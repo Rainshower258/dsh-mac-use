@@ -9,7 +9,7 @@
 # The bench identity is a second certificate, so that a bench build (it takes --state-dir and the test-harness
 # switches) never carries the permissions granted on this Mac: only the VM base grants it, once
 # (scripts/vm-grant-base.sh); never grant a bench build on this Mac.
-# Same recipe as the maintainer's (PLAN-v2 §3.2): RSA 2048, CA:FALSE, key usage digitalSignature, extended key usage
+# The recipe: RSA 2048, CA:FALSE, key usage digitalSignature, extended key usage
 # codeSigning only, 10 years. It is not marked trusted: signing and the permissions work without that, and trusting it
 # would need a password prompt for nothing. So `security find-identity -v` (valid only) does not list it; without -v
 # it shows as CSSMERR_TP_NOT_TRUSTED, which is expected. The private key never leaves the keychain afterwards, and it

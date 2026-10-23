@@ -34,7 +34,7 @@ cu-runtime 由两部分组成。守护进程（`CURuntime.app`，Swift）只在�
 - **只有一道检查把守的地方：通知中心横幅。**横幅绘制在通知中心的全屏窗口内，不属于其所在应用的顶层 AX 元素，因此动作前命中测试中窗口列表这一侧、遮挡标记以及合成图都看不到它：模型看到的被遮住的元素是可点击的。在那里的点击仍会被拒绝，但只靠系统范围的 AX 命中测试（几何用例 `notification-banner`：`caught_by_ax_only`）。该次拒绝之后，惰性的 `occluded` 标记（见「动作前检查」第 7 步）会标出这一区域，模型不会再次走进去；在第一次拒绝之前，这一区域不会被发现。迄今发现的其他所有遮挡，两侧都能拦住。
 - **与 bash 同处一个 dsh（每个日常模式）。**以上各点针对的都是 `cu_*` 工具：它们只能触及用户授权过的应用。插件包（见下文「可安装的 dsh 插件包（电脑操作模式）」）只在一个模式——电脑操作——中注册这些工具，该模式的 agent 看不到其他任何工具（`onlyCuTools`、`exclusive`）；日常 dsh 的其他模式保留 dsh 的 bash 和文件工具，与未装此插件的 dsh 相同，bash 能做什么取决于 dsh 的沙箱允许什么。dsh 的沙箱只限制写入，因此在每个模式下，dsh 沙箱内的 bash 和 dsh 自己的文件工具（`dsh-fs-sandbox`）都能读取状态目录中的 `token`；沙箱保持原样（写入文档，不做修改）。持有令牌者能做的事：读取设置快照（不含令牌、状态目录路径和审计细节）；做出收紧的更改；通过 `access.request` 请求某个应用，这会显示守护进程的弹窗，弹窗写明发起请求的进程（可执行文件和 PID），并在这是该进程的首次请求时注明；为放宽的更改发起本机身份验证（Touch ID 或登录密码），该验证必须由本机前的用户通过，被拒绝后有 10 s 冷却。不能做的事：放宽任何设置，或在本机前的用户不参与的情况下授权某个应用。日常使用中 `grants.set` 是关闭的；授权绑定在发起请求的客户端上；授权只在发起请求的客户端标记过的一轮中给出（`access.turn_start`，见下文），且在第一个客户端运行期间，一个任务的各轮不能被另一个客户端接管。
 - **bash 方面未覆盖的情况：**(1) 用户切换到 dsh 的 `danger-full-access` 模式的会话中，bash 不受限制地运行：此时 bash 与守护进程之间只剩守护进程自己的检查。这是有意留给用户的：切换模式是用户的决定，风险也由用户承担。(2) 命令通过 LaunchServices（`open`）打开的程序在沙箱之外运行。它能读取令牌，并以它自己的任务请求应用（不能以正在进行的对话的任务请求，也不能在两轮之间请求）；此时弹窗会写明发起请求的进程，并注明这是它的首次请求。在应用中显示文件的受管途径是带 `open` 的 `apps.launch`（已授权应用、可操作档、目标经过检查）。(3) dsh 自己的进程：在其中运行的代码（另一个插件、逃出隔离的 workflow 脚本）具有插件的 PID，也就随之拥有插件的授权。(4) bash 可以不经 cu 驱动图形界面（osascript、screencapture、CGEvents），能做到什么程度取决于 dsh 所在进程的 TCC 权限：不要给那个终端或 App 辅助功能、屏幕录制或自动化权限。
-- **cu-std（一项实验）。**`scripts/install-cu-std.sh` 把 dsh 的标准模式安装到一个独立的 dsh home 中（`~/.dsh-cu-std`，带一份自己的 API key 副本），该模式带一个只有 cu_* 工具的 `screen` 子 agent；除非给出 `--real-mac`，否则安装在 VM 中。在那里 bash 受到进一步限制：受限运行的命令既不能读取状态目录，也不能连接 socket（`scripts/cu-sandbox-runner`）。离开沙箱的调用由 dsh 自己的提权提示询问（门控只把严格宽于会话当前模式的请求交给它；`sandbox_permissions` 写的是当前模式时 dsh 不询问就运行，门控把它当作普通调用），每次 workflow 调用都要等待用户批准（`cu-exec-gate`）；该门控的 `confirm: after-screen`（一旦对话中可能含有屏幕内容，每次 bash 调用都要确认）是一个选项，自 2026-10-16 起在 cu-std 中关闭（P3）。workflow 在 cu-std 中是关闭的：它的脚本在 dsh 自己的进程内运行（上文第 3 项缺口）。顶层提示词告诉模型不要在 bash 中使用 `open`，这只是建议，不是边界。
+- **cu-std（一项实验）。**`scripts/install-cu-std.sh` 把 dsh 的标准模式安装到一个独立的 dsh home 中（`~/.dsh-cu-std`，带一份自己的 API key 副本），该模式带一个只有 cu_* 工具的 `screen` 子 agent；除非给出 `--real-mac`，否则安装在 VM 中。在那里 bash 受到进一步限制：受限运行的命令既不能读取状态目录，也不能连接 socket（`scripts/cu-sandbox-runner`）。离开沙箱的调用由 dsh 自己的提权提示询问（门控只把严格宽于会话当前模式的请求交给它；`sandbox_permissions` 写的是当前模式时 dsh 不询问就运行，门控把它当作普通调用），每次 workflow 调用都要等待用户批准（`cu-exec-gate`）；该门控的 `confirm: after-screen`（一旦对话中可能含有屏幕内容，每次 bash 调用都要确认）是一个选项，自 2026-10-16 起在 cu-std 中关闭。workflow 在 cu-std 中是关闭的：它的脚本在 dsh 自己的进程内运行（上文第 3 项缺口）。顶层提示词告诉模型不要在 bash 中使用 `open`，这只是建议，不是边界。
 - **钥匙串提示框批准的是什么。**每次签名都会要求输入登录钥匙串密码（见「签名」），因此持有这台 Mac 授权的守护进程，只有在本机前的用户允许之后才会被安装。该提示框批准的，是 codesign 运行时包目录（源码和 `scripts/build-app.sh`）和构建缓存（对插件页的安装而言是 `~/Library/Caches/cu-runtime/build`：源码副本、swift 的 scratch 路径、输出；对检出目录（checkout）中的构建而言，是该检出目录及其 `.build/` 和 `dist/`）中存放的任何内容：能写入其中任一处的进程，就能决定下一次安装签的是什么。`build-app.sh` 让其余环节都避开 dsh 沙箱内工具进程可能写入的目录（`$TMPDIR`、`/tmp`）：它在输出目录旁的一个 0700 工作目录（`<CU_DIST's parent>/.build-app.*`：位于构建缓存或检出目录中，而它们本来就在提示框批准的范围内）中组装并签名 app，把 `TMPDIR`（swift 和 codesign 的临时文件）和 zsh 的 `TMPPREFIX` 指向该目录，并让 xcrun 跳过它的查找缓存（该缓存位于用户的临时目录中）。此前，app 在 `$TMPDIR` 中暂存，在复制与签名之间被换入的二进制文件会被签名并安装。
 - **通过 socket 更改设置。**持有令牌的客户端可以读取设置（`settings.snapshot`：不含令牌、状态目录路径和审计细节），并且每次请求一项封闭的更改（`settings.apply`）；收紧可以立即生效，但凡是放宽的更改（把应用移出黑名单、加入始终允许名单或升到可操作档，更宽松的访问规则，启用或添加快捷键，再次批准签名已变化的始终允许名单应用，重新发送内容，把应用移出仅文本名单，坐标目标，更高的输入源上限，Electron AX，更短的保留期，放宽的重置或导入）都要等待守护进程在这台 Mac 上进行本机身份验证（Touch ID 或登录密码），一次一项，被拒绝后有 10 s 冷却，且授权弹窗打开期间从不进行；客户端永远无法自称已通过验证。结论在给出的那一刻即确定；若验证进行期间设置或始终允许名单发生了变化，则什么都不应用；导入会对照当前生效的设置进行预览，若自预览显示以来设置已经变化，确认导入会被拒绝（同时把预览更新为最新）。文件和文件夹（日志文件夹、导入、导出）只来自守护进程的面板，由本机前的用户选择。
 - **不防御：**已经以同一用户身份运行的代码。这类代码能读取该用户可读的任何文件，并直接发送 CGEvents。架构无法阻止它，因此也不做尝试。E2E 运行都在用后即弃的 VM 克隆中进行，以此控制这一风险。
@@ -63,11 +63,11 @@ scripts/cu-rpc.py runtime.ping
 
 ### 签名
 
-`build-app.sh` 使用一张自签名的代码签名证书签名，按确切名称查找：正式版构建用 `cu-runtime-signing`，bench 构建用 `cu-runtime-bench-signing`（`CU_SIGN_NAME` 可覆盖名称；`CU_SIGN_IDENTITY` 接受一个 SHA-1，或用 `-` 表示 ad-hoc；同名的多个签名身份会被拒绝）。两种构建都拒绝对方的签名身份，无论按名称还是按 SHA-1 指定（退出状态 2）：这台 Mac 的 TCC 授权锁定的是正式版证书，而接受 `--state-dir` 和测试框架开关的 bench 构建绝不能带有这些授权；只有 VM 基础镜像为 bench 证书授予权限（`scripts/vm-grant-base.sh`）。因此由证书即可判断构建类型，`vm-lib.sh` 的 `require_bench_app` 只部署由 bench 证书签名的 app。`scripts/make-signing-identity.sh [name]` 在登录钥匙串中创建一个签名身份（只做一次，在 Mac 屏幕上的终端里进行：通过 SSH 时钥匙串是锁定的，codesign 会以 `errSecInternalComponent` 失败）；其私钥在磁盘上只以一次性密码加密的形式存在，脚本被中断或终止时也会删除其临时文件。它把证书本身（公开的部分；私钥留在钥匙串中）另存一份到 `~/.<name>/cert.pem`，供以后核对签名身份之用，因为再次列出钥匙串只能显示它现在的内容：`openssl x509 -noout -fingerprint -sha1 -in ~/.cu-runtime-signing/cert.pem` 以插件页显示的格式打印正式版签名身份的 SHA-1。这份副本只是为了方便：该用户的任何进程都能改写它，而脚本会把已经存在的副本改名为 `cert.pem.replaced-<time>`，所以旁边出现 `cert.pem.replaced-*` 就说明它被改写过（以它为准之前，先查明原因）。同一用户的代码无法替换的参照，是保存在这台 Mac 之外的签名身份 `.p12` 备份（或保存在这台 Mac 之外的 `cert.pem`）：`/usr/bin/openssl pkcs12 -in <the .p12> -nokeys -clcerts | /usr/bin/openssl x509 -noout -fingerprint -sha1` 以同样的格式打印其 SHA-1（它会要求输入 `.p12` 的密码，且不写出私钥）。在脚本开始保存这份副本之前创建的签名身份没有这个文件（再次运行脚本时会提示）：从该签名身份的 `.p12` 备份中取出证书，`/usr/bin/openssl pkcs12 -in <the .p12> -nokeys -clcerts -out ~/.cu-runtime-signing/cert.pem`（它会要求输入 `.p12` 的密码，且不写出私钥；`/usr/bin/openssl` 是系统自带的 LibreSSL，而 PATH 中排在前面的 OpenSSL 3，例如 Homebrew 的那个，不加 `-legacy` 就读不了这种 `.p12` 中的 RC2-40 bag）。该证书未被标记为受信任，也无需受信任，因此 `find-identity -v` 不会列出它。维护者的正式版签名身份是 `880B2E68…3B8D`（2026-10-21 轮换，替换了 `3C6EB892…88C7`）：其 `.p12` 保存在一个加密磁盘映像中，密码与之分开保存，`~/.cu-runtime-signing/cert.pem` 只存放证书，以便使用。私钥的访问控制列表不信任 `codesign`（自 2026-10-20 起）：每次签名都会要求输入登录钥匙串密码，因此这台 Mac 上没有任何进程能悄悄签出一个沿用 TCC 授权的仿冒 app；应回答「允许」，而不是「始终允许」（后者会把 `codesign` 重新加回去）。更早创建的签名身份信任 `codesign`；docs/desktop.md 2.3 说明了如何在“钥匙串访问”中将其移除，而不更换私钥。designated requirement（指定要求）锁定证书（`certificate leaf = H"…"`），因此 TCC 授权在重新构建后依然有效。ad-hoc 签名锁定的是 cdhash，重新构建后授权不再有效。`scripts/vm-signing-check.sh` 验证了这两个方向（见下文）。3ecf445 之前的构建都带有这台 Mac 的授权，且没有 hardened runtime：见下文「旧构建」。
+`build-app.sh` 使用一张自签名的代码签名证书签名，按确切名称查找：正式版构建用 `cu-runtime-signing`，bench 构建用 `cu-runtime-bench-signing`（`CU_SIGN_NAME` 可覆盖名称；`CU_SIGN_IDENTITY` 接受一个 SHA-1，或用 `-` 表示 ad-hoc；同名的多个签名身份会被拒绝）。两种构建都拒绝对方的签名身份，无论按名称还是按 SHA-1 指定（退出状态 2）：这台 Mac 的 TCC 授权锁定的是正式版证书，而接受 `--state-dir` 和测试框架开关的 bench 构建绝不能带有这些授权；只有 VM 基础镜像为 bench 证书授予权限（`scripts/vm-grant-base.sh`）。因此由证书即可判断构建类型，`vm-lib.sh` 的 `require_bench_app` 只部署由 bench 证书签名的 app。`scripts/make-signing-identity.sh [name]` 在登录钥匙串中创建一个签名身份（只做一次，在 Mac 屏幕上的终端里进行：通过 SSH 时钥匙串是锁定的，codesign 会以 `errSecInternalComponent` 失败）；其私钥在磁盘上只以一次性密码加密的形式存在，脚本被中断或终止时也会删除其临时文件。它把证书本身（公开的部分；私钥留在钥匙串中）另存一份到 `~/.<name>/cert.pem`，供以后核对签名身份之用，因为再次列出钥匙串只能显示它现在的内容：`openssl x509 -noout -fingerprint -sha1 -in ~/.cu-runtime-signing/cert.pem` 以插件页显示的格式打印正式版签名身份的 SHA-1。这份副本只是为了方便：该用户的任何进程都能改写它，而脚本会把已经存在的副本改名为 `cert.pem.replaced-<time>`，所以旁边出现 `cert.pem.replaced-*` 就说明它被改写过（以它为准之前，先查明原因）。同一用户的代码无法替换的参照，是保存在这台 Mac 之外的签名身份 `.p12` 备份（或保存在这台 Mac 之外的 `cert.pem`）：`/usr/bin/openssl pkcs12 -in <the .p12> -nokeys -clcerts | /usr/bin/openssl x509 -noout -fingerprint -sha1` 以同样的格式打印其 SHA-1（它会要求输入 `.p12` 的密码，且不写出私钥）。在脚本开始保存这份副本之前创建的签名身份没有这个文件（再次运行脚本时会提示）：从该签名身份的 `.p12` 备份中取出证书，`/usr/bin/openssl pkcs12 -in <the .p12> -nokeys -clcerts -out ~/.cu-runtime-signing/cert.pem`（它会要求输入 `.p12` 的密码，且不写出私钥；`/usr/bin/openssl` 是系统自带的 LibreSSL，而 PATH 中排在前面的 OpenSSL 3，例如 Homebrew 的那个，不加 `-legacy` 就读不了这种 `.p12` 中的 RC2-40 bag）。该证书未被标记为受信任，也无需受信任，因此 `find-identity -v` 不会列出它。开发用 Mac 上的正式版签名身份是 `880B2E68…3B8D`（2026-10-21 轮换，替换了 `3C6EB892…88C7`）：其 `.p12` 保存在一个加密磁盘映像中，密码与之分开保存，`~/.cu-runtime-signing/cert.pem` 只存放证书，以便使用。私钥的访问控制列表不信任 `codesign`（自 2026-10-20 起）：每次签名都会要求输入登录钥匙串密码，因此这台 Mac 上没有任何进程能悄悄签出一个沿用 TCC 授权的仿冒 app；应回答「允许」，而不是「始终允许」（后者会把 `codesign` 重新加回去）。更早创建的签名身份信任 `codesign`；docs/desktop.md 2.3 说明了如何在“钥匙串访问”中将其移除，而不更换私钥。designated requirement（指定要求）锁定证书（`certificate leaf = H"…"`），因此 TCC 授权在重新构建后依然有效。ad-hoc 签名锁定的是 cdhash，重新构建后授权不再有效。`scripts/vm-signing-check.sh` 验证了这两个方向（见下文）。3ecf445 之前的构建都带有这台 Mac 的授权，且没有 hardened runtime：见下文「旧构建」。
 
 每个构建都以 hardened runtime（`--options runtime`）签名，不带任何 entitlements，`build-app.sh` 在签名后检查这一标志。守护进程不需要该运行时的任何例外：没有 JIT 或未签名的可执行内存，只使用系统库（因此没有团队 ID 也能通过库验证），没有 `DYLD_*` 变量，不使用摄像头、麦克风、定位、通讯录、日历或照片，也不发送 Apple events（它只接收 reopen 事件；应用和文件通过 LaunchServices 打开）。有了它，持有 TCC 授权的进程会忽略 `DYLD_*` 变量（`open --env` 可能传入这些变量），也不接受调试器附加。
 
-**旧构建。**TCC 为 bundle id `dev.cu-runtime.daemon` 的每项权限保存一行记录，其中存有被授权 app 的 requirement，而这个 requirement 锁定的是正式版证书。因此，用该证书签名的每个 bundle，无论放在哪里，都持有两项授权：LaunchServices 启动归档中或被遗忘的 worktree 中的副本，与启动 `~/Applications/CURuntime.app` 一样容易。只有带 hardened runtime 的正式版构建（Info.plist `CUBench` 为 false，带 hardened runtime：即 `build-app.sh` 自 3ecf445 起生成的构建）才适合保留。凡不属于这一类的正式版证书构建仍然持有授权：3ecf445 之前的所有构建、当时制作的 bench 构建，以及最初的几次 R1 尝试（d4faaeb 到 b0d4919，`CUBench` 为 false）都包括在内。它们都没有 hardened runtime，因此通过 `open --env` 传入的 `DYLD_*` 变量会进入进程。R1 之前的构建（没有 `CUBench` 键）还会服务任意 `--state-dir`，并且在测试框架开关打开时照样启动，因此该用户的任何程序都能启动第二个守护进程，不经弹窗授权应用；最初的几次 R1 尝试按文本比较 `--state-dir` 路径，经由符号链接的写法就能绕过。从早于 3ecf445 的检出目录安装的 `~/Applications/CURuntime.app` 就是其中之一：插件页的「守护进程」标签会把它显示为需要替换（它没有 `CUSourceHash`，也没有 hardened runtime），在那里点「重新安装守护进程」会重新构建并替换它；`autoStart` 不会打开它。对于其他位置的副本，有两种补救办法，由维护者决定采用哪一种：
+**旧构建。**TCC 为 bundle id `dev.cu-runtime.daemon` 的每项权限保存一行记录，其中存有被授权 app 的 requirement，而这个 requirement 锁定的是正式版证书。因此，用该证书签名的每个 bundle，无论放在哪里，都持有两项授权：LaunchServices 启动归档中或被遗忘的 worktree 中的副本，与启动 `~/Applications/CURuntime.app` 一样容易。只有带 hardened runtime 的正式版构建（Info.plist `CUBench` 为 false，带 hardened runtime：即 `build-app.sh` 自 3ecf445 起生成的构建）才适合保留。凡不属于这一类的正式版证书构建仍然持有授权：3ecf445 之前的所有构建、当时制作的 bench 构建，以及 2026-10-20 把构建分为正式版与 bench 两类时最初的几次构建（d4faaeb 到 b0d4919，`CUBench` 为 false）都包括在内。它们都没有 hardened runtime，因此通过 `open --env` 传入的 `DYLD_*` 变量会进入进程。这次区分之前的构建（早于 d4faaeb，没有 `CUBench` 键）还会服务任意 `--state-dir`，并且在测试框架开关打开时照样启动，因此该用户的任何程序都能启动第二个守护进程，不经弹窗授权应用；这次区分最初的几次构建按文本比较 `--state-dir` 路径，经由符号链接的写法就能绕过。从早于 3ecf445 的检出目录安装的 `~/Applications/CURuntime.app` 就是其中之一：插件页的「守护进程」标签会把它显示为需要替换（它没有 `CUSourceHash`，也没有 hardened runtime），在那里点「重新安装守护进程」会重新构建并替换它；`autoStart` 不会打开它。对于其他位置的副本，有两种补救办法，只有第一种是彻底的：
 
 1. **轮换正式版证书。**这种办法是彻底的：为用新证书签名的构建授权时，会替换该行记录中的 requirement，因此用旧证书签名的每个 bundle 会同时失去两项授权，归档、备份以及任何工具都找不到的位置中的副本也包括在内。在 Mac 屏幕上的终端中：
    1. 停止守护进程（插件页的「停止」，或 `pkill -x cu-runtime`）。
@@ -156,7 +156,7 @@ VM 数据（2026-09-29，`bench/experiments/ocr_cache.py`，1440×900 @2x，12 �
 - 裁剪结果在 640k px 预算之内为原生分辨率，超出则缩小；`magnification` 表示其细节相对于概览图的比例。显示的细节不会多于概览图的矩形会被拒绝（`zoom_not_magnifying`）。
 - 元素目标按其边框外扩 16 pt 进行缩放。
 - OCR 行来自 OCR 缓存（它们属于数据，位于 `untrusted_observation` 下）。要点击在缩放图中看到的内容，使用 `point{space: "zoom", zoom_id}`：守护进程会将其映射回去，并像对待任何点一样，对照该缩放图所属的快照进行检查。
-- 守护进程中没有按任务的次数限制；每次缩放都会审计。按任务的预算归插件（R4）负责。
+- 守护进程中没有按任务的次数限制；每次缩放都会审计。按任务的预算归插件负责。
 
 ### 等待窗口
 
@@ -165,7 +165,7 @@ VM 数据（2026-09-29，`bench/experiments/ocr_cache.py`，1440×900 @2x，12 �
 - 本守护进程启动的应用（`apps.launch`）会被等待：在启动后 10 s 内，最多等待 2.5 s，直到 macOS 报告其正在运行。其他人启动的应用不会被等待。
 - 启动时，守护进程在后台预热窗口列表、SCK 和 Vision（审计日志中的 `runtime.prewarm`）。
 - 用于显示时（observe、zoom），程序坞的栏位（OverlayPolicy）通过 AX 读取，超时为 0.25 s，并复用 0.5 s；如果程序坞没有响应（在播放启动动画期间它确实不响应），则使用最后已知的边框。允许/拒绝的判定从不使用这些数据：见「动作前检查」。
-- 启动后的第一次 OCR 仍需约 2.5–3.4 s。启动时的 Vision 预热（即便使用窗口大小、中英混排、并在 OCR 自己的队列上执行）也未能消除这一延迟。bench 运行和插件（R4）会在计时或开始任务前先做一次预热 `observe`。
+- 启动后的第一次 OCR 仍需约 2.5–3.4 s。启动时的 Vision 预热（即便使用窗口大小、中英混排、并在 OCR 自己的队列上执行）也未能消除这一延迟。bench 运行和插件会在计时或开始任务前先做一次预热 `observe`。
 
 ### 系统状态改动
 
@@ -188,8 +188,8 @@ Electron 应用只有在设置了 `AXManualAccessibility` 时，才会向 AX 暴
 - **AX 优先。**对支持 AXPress 的 AX 元素进行 `element_id` 点击时，执行的是 AXPress：不激活应用，也不受遮挡该元素的内容影响。`act.set_value` 设置 AXValue，`act.ax_action` 执行允许名单中的动作。AX 路径仍会检查授权、硬拒绝停止以及元素是否过期。结果中写明 `via: "ax"` 或 `via: "event"`。
 - **其余情况使用真实事件**，并在通过下文的每一项动作前检查之后发出：坐标点、OCR 元素、右键/中键、双击和三击（`kCGMouseEventClickState` 1…n）、滚动、拖拽（按下、12 次拖动移动、松开）、输入和快捷键。
 - **输入**：文本以 Unicode 键盘事件发出（中间不经过输入法，因此中文按原样到达），每块最多 20 个 UTF-16 单元，绝不拆分字符。换行和制表符分别为按下 Return 和 Tab。发送每一块之前，目标必须仍在前台；否则输入以 `focus_lost` 停止，`steps_posted` 说明进行到了哪一步。
-- **粘贴**（`act.type` 配合 `strategy: paste`，P4 2026-10-16，参照官方 cua-macos provider）：文本经由剪贴板和 ⌘V 输入，因此不会被任何输入法吞掉，也不会改变输入源。剪贴板先被保存（每一项的每一种类型，最多 32 MB，否则返回 `clipboard_too_large` 且不粘贴任何内容），并在应用有 0.3 s 读取之后放回，除非期间有其他程序写入了剪贴板（`clipboard_changed`：保持不动）。带元素目标时会读回该输入框（`verified`）。底线与输入相同：full 模式、拒绝密码框、应用须在前台（`focus_lost` 时恢复剪贴板）。当输入的文本没有到达时，插件会建议使用此方式。
-- **屏幕锁定**（P5，2026-10-16）：macOS 处于锁定状态时（`CGSSessionScreenIsLocked`），observe、每个动作和 `apps.launch` 都会在任何操作发生之前被拒绝为 `session_locked`（retry never：由用户解锁，模型再重新观察）。锁定状态未知时不拒绝。
+- **粘贴**（`act.type` 配合 `strategy: paste`，2026-10-16 加入，参照官方 cua-macos provider）：文本经由剪贴板和 ⌘V 输入，因此不会被任何输入法吞掉，也不会改变输入源。剪贴板先被保存（每一项的每一种类型，最多 32 MB，否则返回 `clipboard_too_large` 且不粘贴任何内容），并在应用有 0.3 s 读取之后放回，除非期间有其他程序写入了剪贴板（`clipboard_changed`：保持不动）。带元素目标时会读回该输入框（`verified`）。底线与输入相同：full 模式、拒绝密码框、应用须在前台（`focus_lost` 时恢复剪贴板）。当输入的文本没有到达时，插件会建议使用此方式。
+- **屏幕锁定**（2026-10-16 加入）：macOS 处于锁定状态时（`CGSSessionScreenIsLocked`），observe、每个动作和 `apps.launch` 都会在任何操作发生之前被拒绝为 `session_locked`（retry never：由用户解锁，模型再重新观察）。锁定状态未知时不拒绝。
 - **快捷键**：修饰键作为真实按键按下（按顺序按下，按相反顺序松开），每个事件都携带当时按住的标志位。
 - **激活**：`NSRunningApplication.activate()`，随后照常检查应用是否在 500 ms 内成为前台应用。在 VM 中实测（`bench/experiments/activation.py`，每项 20 次试验）：`running_application` 在有其他应用位于前台时为 20/20，目标被隐藏时为 20/20；`ax_frontmost` 分别为 20/20 和 0/20；`ax_raise` 分别为 0/20 和 0/20（它会提升窗口，但不会激活应用）。config.json 中的 `activation_method` 可覆盖默认方式。
 - **指针自身的窗口**不属于窗口次序。在 VM 中，它是位于指针位置的一个真实屏幕窗口，曾使鼠标最后停留的点看起来被遮挡。只有**属于 Window Server 且**处于光标层级的窗口才会被排除：任何应用都可以把窗口放到该层级，而这样的窗口仍构成遮挡（几何测试集 `occlusion-cursor-level`：6/6 由窗口列表本身拒绝；按旧的仅看层级的规则，只有 AX 命中测试能拦住它们）。
@@ -227,17 +227,17 @@ Electron 应用只有在设置了 `AXManualAccessibility` 时，才会向 AX 暴
 | `never` | 因策略被拒绝，或请求格式错误（也包括 `ime_switch_needs_approval` 和 `ime_switch_failed`，插件对此的处理是询问用户，或以 `ime_policy: leave` 重发；未输入任何内容） | 不要原样重试 |
 | `outcome_unknown` | 动作可能已全部或部分发生（`action_failed`、`focus_lost`、`act.*` 或 `apps.launch` 的 `request_timeout`）；`data.action_may_have_executed: true` | 绝不自动重试：先观察 |
 
-插件（R4）只自动重试 `after_delay`，且次数有限。前三类的 `data.executed` 为 `false`，最后一类为 `null`（未知）。
+插件只自动重试 `after_delay`，且次数有限。前三类的 `data.executed` 为 `false`，最后一类为 `null`（未知）。
 
 ### 动作前检查
 
 以下检查对每个 `act.*` 按顺序执行。第一项失败即拒绝该动作，并记入审计。
 
-0. **以显示名称指定的应用**（用 "DSHFixture" 代替 `dev.dsh.bench.fixture`）会首先被解析，且只在该任务的已授权应用中查找，仅当恰好匹配一个时才解析成功（本地化名称、bundle 显示名称/简称或 .app 文件名；忽略大小写和首尾空格）。多个匹配会被拒绝为 `app_name_ambiguous`；没有匹配则保持原样，并被拒绝为 `not_granted`。守护进程从不查询授权范围之外的应用名称，因此这一步不会放宽授权，解析得到的 bundle ID 仍要经过下面的各项检查。审计中保留 `app_name` 和 `app_resolved_from_name`。（R4：每一次 `not_granted` 都是模型使用了显示名称。）
+0. **以显示名称指定的应用**（用 "DSHFixture" 代替 `dev.dsh.bench.fixture`）会首先被解析，且只在该任务的已授权应用中查找，仅当恰好匹配一个时才解析成功（本地化名称、bundle 显示名称/简称或 .app 文件名；忽略大小写和首尾空格）。多个匹配会被拒绝为 `app_name_ambiguous`；没有匹配则保持原样，并被拒绝为 `not_granted`。守护进程从不查询授权范围之外的应用名称，因此这一步不会放宽授权，解析得到的 bundle ID 仍要经过下面的各项检查。审计中保留 `app_name` 和 `app_resolved_from_name`。（截至 2026-09-30 插件的运行中观察到：每一次 `not_granted` 都是模型使用了显示名称。）
 1. 授权存在且未过期。
 2. 应用未被硬拒绝（纵深防御），且授权覆盖该应用。
 3. 快捷键可以解析，并通过允许名单（见下文）。
-4. 每个目标都是来自有效快照的 `element_id`，或声明了 `space` 的坐标点。R1 中没有快照，也没有图像映射，因此只有 `space: "screen"` 的坐标点能通过。
+4. 每个目标都是来自有效快照的 `element_id`，或声明了 `space`（`screen`、`image` 或 `zoom`）的坐标点。两者都带有其来源的 `snapshot_gen`；已不再保留的快照会被拒绝为 `stale_snapshot`。
 5. **硬拒绝的应用不在前台**。如果在前台（例如目标中的链接启动了终端），所有动作都会停止。守护进程不会悄悄把目标应用拉回到它上面。
 6. **先激活，再验证**：应用必须在 500 ms 内成为前台应用。
 7. **命中测试**：在每个坐标点上，窗口列表中最上层的窗口**和**系统范围的 AX 命中测试都必须指向该应用。
@@ -253,7 +253,7 @@ Electron 应用只有在设置了 `AXManualAccessibility` 时，才会向 AX 暴
 - 带有 ⌘ ⌃ ⌥ fn 中任意一个的快捷键，**仅当**在以下名单中时才允许：⌘A C V X Z、⌘⇧Z、⌘F G W N S Q、⌘⌫、⌘L（浏览器地址栏）和 ⌘⇧T（2026-10-14），以及 ⌥ 或 ⌘ 加方向键。真实任务需要更多时再扩充名单。
 - F1–F20 一律拒绝，无论是否带修饰键。
 
-R1 的旧阻止列表现在作为验收集保存在测试中（`legacyBlockedChords`）：其中每个快捷键都必须被拒绝。按其构造方式，允许名单也会拒绝影响其他应用的快捷键，例如 ⌘⌥H。
+第一版（2026-09-28）的阻止列表现在作为验收集保存在测试中（`legacyBlockedChords`）：其中每个快捷键都必须被拒绝。按其构造方式，允许名单也会拒绝影响其他应用的快捷键，例如 ⌘⌥H。
 
 ### 硬拒绝名单
 
@@ -268,11 +268,11 @@ R1 的旧阻止列表现在作为验收集保存在测试中（`legacyBlockedCho
 Finder 不在硬拒绝名单中，而是由配置控制：它需要守护进程配置中的 `allow_finder`，以及来源为 `config` 的授权。
 
 上游代码：原型运行在 `AzaiSakura/dsh-computer-use` 的守护进程上，`legacy/` 保留了当时对它的补丁，仅作历史记录；现在的守护进程没有复用它的任何代码。今后任何移植（例如 `AXTreeDiff`）都必须附带其 MIT 许可声明。
-## 维护者 Mac 上的日常使用
+## 真实 Mac 上的日常使用
 
-`docs/desktop.md`（中文，面向本机前的用户）涵盖：如何停止、数据存放位置、通过插件页安装（`scripts/install.sh` 作为预检与引导）、日常使用、autoStart、授权弹窗、设置、始终允许名单（`cu-runtime grants list | revoke | add --full`）、权限、模式检查、令牌（token）与沙箱、卸载，以及作为实验的 cu-std。简言之：电脑操作在日常使用的 dsh 中借助插件包运行（见下文「可安装的 dsh 插件包（电脑操作模式）」）：其「电脑操作」模式是唯一带有 cu_* 工具的模式，该模式的 agent 没有任何其他工具；「守护进程」标签中的「模式检查」会确认：正在运行的 dsh 的 home 下，没有任何 profile 在别处加载 cu_* 工具，也没有任何 profile 加载其他任何电脑操作插件。会话的模型由本机前的用户选择，须为支持图像输入的模型。应用不预先授权：首个涉及某应用的调用会使守护进程以自己的弹窗请求完整模式的授权，每个应用一次（P2，2026-10-16；此前该调用会被拒绝，只有附带 `access` 与理由重新发送时才会询问，类似 dsh 的 bash 提升其沙箱权限的方式）；调用可携带可选的 `justification`，由弹窗显示。守护进程为较早的始终允许名单条目及 `grants add` 保留 `read` 模式（观察、缩放、左键单击、滚动、AXPress、AXRaise）。弹窗关闭时，焦点会返回原先持有焦点的应用（守护进程本身在硬拒绝名单中，若留在最前，下一个动作会被停止），该决定的审计记录会注明这一点（`focus`）；系统底线（硬拒绝、快捷键允许名单、密码字段、命中测试、最前应用检查与过期检查）在两种模式下均有效。守护进程自身的 bundle ID 在硬拒绝名单中，因此模型既看不到也无法点击该弹窗。`bench/experiments/approval_dialog.py` 在 VM 中检查真实的弹窗。
+`docs/desktop.md`（中文，面向本机前的用户）涵盖：如何停止、数据存放位置、通过插件页安装（`scripts/install.sh` 作为预检与引导）、日常使用、autoStart、授权弹窗、设置、始终允许名单（`cu-runtime grants list | revoke | add --full`）、权限、模式检查、令牌（token）与沙箱、卸载，以及作为实验的 cu-std。简言之：电脑操作在日常使用的 dsh 中借助插件包运行（见下文「可安装的 dsh 插件包（电脑操作模式）」）：其「电脑操作」模式是唯一带有 cu_* 工具的模式，该模式的 agent 没有任何其他工具；「守护进程」标签中的「模式检查」会确认：正在运行的 dsh 的 home 下，没有任何 profile 在别处加载 cu_* 工具，也没有任何 profile 加载其他任何电脑操作插件。会话的模型由本机前的用户选择，须为支持图像输入的模型。应用不预先授权：首个涉及某应用的调用会使守护进程以自己的弹窗请求完整模式的授权，每个应用一次（自 2026-10-16 起；此前该调用会被拒绝，只有附带 `access` 与理由重新发送时才会询问，类似 dsh 的 bash 提升其沙箱权限的方式）；调用可携带可选的 `justification`，由弹窗显示。守护进程为较早的始终允许名单条目及 `grants add` 保留 `read` 模式（观察、缩放、左键单击、滚动、AXPress、AXRaise）。弹窗关闭时，焦点会返回原先持有焦点的应用（守护进程本身在硬拒绝名单中，若留在最前，下一个动作会被停止），该决定的审计记录会注明这一点（`focus`）；系统底线（硬拒绝、快捷键允许名单、密码字段、命中测试、最前应用检查与过期检查）在两种模式下均有效。守护进程自身的 bundle ID 在硬拒绝名单中，因此模型既看不到也无法点击该弹窗。`bench/experiments/approval_dialog.py` 在 VM 中检查真实的弹窗。
 
-## 插件（R4）
+## 插件
 
 `plugin/` 是 dsh 插件：即 `cu_*` 工具。它只连接守护进程的 socket，从不将守护进程作为其子进程启动（否则 TCC 会把权限记在 node 而非该应用名下）；启用 `autoStart` 时（插件包的模式、cu-std），它通过 LaunchServices 打开已安装的应用，且仅限宿主已验证的正式版构建（见下文「可安装的 dsh 插件包（电脑操作模式）」）；否则在无法连接时说明应在何处启动守护进程。所有策略决定都留在守护进程中。每个 dsh 会话（一个任务）中：
 - 首次工具调用会授权所配置的 `apps`（来源为 `config`，显式设置 `electronAx`），并执行一次预热观察；该授权在 `turn/end` 时撤销；
@@ -330,7 +330,7 @@ dsh plugin --profile web add link:$PWD            # from the repository root; re
 
 **测量结果依赖守护进程的行为。** 测量脚本读取的是守护进程返回的内容，因此当该行为发生变化（过滤、去重、几何）时，应先重新验证测量，再信任其结果。QQ AX 覆盖率脚本写于 OCRDedup 出现之前；去重开始丢弃 AX 已覆盖的 OCR 行之后，其 "on" 数值低得离谱（comparison.md，Result 1e）。
 
-`swift test` 运行 206 个测试。`RedTeamTests` 是 R1 红队测试集：每次尝试都必须被拒绝并记入审计。阳性对照用于防范一个干脆拒绝一切的守护进程。2026-09-28 对该测试集做了变异检查：分别移除命中测试、快捷键过滤和最前应用停止；每次移除都使本应发现它的测试失败。
+`swift test` 运行 206 个测试。`RedTeamTests` 是随第一版（2026-09-28）编写的红队测试集：每次尝试都必须被拒绝并记入审计。阳性对照用于防范一个干脆拒绝一切的守护进程。2026-09-28 对该测试集做了变异检查：分别移除命中测试、快捷键过滤和最前应用停止；每次移除都使本应发现它的测试失败。
 
 VM 脚本需要 `cu-base` Tart VM 和 `vm-lib.sh`，并部署 bench 构建：须先运行 `CU_BENCH=1 scripts/build-app.sh`（输出到 `dist-bench/`）（`vm-signing-check.sh` 会自行构建）。克隆之前，`require_bench_app` 会检查它是否为由唯一的 `cu-runtime-bench-signing` 身份签名（以该身份的证书执行 `codesign --verify -R`）且启用 hardened runtime 的 bench 构建。基础镜像须对 bench 身份授权一次；具体步骤（创建身份、构建、`prepare`、手动授权、`finish`、`vm-signing-check.sh`，对 `cu-base-qq` 同样执行）见 `scripts/vm-grant-base.sh` 的文件头。
 

@@ -1,4 +1,4 @@
-# Sourced by the vm-*.sh scripts. Guest layout is fixed (PLAN-v2 §3.2): the app always lives at
+# Sourced by the vm-*.sh scripts. Guest layout is fixed: the app always lives at
 # ~/Applications/CURuntime.app inside the guest.
 VMDIR=${VMDIR:-$HOME/Desktop/dsh-cu-ocr/vm}
 TART=$VMDIR/tart.app/Contents/MacOS/tart

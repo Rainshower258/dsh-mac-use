@@ -1,5 +1,5 @@
 #!/bin/zsh
-# R1 signing acceptance (PLAN-v2 §8): rebuild -> deploy into a fresh clone -> NO re-grant ->
+# Signing acceptance (docs/DESIGN.md, Signing): rebuild -> deploy into a fresh clone -> NO re-grant ->
 # AXIsProcessTrusted must be true and a real SCK capture must succeed.
 set -uo pipefail
 ROOT=${0:A:h:h}

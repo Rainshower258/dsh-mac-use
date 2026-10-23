@@ -3,7 +3,7 @@
 # own dsh home, CU_STD_HOME (default ~/.dsh-cu-std); see profiles/cu-std/cordis.patch.yml.in. Builds the plugin with
 # the documented build (`npm run build` at the repository root: the host and the plugin page, so a bundle
 # link-installed from this checkout gets both from one commit), then writes the profile with absolute paths.
-# On a real Mac only with --real-mac (the maintainer, 2026-10-14): bash there runs as you, next to the daemon. What
+# On a real Mac only with --real-mac (decided 2026-10-14): bash there runs as you, next to the daemon. What
 # stands between them and what does not is in docs/DESIGN.md "Threat model": "Not covered with bash" and "cu-std (an
 # experiment)". The markers of a virtual Mac are bench/vmguard.py's (kern.hv_vmm_present=1, a VirtualMac model).
 set -euo pipefail
@@ -56,7 +56,7 @@ mkdir -p $DEST $STD_HOME/work
 # One empty workspace at $STD_HOME/work, as dsh writes it (unit workspace v2). Without it
 # dsh's web UI asks for a folder on its first start, and whatever folder is picked becomes the session's workspace:
 # its CLAUDE.md / AGENTS.md are injected as workspace instructions and its files are the model's project (2026-10-15:
-# the maintainer's sessions ran in the project folder, and the model read the plan's test checklist before a test).
+# sessions ran in the project folder, and the model read a test checklist kept there before a test).
 # An existing record is left alone, with a warning when it does not point here.
 python3 - "$STD_HOME" <<'PY'
 import datetime, json, os, sys, uuid
@@ -140,7 +140,7 @@ rm -f $DUMP
 # refused every cu_* call (VM, 2026-10-10). Since 0.2.1 a screen child runs in cu-screen instead; the row stays off.
 # The parent keeps screen and subagent_fork. Its bash and pwsh rows are off too: bash is loaded at the profile level instead,
 # where its row injects the exec gate's service (cordis.patch.yml.in: without the gate dsh refuses to start, VM
-# 2026-10-10; an `inject` on a preset row was not verified). workflow is off as well (the maintainer, 2026-10-11): its
+# 2026-10-10; an `inject` on a preset row was not verified). workflow is off as well (decided 2026-10-11): its
 # scripts run inside dsh's own process (node:vm, no security boundary), outside the sandbox and cu-sandbox-runner's
 # fence around the daemon, so the per-call approval would be all that stood in the way. A row not found fails the
 # install.

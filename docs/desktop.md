@@ -158,7 +158,7 @@ zsh scripts/make-signing-identity.sh
 
    报 `EACCES` 的话，是 2.1 第 3 步的第二行没执行，补上再来。
 
-   > 维护者注：维护者自己的机器上，`plugin/node_modules` 是用 `plugin/scripts/link-deps.sh` 链到上游参考仓库的，那里**不要**运行 `npm ci` 或 `npm install`，否则 npm 会顺着链接写进上游目录。
+   > 注：`plugin/node_modules` 如果是用 `plugin/scripts/link-deps.sh` 链到上游参考仓库的（开发用的机器上是这样），**不要**运行 `npm ci` 或 `npm install`，否则 npm 会顺着链接写进上游目录。
 
 2. **启动日常的 dsh**：`dsh --profile web`，或者打开 dsh 的桌面版。
 3. **添加插件**：在 dsh 的插件页点「添加插件」，填入仓库链接 `https://github.com/Rainshower258/dsh-mac-use`；从源码添加时，填这份源码的**完整绝对路径**（例如 `/Users/<用户名>/cu-runtime`；dsh 不认 `~/` 开头的路径；install.sh 的引导会打印出完整路径），添加后点「启用」。
@@ -204,7 +204,7 @@ zsh scripts/make-signing-identity.sh
 
 「电脑操作」模式开启了 `autoStart`：守护进程没在运行时，第一次 cu_* 调用会经 LaunchServices（`open -g`，不抢焦点）打开已安装的 `~/Applications/CURuntime.app`。打开之前，插件按插件页启动守护进程时的同一套规则核对这个 app：已安装；钥匙串里只有一张名为 `cu-runtime-signing` 的证书；是正式版本（不是 bench 构建）、符合这张证书的签名要求，并带 hardened runtime。核对只做只读的查询（`plutil`、`security find-identity`、`codesign --verify`、`codesign -d`），约 1 到 2 秒。
 
-不符合的 app 不会被打开：R1 之前的构建、bench 构建、没有 hardened runtime 的构建、钥匙串里有多张同名证书的情况都在内。这时模型收到的报错是：
+不符合的 app 不会被打开：d4faaeb（2026-10-20）之前的构建、bench 构建、没有 hardened runtime 的构建、钥匙串里有多张同名证书的情况都在内。这时模型收到的报错是：
 
 ```
 cu-runtime daemon is not reachable (the installed CURuntime.app is not a release build the plugin verified: <code>). The daemon is not started. Do not start it yourself: tell the user, who can install or update CURuntime.app on the plugin page's 守护进程 tab.
@@ -356,7 +356,7 @@ tccutil reset ScreenCapture dev.cu-runtime.daemon
 
 - **用仓库链接添加的**，要更新时在插件页移除插件，再用同一个链接添加一次，就会装上仓库当前的版本；然后看「守护进程」标签，按下一条更新守护进程。
 - **从源码添加的，更新源码后**，先运行一次 `zsh ~/cu-runtime/scripts/install.sh`（或者在仓库根目录执行 `npm run build`），再重启 dsh：dsh 按路径加载的是源码目录里构建好的文件，不重新构建就仍在运行上一次的构建。然后看插件页「守护进程」标签：已装的 `~/Applications/CURuntime.app` 不是这份源码的正式构建（源码哈希不同、没有 hardened runtime，或者是 2026-10-20 之前装的）时，页面会提示更新，点「更新守护进程」（或「重新安装守护进程」）即可，签名时钥匙串要一次登录密码。
-- **旧构建要清理。** 两项权限认的是签名证书，而不是某一次构建：用正式证书 `cu-runtime-signing` 签过的 CURuntime.app，放在哪里都带着这两项权限，LaunchServices 从归档或旧目录里一样能启动它（自动启动只打开验证过的 `~/Applications/CURuntime.app`，但别的程序仍可以用 `open` 启动这些副本）。能留下的只有 hardened 正式构建（`CUBench` 为 false、带 hardened runtime：3ecf445 起的 `build-app.sh` 才这样构建）；3ecf445 之前的构建都没有 hardened runtime，R1 之前的还认 `--state-dir` 和测试用的开关。列出这台 Mac 上所有的 CURuntime.app：
+- **旧构建要清理。** 两项权限认的是签名证书，而不是某一次构建：用正式证书 `cu-runtime-signing` 签过的 CURuntime.app，放在哪里都带着这两项权限，LaunchServices 从归档或旧目录里一样能启动它（自动启动只打开验证过的 `~/Applications/CURuntime.app`，但别的程序仍可以用 `open` 启动这些副本）。能留下的只有 hardened 正式构建（`CUBench` 为 false、带 hardened runtime：3ecf445 起的 `build-app.sh` 才这样构建）；3ecf445 之前的构建都没有 hardened runtime，d4faaeb（2026-10-20）之前的还认 `--state-dir` 和测试用的开关。列出这台 Mac 上所有的 CURuntime.app：
 
   ```sh
   zsh ~/cu-runtime/scripts/find-release-builds.sh

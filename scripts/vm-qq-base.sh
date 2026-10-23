@@ -1,12 +1,12 @@
 #!/bin/zsh
 # T7 set-up session (bench/vm/qq/README.md): QQ into cu-base-qq, logged in as the TEST account, with the scripted
-# messages, then the base shut down clean. Needs the maintainer at the Mac (QR login on the phone).
+# messages, then the base shut down clean. Needs a person at the Mac (QR login on the phone).
 #   scripts/vm-qq-base.sh prepare <QQ zip>   # backup clone, boot the base WITH a window, install and open QQ
 #   scripts/vm-qq-base.sh inspect            # (after sending) how QQ shows the scripted lines: AX (electron_ax off/on)
 #                                            # and OCR text, for T7-qq-latest's `equivalents` (emoji vs QQ face text)
 #   scripts/vm-qq-base.sh finish             # check, quit QQ (keeps the login), shut the base down; also how the
 #                                            # base's grant (scripts/vm-grant-base.sh, step 6) is finished
-# Nothing of the maintainer's own QQ data goes in: the zip holds the app bundle only (ditto of /Applications/QQ.app).
+# No personal QQ data goes in: the zip holds the app bundle only (ditto of /Applications/QQ.app).
 set -euo pipefail
 ROOT=${0:A:h:h}
 # T7 has its own base (2026-10-10): QQ starts at login by itself (mechanism not found), so cu-base never has QQ and
@@ -19,8 +19,8 @@ prepare)
   ZIP=${2:?usage: $0 prepare <QQ zip>}
   "$TART" list | grep -q "^local *$BASE .*stopped" || { print "$BASE must exist and be stopped"; exit 1; }
   # The daemon with the action allowlist (T7 is read only) goes into the base in the same session. Same signing
-  # identity (the bench one, vm-lib.sh), so the base's TCC grants hold (PLAN-v2 §3.2); finish checks that before
-  # shutting down.
+  # identity (the bench one, vm-lib.sh), so the base's TCC grants hold (they pin the bench certificate,
+  # vm-grant-base.sh); finish checks that before shutting down.
   HEAD=$(git -C "$ROOT" rev-parse --short HEAD)
   # A bench build (vm-lib.sh): inspect turns config_grants on in the base's config.json.
   BUILD_BENCH="CU_BENCH=1 CU_DIST=$ROOT/dist-bench scripts/build-app.sh"

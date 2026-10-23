@@ -7,11 +7,11 @@
 # certificate signed holds both grants wherever it lies, and LaunchServices starts it from an archive or a forgotten
 # worktree as readily as from ~/Applications. Only a hardened release build (Info.plist CUBench false, signed with
 # hardened runtime: what build-app.sh makes from 3ecf445 on) is fit to keep. Every build from before 3ecf445 (bench
-# builds made then and the first R1 attempts, d4faaeb up to b0d4919, included) has no hardened runtime, so DYLD_*
-# variables passed with `open --env` reach the process that holds the grants. Those from before R1 (no CUBench key)
-# also serve any --state-dir and start with config.json's test-harness switches (config_grants approves apps without
-# the dialog), and the first R1 attempts compared the --state-dir path as text, which a spelling through a symlink got
-# past. Rotating the release certificate is the complete remedy (docs/DESIGN.md, Signing): one re-grant replaces the
+# builds made then and the first builds of the 2026-10-20 split into release and bench builds, d4faaeb up to b0d4919,
+# included) has no hardened runtime, so DYLD_* variables passed with `open --env` reach the process that holds the
+# grants. Those from before that split (no CUBench key) also serve any --state-dir and start with config.json's
+# test-harness switches (config_grants approves apps without the dialog), and the first builds of the split compared
+# the --state-dir path as text, which a spelling through a symlink got past. Rotating the release certificate is the complete remedy (docs/DESIGN.md, Signing): one re-grant replaces the
 # requirement, and every old bundle loses the grants at once, also the copies this script cannot find. This script
 # serves the other remedy, deleting them.
 #

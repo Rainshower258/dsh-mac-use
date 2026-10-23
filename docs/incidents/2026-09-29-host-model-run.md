@@ -1,6 +1,6 @@
 # Incident — a real model with bash ran on the host (2026-09-29)
 
-Sanitized summary. The full report (local paths, file names) stays with the maintainer.
+Sanitized summary. The full report (local paths, file names) is not part of the repository.
 
 ## What happened
 
@@ -35,7 +35,7 @@ audit log, dsh's upload cache, and a scan of files modified in the window.
 Which files the model **read**. The sandbox allows reads and does not log them, and on this APFS volume atime is
 only refreshed when it is older than mtime, so atimes cannot tell. Whatever was read went into the conversation, i.e.
 to the model provider. Whether a caller-environment token matched the model's `env | grep` cannot be established.
-Credential rotation is the maintainer's decision.
+Rotating the credentials that might have been exposed is the remaining remedy; this report does not decide it.
 
 ## Root causes
 
