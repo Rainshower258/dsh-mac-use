@@ -354,7 +354,7 @@ tccutil reset ScreenCapture dev.cu-runtime.daemon
 
 ### 6.2 更新源码以后：更新守护进程、清理旧构建
 
-- **用仓库链接添加的**，要更新时在插件页移除插件，再用同一个链接添加一次，就会装上仓库当前的版本；然后看「守护进程」标签，按下一条更新守护进程。
+- **用仓库链接添加的**，要更新时在插件页移除插件，再用同一个链接添加一次，就会装上仓库当前的版本。**然后先重启 dsh**（`dsh web` 退出再启动，或退出再打开桌面版），再看「守护进程」标签，按下一条更新守护进程：不重启的话，dsh 里可能还留着替换前的插件，「更新守护进程」会用旧插件的源码构建（2026-10-23 在本机遇到过：构建的版本号是旧源码的，不是新包的提交号）。
 - **从源码添加的，更新源码后**，先运行一次 `zsh ~/cu-runtime/scripts/install.sh`（或者在仓库根目录执行 `npm run build`），再重启 dsh：dsh 按路径加载的是源码目录里构建好的文件，不重新构建就仍在运行上一次的构建。然后看插件页「守护进程」标签：已装的 `~/Applications/CURuntime.app` 不是这份源码的正式构建（源码哈希不同、没有 hardened runtime，或者是 2026-10-20 之前装的）时，页面会提示更新，点「更新守护进程」（或「重新安装守护进程」）即可，签名时钥匙串要一次登录密码。
 - **旧构建要清理。** 两项权限认的是签名证书，而不是某一次构建：用正式证书 `cu-runtime-signing` 签过的 CURuntime.app，放在哪里都带着这两项权限，LaunchServices 从归档或旧目录里一样能启动它（自动启动只打开验证过的 `~/Applications/CURuntime.app`，但别的程序仍可以用 `open` 启动这些副本）。能留下的只有 hardened 正式构建（`CUBench` 为 false、带 hardened runtime：3ecf445 起的 `build-app.sh` 才这样构建）；3ecf445 之前的构建都没有 hardened runtime，d4faaeb（2026-10-20）之前的还认 `--state-dir` 和测试用的开关。列出这台 Mac 上所有的 CURuntime.app：
 

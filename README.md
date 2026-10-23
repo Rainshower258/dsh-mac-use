@@ -31,6 +31,10 @@ Then in dsh:
 2. The plugin's detail page → 守护进程 (daemon) tab → 安装守护进程 (install daemon) → 授予权限 (grant permissions).
 3. Done when the 模式检查 (mode check) shows 正常 (OK).
 
+### Updating
+
+Plugin page → remove the plugin → 添加插件 (add plugin) with the same link → **restart dsh** → 守护进程 (daemon) tab → 更新守护进程 (update daemon). Without the restart, dsh may still run the replaced plugin, and the daemon is built from its sources.
+
 ## Use
 
 Start a session in the 电脑操作 mode, pick a model that takes images, and ask, e.g. "open Calculator and compute 12×34". The first time the model touches an app, an approval dialog lets the user decide whether to allow it, and how far.
