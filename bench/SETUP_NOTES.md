@@ -38,7 +38,7 @@
    - [5/6] 的"屏幕录制 OK"检查的是运行这个脚本的终端的权限，不是 CUADaemon 的。
 3. **`build-app.sh` 会重写已提交的 `dist/AppIcon.iconset/*.png`**，导致工作区出现改动。跑完用 `git checkout -- dist/AppIcon.iconset` 还原。
 4. **`CGWindowListCreateImage` 在 macOS 15 SDK 里已被标为 obsoleted**，现在还能编译，只是因为 `Package.swift` 把部署目标写成了 macOS 14。以后如果调高部署目标，编译会直接失败；到时就得改用 ScreenCaptureKit（上游 README 也写了这是规划中的改进）。
-5. **截图临时文件会一直留着**：`$TMPDIR/dsh-cua-<uuid>.png` 从来不删。权限是 0600（main.swift 里设了 `umask 077`），但文件会越积越多。Phase 3 加 `read_text` 时要一并处理（PLAN §4.3）。
+5. **截图临时文件会一直留着**：`$TMPDIR/dsh-cua-<uuid>.png` 从来不删。权限是 0600（main.swift 里设了 `umask 077`），但文件会越积越多。Phase 3 加 `read_text` 时要一并处理。
 6. **TCC 按"负责进程"归因。** 守护进程如果是从某个终端（包括 CC 的终端）拉起来的，就继承那个终端的授权。**CC 所在的这个终端已经同时拥有录屏和辅助功能权限**，所以 CC 能直接做离线层实测。但 `dsh web` 由什么进程拉起并不固定，维护者仍然需要按 `docs/accessibility-setup.md` 把 `dist/DSH Computer Use.app` 加进两个权限列表，这样才稳。
 7. `docs/accessibility-setup.md`、`cordis.example.yml` 和 `scripts/grant-accessibility.sh` 里写死了上游作者的机器路径（`/Users/<upstream-author>/…`、`deepseek-computer-use-reverse`、debug 构建）。照着文档操作时，要把路径换成 `~/Desktop/dsh-cu-ocr/dsh-computer-use/…`。
 8. **中英 README 的差异**：内容基本一致，只有一处——英文版"Project Structure"里 `docs/` 的注释还写着 "virtual cursor"，但虚拟光标在 08-21 已经删掉了（见 tasks.md 3.10），中文版是对的。另外，两个 README 都说截图走 ScreenCaptureKit，实际代码用的是 `CGWindowListCreateImage`（Known Limitations 里有说明）。

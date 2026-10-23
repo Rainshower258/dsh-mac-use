@@ -1,6 +1,6 @@
 # bench/ — 读屏（OCR / VLM）效果 bench
 
-用来量化 dsh-computer-use 在"字只存在于像素里"的场景下能读对多少、会不会编，并在同一套数据上比较各个读屏后端。任务书是 `../../PLAN.md`，环境踩坑和 Phase 0 的结论见 [`SETUP_NOTES.md`](SETUP_NOTES.md)。
+用来量化 dsh-computer-use 在"字只存在于像素里"的场景下能读对多少、会不会编，并在同一套数据上比较各个读屏后端。环境踩坑和 Phase 0 的结论见 [`SETUP_NOTES.md`](SETUP_NOTES.md)。
 
 > **2026-09-28 起 bench 住在 `cu-runtime/bench/`**，从 `dsh-computer-use` 用 git subtree 迁过来，历史保留。`dsh-computer-use` 此后只作参考：A0/A1 这两组上游基线仍然用它的插件和守护进程，路径由 `DSH_CU_LEGACY` 指定，默认是 `../../dsh-computer-use`。E2E 用 `bench/vm/run_vm.sh` 在虚拟机里跑，客体里的目录结构没有变。
 >
@@ -37,6 +37,8 @@ bench/
 ```
 
 ## 一次性准备
+
+代码块的前三行（`native/`、`packages/computer-use/…`、`dist/AppIcon.iconset`）和下文的 `docs/accessibility-setup.md` 都是上游 dsh-computer-use 检出（`$DSH_CU_LEGACY`）里的路径，只有跑 A0/A1 这两组上游基线时才需要；本仓库自己的守护进程和 bench 构建见 `docs/DESIGN.md`。
 
 ```sh
 # 守护进程和插件（仓库根目录下）

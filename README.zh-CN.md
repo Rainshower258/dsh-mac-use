@@ -4,7 +4,7 @@
 
 让 DeepSeek Harness（dsh）操作本机 macOS 应用。插件增加「电脑操作」模式：模型只能查看和操作用户批准的应用，每个应用第一次被使用时都要用户在弹窗里同意；所有安全决定由本机的守护进程做出。
 
-* 受 AzaiSakura/dsh-computer-use 启发，原型基于它的守护进程：<https://github.com/AzaiSakura/dsh-computer-use>
+* 受 AzaiSakura/dsh-computer-use（<https://github.com/AzaiSakura/dsh-computer-use>）启发：原型基于它的守护进程。现在的守护进程是重写的，没有复用它的任何代码；`legacy/` 保留了原型对它的补丁，仅作历史记录。
 
 ## 安装
 
@@ -48,7 +48,7 @@ pkill -x cu-runtime
 - [使用说明](docs/desktop.md)：更新、卸载、授权、设置、权限排查。
 - [设计说明](docs/DESIGN.zh-CN.md)：威胁模型、守护进程协议、插件结构、测试，以及修改代码要动哪里。
 
-本项目以 MIT 许可发布。
+本项目以 MIT 许可发布（[LICENSE](LICENSE)）。
 
 ## 问题反馈
 

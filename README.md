@@ -4,7 +4,7 @@ English | [中文](README.zh-CN.md)
 
 Lets DeepSeek Harness (dsh) operate apps on this Mac. The plugin adds a 电脑操作 ("computer use") mode: the model can see and act only in apps the user approved, the first use of each app has to be allowed by the user in a dialog, and every security decision is made by a local daemon.
 
-* Inspired by AzaiSakura/dsh-computer-use; the prototype was built on its daemon: <https://github.com/AzaiSakura/dsh-computer-use>
+* Inspired by AzaiSakura/dsh-computer-use (<https://github.com/AzaiSakura/dsh-computer-use>): the prototype was built on its daemon. The current daemon is a rewrite that reuses none of its code; `legacy/` keeps the prototype's patches to it for history only.
 
 ## Install
 
@@ -48,7 +48,7 @@ Settings (app lists, key chords, privacy and more) are changed on the plugin pag
 - [User guide](docs/desktop.md) (Chinese): update, uninstall, approvals, settings, permission troubleshooting.
 - [Design](docs/DESIGN.md): threat model, the daemon's protocol, the plugin's structure, tests, and where to change what.
 
-Released under the MIT license.
+Released under the MIT license ([LICENSE](LICENSE)).
 
 ## Bug reports
 
