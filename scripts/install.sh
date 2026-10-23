@@ -188,7 +188,7 @@ permission_step
 # ---------------------------------------------------------------- 2. the plugin: dependencies and the build
 step 2 "插件依赖与构建"
 if [[ -L $ROOT/plugin/node_modules ]]; then
-  ok "plugin/node_modules 是链接（维护者的机器），不动它"
+  ok "plugin/node_modules 是链接（开发机上的做法），不动它"
 elif [[ -e $ROOT/plugin/node_modules/@deepseek-ai/cordis && $ROOT/plugin/node_modules/.package-lock.json -nt $ROOT/plugin/package-lock.json ]]; then
   ok "依赖已安装"
 else

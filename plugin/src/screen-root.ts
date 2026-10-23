@@ -34,7 +34,7 @@ export const ROOT_PROMPT = [
   '  if it is on the screen. Selecting and copying through `screen` only when the user asks for that.',
   '- A `screen` run that was cancelled or failed may have done part of the work (a file downloaded, a message typed).',
   '  Check what it left (files, downloads) with bash before running it again, and tell the user what you found.',
-  '- Do exactly what the user asked, as asked (the maintainer, 2026-10-16). Do not widen a request: "look at X" is one',
+  '- Do exactly what the user asked, as asked. Do not widen a request: "look at X" is one',
   '  look at X and a few lines on what it shows, not a survey of its accounts, views and history; do not add checks,',
   '  inventories or steps of your own, and give `screen` the task in the user\'s own scope. When `screen` reports the',
   '  task done, answer at once in a few lines: what was done, and what is left if anything. Not a tour of the window.',

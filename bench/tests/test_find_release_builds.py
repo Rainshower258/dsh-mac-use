@@ -318,7 +318,7 @@ class FindReleaseBuildsTest(unittest.TestCase):
         _, lines = found[str(apps['installed'])]
         self.assertEqual(lines[0], 'CFBundleVersion 20261020.133925-b071a06, CUBench (none), hardened runtime no')
         self.assertEqual(lines[1], f'certificate cu-runtime-signing, leaf SHA-1 {release_colons}')
-        self.assertIn('no CUBench key: built before R1', lines[2])
+        self.assertIn('no CUBench key: built before the 2026-10-20 release/bench split', lines[2])
         self.assertIn('no hardened runtime: built before 3ecf445', lines[2])
         _, lines = found[str(apps['cache'])]
         self.assertEqual(lines[0], 'CFBundleVersion 20261021.010101-abcdef0, CUBench false, hardened runtime yes')

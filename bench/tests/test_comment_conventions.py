@@ -19,7 +19,8 @@ RULES = [
      re.compile(r'\bPLAN\b|PLAN-|阶段[0-9一二三四五六七八九]|交接|(?<!\.md )(?<!\.md` )(?<!see )§\s?[0-9]')),
     # R5 is the benchmark round documented in bench/ (CONTRIBUTING.md rule 2); the other codes are not.
     ('a milestone code', re.compile(r'(?<![\w./-])(R[1-46]|P[1-5]|C[1-6])(?![\w-])')),
-    ('a review round', re.compile(r'\b(VM )?round [0-9]+\b|第[一二三四五六七八九十0-9]+轮', re.I)),
+    ('a review round or stage', re.compile(r'\b(VM )?round [0-9]+[a-z]?\b|\b(stage|batch) [0-9]+[a-z]?\b|第[一二三四五六七八九十0-9]+轮'
+                                           r'|\bC-[AB][0-9]\b', re.I)),
     ('a decision attributed to a person',
      re.compile(r"the maintainer[,:]? \(?20\d\d-|(?i:confirmed|decided|asked|approved|chosen) by the maintainer"
                 r"|the maintainer's (review|decision|Mac)|维护者[，,：:]\s?20\d\d")),
@@ -51,7 +52,7 @@ class CommentConventions(unittest.TestCase):
 
     def test_the_rules_catch_what_they_are_for(self):
         caught = ['see PLAN-v2 §6', 'every §5.3 check', '(VM round 17, 2026-10-17)', 'act.type paste (P4)', 'as of R1',
-                  '第七轮', '(the maintainer, 2026-10-14)', 'Confirmed by the maintainer', '（维护者，2026-10-14）']
+                  '第七轮', '(VM round 13b)', 'stage 3b', 'batch 2', 'contract C-A1', '(the maintainer, 2026-10-14)', 'Confirmed by the maintainer', '（维护者，2026-10-14）']
         passed = ['the R5 benchmark', 'key ⌘R', 'r5-tables.md', 'the maintainer grants it by hand', 'C1-like',
                   'p1 = 3', 'VM test, 2026-10-17', 'docs/desktop.md §2.4', '`r5-tables.md` §3', '(see §1)']
         for s in caught:

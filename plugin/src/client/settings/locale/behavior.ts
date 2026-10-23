@@ -1,7 +1,7 @@
 /**
  * The 行为与模型 (Behavior and model) tab's text: every key `settings.behavior.`, the same keys in zh and en. The
  * field names and the offered values are the shared ones (settings.field.behavior.*, settings.value.ime_policy_cap.*,
- * settings.value.activation_method.*); the rest is the native page's (SettingsStrings.swift, batch 4).
+ * settings.value.activation_method.*); the rest is the native page's (SettingsStrings.swift).
  *
  * @module
  */

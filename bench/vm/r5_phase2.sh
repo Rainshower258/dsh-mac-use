@@ -6,13 +6,13 @@
 #   bench/vm/detach.sh r5p2-b zsh bench/vm/r5_phase2.sh B2 B0-axon
 set -uo pipefail
 ROOT=${0:A:h:h:h}
-PLAN=${R5_PLAN:-$ROOT/bench/r5/phase2-lean.json}
+PLAN_FILE=${R5_PLAN:-$ROOT/bench/r5/phase2-lean.json}
 cd "$ROOT"
 for arm in "$@"; do
-  cells=$(python3 -c "import json,sys;print(','.join(json.load(open(sys.argv[1]))['per_arm_cells'][sys.argv[2]]))" "$PLAN" "$arm") \
+  cells=$(python3 -c "import json,sys;print(','.join(json.load(open(sys.argv[1]))['per_arm_cells'][sys.argv[2]]))" "$PLAN_FILE" "$arm") \
     || { print "unknown arm $arm"; exit 2; }
-  k=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['k'])" "$PLAN")
-  prefix=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1])).get('run_prefix', 'r5-p2lean'))" "$PLAN")
+  k=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['k'])" "$PLAN_FILE")
+  prefix=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1])).get('run_prefix', 'r5-p2lean'))" "$PLAN_FILE")
   run_dir=bench/runs/$prefix-$arm
   resume=()
   [[ -f $run_dir/manifest.json ]] && resume=(--resume)

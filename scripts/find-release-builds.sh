@@ -224,7 +224,7 @@ for app in $apps; do
     case $cubench in
       false) ;;
       true) why+=('a bench build (CUBench true) signed with the release certificate: it takes --state-dir and the test-harness switches') ;;
-      '(none)') why+=('no CUBench key: built before R1, it takes --state-dir and the test-harness switches') ;;
+      '(none)') why+=('no CUBench key: built before the 2026-10-20 release/bench split, it takes --state-dir and the test-harness switches') ;;
       *) why+=("CUBench $cubench") ;;
     esac
     if (( ! hardened )); then why+=('no hardened runtime: built before 3ecf445'); fi
