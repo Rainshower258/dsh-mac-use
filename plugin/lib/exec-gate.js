@@ -6,8 +6,9 @@
  *   conversation (screenSeen), every one; before that, bash runs under dsh's standard rules;
  * - `off` (cu-std since P3, 2026-10-16: the official dsh keeps bash and computer use apart, and the per-call
  *   confirmation cost more than it caught): none for that reason.
- * Whatever the mode, every workflow call is asked. A bash or pwsh call that escalates its sandbox mode is asked by dsh
- * itself, once, and not again here (escalates).
+ * Whatever the mode, every workflow call is asked. A bash or pwsh call that escalates its sandbox mode to one strictly
+ * wider than the session's current mode is asked by dsh itself, once, and not again here (escalates); one that names
+ * the current mode, or whose current mode cannot be read, is not an escalation dsh asks, so it is confirmed here.
  *
  * Fails closed three ways:
  * - Not loaded: it provides the `cuExecGate` service only once both checks below are registered, and cu-std loads bash
@@ -131,22 +132,55 @@ export function leavesSandbox(exec) {
         + 'be done inside the sandbox.';
 }
 /**
- * A bash or pwsh call that asks for another sandbox mode. dsh's escalation goes through its approval service for that
- * one call before anything runs (dsh-tool-bash; outcomes are allowed-once or a refusal, no session-wide allow), and a
- * session whose policy is never refuses it unasked; one that is not a real, strictly wider escalation fails closed. So
- * the gate does not ask it a second time (VM 2026-10-14, round 7: the same `cp` to the Desktop was asked twice).
+ * The strictly-wider ladder of dsh-sandbox (`WIDER_MODES`): what a call whose current mode is the key may escalate to.
+ * dsh's `approveEscalation` asks the user only for these; a request for the current mode runs without asking (review
+ * 2026-10-23: `sandbox_permissions: workspace-write` in a workspace-write session skipped both prompts).
  */
-export function escalates(exec) {
-    if (exec.name !== 'bash' && exec.name !== 'pwsh')
-        return false;
-    return exec.arguments?.sandbox_permissions !== undefined;
+export const WIDER_MODES = {
+    'read-only': ['workspace-write', 'danger-full-access'],
+    'workspace-write': ['danger-full-access'],
+};
+/**
+ * The sandbox mode dsh's bash and pwsh resolve for this call: `ctx.sandboxPolicy.resolve({ session })`, the session's
+ * last `sandbox/mode` override or the deployment default (dsh-sandbox-policy; dsh-tool-bash and dsh-tool-pwsh call the
+ * same resolver). Undefined when it cannot be read: no policy service, no agent, an error, a mode that is not a string.
+ */
+export function currentModeOf(exec, policy) {
+    try {
+        if (exec.agent === undefined || exec.agent === null)
+            return undefined;
+        const session = exec.agent.session;
+        const mode = policy?.resolve?.(session === undefined ? {} : { session })?.mode;
+        return typeof mode === 'string' ? mode : undefined;
+    }
+    catch {
+        return undefined;
+    }
 }
 /**
- * Why this call must wait for the person, or undefined: none for an escalation, which dsh asks itself (escalates; past
- * workspace-write it needs fullAccess, else it is refused before this). Unknown confirm modes are always.
+ * A bash or pwsh call that asks for a sandbox mode strictly wider than the session's current one (`currentMode`).
+ * dsh's escalation goes through its approval service for exactly those, for that one call, before anything runs
+ * (dsh-tool-bash, dsh-sandbox's approveEscalation; outcomes are allowed-once or a refusal, no session-wide allow), and a
+ * session whose policy is never refuses it unasked. So the gate does not ask it a second time (VM 2026-10-14, round 7:
+ * the same `cp` to the Desktop was asked twice). Anything else is not left to dsh (fail closed): the current mode
+ * requested again, which dsh runs unasked, a narrower or unknown mode, a value that is not a string, or a current mode
+ * that cannot be read.
  */
-export function causeOf(exec, config, seen) {
-    if (!GATED.has(exec.name) || escalates(exec))
+export function escalates(exec, currentMode) {
+    if (exec.name !== 'bash' && exec.name !== 'pwsh')
+        return false;
+    const asked = exec.arguments?.sandbox_permissions;
+    if (typeof asked !== 'string' || currentMode === undefined || !Object.hasOwn(WIDER_MODES, currentMode))
+        return false;
+    return WIDER_MODES[currentMode].includes(asked);
+}
+/**
+ * Why this call must wait for the person, or undefined: none for a strictly wider escalation, which dsh asks itself
+ * (escalates, against `currentMode`: the session's mode, undefined when unknown; past workspace-write it needs
+ * fullAccess, else it is refused before this). Unknown confirm modes are always.
+ */
+export function causeOf(exec, config, seen, currentMode) {
+    if (!GATED.has(exec.name) || escalates(exec, currentMode?.(exec)))
         return undefined;
     const mode = config.confirm === 'after-screen' || config.confirm === 'off' ? config.confirm : 'always';
     if (mode === 'always')
@@ -175,9 +209,11 @@ export function apply(ctx, config = {}) {
     const seenSessions = new WeakSet();
     const seen = (agent) => screenSeen(agent, ctx.get('agents'), config.screenTool ?? SCREEN_TOOL, seenSessions);
     const causes = new WeakMap();
+    // The same resolver and session dsh's bash and pwsh read when the call runs.
+    const currentMode = (exec) => currentModeOf(exec, ctx.get('sandboxPolicy'));
     const causeFor = (exec) => {
         if (!causes.has(exec))
-            causes.set(exec, causeOf(exec, config, seen) ?? null);
+            causes.set(exec, causeOf(exec, config, seen, currentMode) ?? null);
         return causes.get(exec) ?? undefined;
     };
     ctx.tools.guard((exec) => {

@@ -19,11 +19,25 @@ function tool(name, runs) {
   }
 }
 
-/** A registry with `bash`, `pwsh`, `workflow` and an ungated `read`; `answer` is the approval outcome (or a function). */
-async function setup({ answer = 'allowed-once', approval = true, withGate = true, override, gateConfig } = {}) {
+/**
+ * A registry with `bash`, `pwsh`, `workflow` and an ungated `read`; `answer` is the approval outcome (or a function).
+ * `sandboxMode` is what a fake `sandboxPolicy` resolves for every call (dsh's default, read-only), a function of the
+ * resolve request, or null for no policy service.
+ */
+async function setup({ answer = 'allowed-once', approval = true, withGate = true, override, gateConfig,
+  sandboxMode = 'read-only' } = {}) {
   const ctx = new Context()
   ctx.plugin(SystemPrompt)
   ctx.plugin(ToolRuntime)
+  const resolves = []
+  if (sandboxMode !== null) {
+    ctx.plugin({ name: 'fake-sandbox-policy', apply: (c) => c.provide('sandboxPolicy', {
+      resolve: (req = {}) => {
+        resolves.push(req)
+        return { mode: typeof sandboxMode === 'function' ? sandboxMode(req) : sandboxMode, workspaceRoot: '/w' }
+      },
+    }) })
+  }
   const asks = []
   if (approval) {
     ctx.plugin({ name: 'fake-approval', apply: (c) => c.provide('approval', {
@@ -39,7 +53,7 @@ async function setup({ answer = 'allowed-once', approval = true, withGate = true
   let n = 0
   const call = (name, extra = {}) => ctx.tools.execute({ callId: `c${++n}`, name, arguments: {}, agent,
     signal: new AbortController().signal, ...extra })
-  return { ctx, asks, runs, call, fiber }
+  return { ctx, asks, runs, call, fiber, resolves }
 }
 
 test('the gated tools: everything in the preset that runs what the model writes', () => {
@@ -176,9 +190,73 @@ test('positive controls: a plain call is asked; an escalation is left to dsh\'s 
   const open = await setup({ gateConfig: { fullAccess: true } })
   assert.equal((await open.call('bash', { arguments: { sandbox_permissions: 'danger-full-access', justification: 'j' } })).isError, false)
   assert.equal(open.asks.length, 0, 'asked once, by dsh, not twice')
-  assert.equal(gate.escalates({ name: 'bash', arguments: { sandbox_permissions: 'danger-full-access' } }), true)
-  assert.equal(gate.escalates({ name: 'workflow', arguments: { sandbox_permissions: 'danger-full-access' } }), false)
-  assert.equal(gate.escalates({ name: 'bash', arguments: {} }), false)
+  assert.equal(gate.escalates({ name: 'bash', arguments: { sandbox_permissions: 'danger-full-access' } }, 'read-only'), true)
+  assert.equal(gate.escalates({ name: 'workflow', arguments: { sandbox_permissions: 'danger-full-access' } }, 'read-only'), false)
+  assert.equal(gate.escalates({ name: 'bash', arguments: {} }, 'read-only'), false)
+})
+
+// Review 2026-10-23: dsh's approveEscalation returns without asking when the requested mode is the call's current one,
+// so `sandbox_permissions: <current mode>` skipped both prompts. Only a strictly wider request is left to dsh.
+
+test('a request for the session\'s current sandbox mode is not an escalation: the gate confirms it', async () => {
+  for (const mode of ['read-only', 'workspace-write']) {
+    for (const confirm of ['always', 'after-screen']) {
+      const { asks, runs, call } = await setup({ sandboxMode: mode, gateConfig: { confirm }, answer: 'rejected' })
+      const root = { id: 'root', session: { events: [{ type: 'tool/call', data: { name: 'screen' } }], header: {} } }
+      for (const name of ['bash', 'pwsh']) {
+        const r = await call(name, { agent: root, arguments: { sandbox_permissions: mode, justification: 'j' } })
+        assert.equal(r.isError, true, `${name} ${mode} ${confirm}`)
+        assert.match(r.error.message, new RegExp(`^${name} was not run: the user declined this call`))
+      }
+      assert.equal(asks.length, 2, `${mode} ${confirm}: each same-mode call asked by the gate`)
+      assert.deepEqual(runs, {})
+    }
+  }
+  const ok = await setup({ sandboxMode: 'workspace-write' })
+  assert.equal((await ok.call('bash', { arguments: { sandbox_permissions: 'workspace-write', justification: 'j' } })).isError, false)
+  assert.equal(ok.asks.length, 1, 'positive control: approved by the gate, it runs')
+  assert.equal(ok.runs.bash, 1)
+})
+
+test('a strictly wider request is left to dsh\'s escalation prompt, read against the calling session\'s mode', async () => {
+  const wider = await setup({ sandboxMode: 'read-only' })
+  assert.equal((await wider.call('bash', { arguments: { sandbox_permissions: 'workspace-write', justification: 'j' } })).isError, false)
+  assert.equal(wider.asks.length, 0, 'read-only to workspace-write: dsh asks, the gate does not')
+  assert.deepEqual(wider.resolves.at(-1), {}, 'an agent without a session resolves the deployment default, as dsh does')
+  const full = await setup({ sandboxMode: 'workspace-write', gateConfig: { fullAccess: true } })
+  assert.equal((await full.call('pwsh', { arguments: { sandbox_permissions: 'danger-full-access', justification: 'j' } })).isError, false)
+  assert.equal(full.asks.length, 0, 'workspace-write to danger-full-access (fullAccess): dsh asks')
+  // The session's own mode, not the deployment default: a session switched to workspace-write asks workspace-write.
+  const switched = { id: 'root', session: { events: [], header: {} } }
+  const perSession = await setup({ sandboxMode: (req) => (req.session === switched.session ? 'workspace-write' : 'read-only') })
+  await perSession.call('bash', { agent: switched, arguments: { sandbox_permissions: 'workspace-write', justification: 'j' } })
+  assert.equal(perSession.asks.length, 1, 'same mode as this session: the gate asks')
+  assert.deepEqual(perSession.resolves.at(-1), { session: switched.session })
+})
+
+test('a current mode that cannot be read, or a malformed request, is confirmed by the gate (fail closed)', async () => {
+  const req = { arguments: { sandbox_permissions: 'workspace-write', justification: 'j' } }
+  const unknowns = [
+    ['no sandboxPolicy service', { sandboxMode: null }],
+    ['a mode that is not a string', { sandboxMode: () => 7 }],
+    ['a mode outside the ladder', { sandboxMode: 'some-future-mode' }],
+    ['a resolver that throws', { sandboxMode: () => { throw new Error('x') } }],
+    ['the prototype is not a mode', { sandboxMode: '__proto__' }],
+  ]
+  for (const [what, opts] of unknowns) {
+    const { asks, runs, call } = await setup(opts)
+    assert.equal((await call('bash', req)).isError, false, what)
+    assert.equal(asks.length, 1, `${what}: asked by the gate`)
+    assert.equal(runs.bash, 1)
+  }
+  // Narrower than the current mode, or not a string (fullAccess, so leavesSandbox lets these through to the gate).
+  for (const asked of ['read-only', 7, null, ['workspace-write']]) {
+    const s = await setup({ sandboxMode: 'workspace-write', gateConfig: { fullAccess: true } })
+    await s.call('bash', { arguments: { sandbox_permissions: asked, justification: 'j' } })
+    assert.equal(s.asks.length, 1, `${JSON.stringify(asked)}: asked by the gate`)
+  }
+  assert.equal(gate.escalates({ name: 'bash', arguments: { sandbox_permissions: 'workspace-write' } }), false, 'no mode known')
+  assert.equal(gate.currentModeOf({ agent: undefined }, { resolve: () => ({ mode: 'read-only' }) }), undefined, 'no agent')
 })
 test('workflow is not a sandbox escalation: it is gated per call as before', async () => {
   const { asks, runs, call } = await setup()
