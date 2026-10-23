@@ -200,13 +200,21 @@ public final class Dispatcher {
             return grant.json
 
         case "grants.revoke":
+            // Only the client that holds the task (its approvals, its turns) may end it: forgetting the task also
+            // forgets its turn owner, which would let another client claim the task's turns (claimTurns). A config
+            // grant with no turn owner (the bench, scripts/cu-rpc.py: each call its own process) has no holder.
             let p = try JSONCoding.decodeParams(TaskParams.self, params)
             f["task_id"] = .string(p.taskId)
+            try checkHoldsTask(p.taskId)
             book.forget(p.taskId)
             return ["revoked": .bool(grants.revoke(p.taskId))]
 
         case "grants.list":
-            return .array(grants.all(now: now()).map(\.json))
+            // The tasks no other running client holds: another client's task IDs and apps are not this one's to read.
+            let all = grants.all(now: now())
+            let listed = all.filter { heldElsewhere($0.taskID, grant: $0) == nil }
+            if listed.count < all.count { f["withheld"] = .number(Double(all.count - listed.count)) }
+            return .array(listed.map(\.json))
 
         case "grants.request":
             // The daemon never widens a grant because it was asked to. A human-approved grant arrives

@@ -73,6 +73,146 @@ final class TurnOwnerTests: XCTestCase {
         assertDenied(turnStart(h, other), "turn_owner_mismatch", in: h)
     }
 
+    // MARK: Ownership of grants.revoke, grants.list, access.status and the decision (2026-10-23 finding)
+
+    /// The requester polls and settles its own dialog: the task's grant for `c` (the person answered `answer`).
+    private func approve(_ h: Harness, _ c: ConnectionInfo? = nil, task: String = "t1", app: String = fixture,
+                         _ answer: DialogAnswer = .session) -> Result<JSONValue, RPCFailure> {
+        let r = request(h, c, task: task, app: app)
+        h.presenter.respond(answer)
+        return handle(h, "access.status", ["task_id": .string(task), "request_id": (try? r.get())?["request_id"] ?? "none"], c)
+    }
+
+    private func revoke(_ h: Harness, _ c: ConnectionInfo? = nil, task: String = "t1") -> Result<JSONValue, RPCFailure> {
+        handle(h, "grants.revoke", ["task_id": .string(task)], c)
+    }
+
+    private func listed(_ h: Harness, _ c: ConnectionInfo? = nil) throws -> [String] {
+        guard case .array(let gs) = try handle(h, "grants.list", [:], c).get() else { throw RPCFailure(.invalidParams, "no list") }
+        return gs.compactMap { $0["task_id"]?.stringValue }
+    }
+
+    func testAnotherClientCannotRevokeATaskToTakeItsTurnsOver() throws {
+        // grants.revoke used to forget the task's turn owner unchecked: revoke, then turn_start, and dsh's own next
+        // turn_start was refused while the outsider could raise dialogs under the conversation's task.
+        let h = harness()
+        h.env.processes[7777] = "/usr/bin/python3"  // the other client runs
+        assertAllowed(turnStart(h), in: h)
+        assertAllowed(approve(h), in: h)
+        assertDenied(revoke(h, other), "grant_owner_mismatch", in: h)
+        XCTAssertNotNil(h.dispatcher.grants.current("t1", now: h.clock), "the owner's approvals stay")
+        assertDenied(turnStart(h, other), "turn_owner_mismatch", in: h)
+        assertAllowed(turnEnd(h), in: h)
+        assertAllowed(turnStart(h), in: h)
+        XCTAssertEqual(try request(h, app: textEdit).get()["status"], "pending", "the owner's turn is intact")
+        h.presenter.respond(.deny)
+        XCTAssertEqual(h.presenter.shown.count, 2)
+
+        // A task whose turns are marked but which holds no approval yet: the turn owner is what is refused.
+        assertAllowed(turnStart(h, task: "t2"), in: h)
+        assertDenied(revoke(h, other, task: "t2"), "turn_owner_mismatch", in: h)
+        assertDenied(turnStart(h, other, task: "t2"), "turn_owner_mismatch", in: h)
+        XCTAssertTrue(h.dispatcher.book.turnOwner["t2"]?.matches(h.conn) ?? false)
+
+        // The owner ends its own task; once a client has exited, its tasks are anyone's to clean up.
+        XCTAssertEqual(try revoke(h).get()["revoked"], true)
+        assertAllowed(turnStart(h, task: "t3"), in: h)
+        h.env.processes[4242] = .some(nil)  // dsh exited
+        assertAllowed(revoke(h, other, task: "t3"), in: h)
+    }
+
+    func testAConfigGrantNobodyHoldsIsRevokedByAnyClientAsTheBenchDoes() {
+        // scripts/cu-rpc.py and the bench: grants.set and grants.revoke from separate processes, no turns.
+        let h = Harness()
+        h.autoTurn = false
+        assertAllowed(handle(h, "grants.set", ["task_id": "inspect", "bundle_ids": [.string(fixture)], "source": "config"],
+                             other), in: h)
+        XCTAssertEqual(try revoke(h, task: "inspect").get()["revoked"], true)
+    }
+
+    func testGrantsListShowsOnlyTheCallersTasks() throws {
+        let h = Harness()  // config grants on, for a task nobody holds
+        h.autoTurn = false
+        h.env.processes[7777] = "/usr/bin/python3"
+        assertAllowed(turnStart(h), in: h)
+        assertAllowed(approve(h), in: h)
+        assertAllowed(turnStart(h, other, task: "x"), in: h)
+        assertAllowed(approve(h, other, task: "x"), in: h)
+        h.grant("cfg")
+        XCTAssertEqual(try listed(h), ["cfg", "t1"])
+        XCTAssertEqual(h.lastAudit["withheld"], 1)
+        XCTAssertEqual(try listed(h, other), ["cfg", "x"])
+        // A config grant on a task whose turns another client marks is that client's too.
+        h.grant("t2")
+        assertAllowed(turnStart(h, task: "t2"), in: h)
+        XCTAssertEqual(try listed(h, other), ["cfg", "x"])
+        XCTAssertEqual(try listed(h), ["cfg", "t1", "t2"])
+    }
+
+    func testOnlyTheRequesterPollsItsDialog() throws {
+        let h = harness()
+        h.env.processes[7777] = "/usr/bin/python3"
+        assertAllowed(turnStart(h), in: h)
+        let id = try XCTUnwrap(try request(h).get()["request_id"])
+        let poll = { (c: ConnectionInfo?) in self.handle(h, "access.status", ["task_id": "t1", "request_id": id], c) }
+        assertDenied(poll(other), "grant_owner_mismatch", in: h)
+        XCTAssertNil(h.lastAudit["app"], "the app stays out of a refused poll")
+        h.presenter.respond(.session)
+        assertDenied(poll(other), "grant_owner_mismatch", in: h)
+        XCTAssertNil(h.dispatcher.grants.current("t1", now: h.clock), "a refused poll settles nothing")
+        XCTAssertNotNil(h.dispatcher.book.pending)
+        XCTAssertEqual(try poll(nil).get()["status"], "granted")
+        XCTAssertTrue(h.dispatcher.grants.current("t1", now: h.clock)?.owner?.matches(h.conn) ?? false)
+    }
+
+    func testTheDecisionIsRecordedUnderTheRequesterWhoeverSettlesIt() throws {
+        let h = harness()
+        assertAllowed(turnStart(h), in: h)
+        XCTAssertEqual(try request(h).get()["status"], "pending")
+        h.presenter.respond(.session)
+        // Another client's access.request settles the answered dialog first (settleAbandonedDialog).
+        _ = request(h, other, task: "x", interactive: false)
+        let line = try XCTUnwrap(h.audit.entries.last { $0["method"] == "access.decision" })
+        XCTAssertEqual(line["peer_pid"], 4242)
+        XCTAssertEqual(line["peer_exe"], "/usr/local/bin/node")
+        XCTAssertEqual(line["conn"], 1)
+        XCTAssertEqual(line["settled_by"]?["peer_pid"], 7777)
+        XCTAssertTrue(h.dispatcher.grants.current("t1", now: h.clock)?.owner?.matches(h.conn) ?? false)
+    }
+
+    func testAnApprovalJoinsAConfigGrantOnlyAsTheRequestersOwn() {
+        // A person's approval used to join a config grant (no owner) and stay usable by any client.
+        let h = Harness()
+        h.autoTurn = false
+        h.env.processes[7777] = "/usr/bin/python3"
+        h.grant("t1", [textEdit])
+        assertAllowed(handle(h, "observe", ["task_id": "t1", "ocr": "off"], other), in: h)  // a config grant: anyone's
+        assertAllowed(turnStart(h), in: h)
+        assertAllowed(approve(h), in: h)
+        let g = h.dispatcher.grants.current("t1", now: h.clock)
+        XCTAssertEqual(g?.bundleIDs, [textEdit, fixture])
+        XCTAssertTrue(g?.owner?.matches(h.conn) ?? false)
+        assertDenied(handle(h, "observe", ["task_id": "t1", "ocr": "off"], other), "grant_owner_mismatch", in: h)
+    }
+
+    func testAnApprovalNeverLandsInAnotherClientsGrant() {
+        let h = harness()
+        h.env.processes[7777] = "/usr/bin/python3"
+        assertAllowed(turnStart(h), in: h)
+        XCTAssertEqual(try request(h).get()["status"], "pending")
+        // Meanwhile the task's grant became another running client's (no RPC path leads here now: defense in depth).
+        let theirs = Grant(taskID: "t1", bundleIDs: [textEdit], allowLaunch: false, expiresAt: h.clock.addingTimeInterval(600),
+                           source: .approval, owner: GrantOwner(other))
+        h.dispatcher.grants.set(theirs)
+        h.presenter.respond(.session)
+        assertDenied(handle(h, "access.status", ["task_id": "t1", "request_id": "dlg-1"]), "grant_owner_mismatch", in: h)
+        XCTAssertEqual(h.dispatcher.grants.current("t1", now: h.clock), theirs, "nothing merged into it")
+        let line = h.audit.entries.last { $0["method"] == "access.decision" }
+        XCTAssertEqual(line?["decision"], "deny")
+        XCTAssertEqual(line?["reason"], "grant_owner_mismatch")
+        XCTAssertFalse(h.dispatcher.book.approvedClients.contains(GrantOwner(h.conn)))
+    }
+
     func testOnceTheOwnerHasExitedTheNextClientTakesTheTurnsOver() {
         let h = harness()
         assertAllowed(turnStart(h), in: h)

@@ -202,8 +202,10 @@ public struct Grant: Sendable, Equatable {
     }
 
     /// This grant with `a` added to the app's approvals, kept as two layers (AppAccess.layers); the grant lives at
-    /// least as long as it.
-    func adding(_ a: AppAccess) -> Grant {
+    /// least as long as it. The result belongs to `newOwner`, the client the approval was given to, so an approval
+    /// never lands in a grant another client can use: a config grant (no owner) it joins becomes the requester's, and
+    /// give() never merges into another client's grant.
+    func adding(_ a: AppAccess, owner newOwner: GrantOwner) -> Grant {
         let key = a.bundleID.lowercased()
         var acc = access, below = fallback
         let l = AppAccess.layers([a] + [access[key], fallback[key]].compactMap { $0 })
@@ -212,7 +214,7 @@ public struct Grant: Sendable, Equatable {
         let ids = covers(a.bundleID) ? bundleIDs : bundleIDs + [a.bundleID]
         return Grant(taskID: taskID, bundleIDs: ids, allowLaunch: allowLaunch, expiresAt: max(expiresAt, a.expiresAt),
                      source: source, electronAX: electronAX, imePolicy: imePolicy, actions: actions, clickLimit: clickLimit,
-                     access: acc, fallback: below, owner: owner)
+                     access: acc, fallback: below, owner: newOwner)
     }
 
     /// This grant without the per-app approvals `drop` selects: an app whose top approval goes falls back to the one

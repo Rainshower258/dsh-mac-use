@@ -338,7 +338,9 @@ final class PendingDialog: @unchecked Sendable {
     let electronAX: Bool
     let imePolicy: ChangePolicy
     let startedAt: Date
-    /// Who asked (the requesting connection's peer): the approval is theirs even when another call settles it.
+    /// Who asked (the requesting connection and its peer): the approval is theirs even when another call settles it,
+    /// only they may poll the dialog (access.status), and the access.decision audit line names them.
+    let requester: ConnectionInfo
     let owner: GrantOwner
     private let lock = NSLock()
     private var _answer: DialogAnswer?
@@ -346,7 +348,7 @@ final class PendingDialog: @unchecked Sendable {
     private var _windows: DialogWindows?
 
     init(id: String, taskID: String, identity: AppIdentity, mode: AppMode, electronAX: Bool, imePolicy: ChangePolicy,
-         startedAt: Date, owner: GrantOwner) {
+         startedAt: Date, requester: ConnectionInfo) {
         self.id = id
         self.taskID = taskID
         self.identity = identity
@@ -354,7 +356,8 @@ final class PendingDialog: @unchecked Sendable {
         self.electronAX = electronAX
         self.imePolicy = imePolicy
         self.startedAt = startedAt
-        self.owner = owner
+        self.requester = requester
+        owner = GrantOwner(requester)
     }
 
     var answer: DialogAnswer? {

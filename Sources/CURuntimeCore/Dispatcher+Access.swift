@@ -88,7 +88,7 @@ extension Dispatcher {
             if turnMarked(p.taskId), settings.access.defaultMode.covers(mode) {
                 let a = AppAccess(bundleID: identity.bundleID, mode: mode, scope: .session,
                                   expiresAt: now().addingTimeInterval(settings.access.sessionLimit))
-                give(a, taskID: p.taskId, electronAX: electronAX, ime: ime, owner: GrantOwner(conn))
+                try give(a, taskID: p.taskId, electronAX: electronAX, ime: ime, owner: GrantOwner(conn))
                 f["via"] = "default_mode"
                 f["default_mode"] = .string(settings.access.defaultMode.rawValue)
                 return granted(identity, a.mode, a.scope, via: "default_mode")
@@ -118,7 +118,7 @@ extension Dispatcher {
             }
             let offerAlways = apps.designatedRequirement(path: identity.path) != nil
             let d = PendingDialog(id: book.newID(), taskID: p.taskId, identity: identity, mode: mode,
-                                  electronAX: electronAX, imePolicy: ime, startedAt: t, owner: GrantOwner(conn))
+                                  electronAX: electronAX, imePolicy: ime, startedAt: t, requester: conn)
             book.pending = d
             if !upgrade { book.dialogsThisTurn[p.taskId] = shown + 1 } else { f["upgrade"] = true }
             f["decision"] = "defer"
@@ -146,6 +146,13 @@ extension Dispatcher {
             f["request_id"] = .string(p.requestId)
             guard let d = book.pending, d.id == p.requestId, d.taskID == p.taskId else {
                 throw Denial("unknown_request", "no open approval dialog \(Self.clip(p.requestId)) for this task")
+            }
+            // Only the client that asked polls (and so settles) its dialog; request IDs are sequential (dlg-N). The
+            // app stays out of the refusal and its audit line. An answered dialog whose requester stopped polling is
+            // settled by the next access.request (settleAbandonedDialog), still as the requester's.
+            guard d.owner.matches(conn) else {
+                throw Denial("grant_owner_mismatch", "approval dialog \(Self.clip(p.requestId)) belongs to the client "
+                             + "that asked for it, not to this connection")
             }
             f["app"] = .string(d.identity.bundleID)
             if let answer = d.answer { return try settle(d, answer, &f) }
@@ -256,14 +263,16 @@ extension Dispatcher {
         }
         let a = AppAccess(bundleID: identity.bundleID, mode: m, scope: .always,
                           expiresAt: now().addingTimeInterval(settings.access.sessionLimit))
-        give(a, taskID: taskID, electronAX: electronAX, ime: ime, owner: GrantOwner(conn))
+        try give(a, taskID: taskID, electronAX: electronAX, ime: ime, owner: GrantOwner(conn))
         return a
     }
 
-    /// Applies a person's answer (or the timeout). One audit line per decision, besides the request's own.
+    /// Applies a person's answer (or the timeout). One audit line per decision, besides the request's own: under the
+    /// requester (its connection and peer), whichever call settles it; another connection that did is `settled_by`.
     private func settle(_ d: PendingDialog, _ answer: DialogAnswer, _ f: inout [String: JSONValue]) throws -> JSONValue {
         book.pending = nil
-        var rec = conn.auditFields
+        var rec = d.requester.auditFields
+        if conn.id != d.requester.id || !d.owner.matches(conn) { rec["settled_by"] = .object(conn.auditFields) }
         rec["method"] = "access.decision"
         rec["task_id"] = .string(d.taskID)
         rec["request_id"] = .string(d.id)
@@ -303,12 +312,18 @@ extension Dispatcher {
                 }
             }
         }
-        rec["decision"] = "allow"
         rec["scope"] = .string(scope.rawValue)
-        if !book.approvedClients.contains(d.owner) { book.approvedClients.append(d.owner) }
         let a = AppAccess(bundleID: d.identity.bundleID, mode: d.mode, scope: scope,
                           expiresAt: now().addingTimeInterval(settings.access.sessionLimit))
-        give(a, taskID: d.taskID, electronAX: d.electronAX, ime: d.imePolicy, owner: d.owner)
+        do {
+            try give(a, taskID: d.taskID, electronAX: d.electronAX, ime: d.imePolicy, owner: d.owner)
+        } catch let e as Denial {
+            rec["decision"] = "deny"
+            rec["reason"] = .string(e.reason)
+            throw e
+        }
+        rec["decision"] = "allow"
+        if !book.approvedClients.contains(d.owner) { book.approvedClients.append(d.owner) }
         return granted(d.identity, a.mode, a.scope, via: "dialog")
     }
 
@@ -321,11 +336,19 @@ extension Dispatcher {
         _ = try? settle(d, answer, &ignored)
     }
 
-    private func give(_ a: AppAccess, taskID: String, electronAX: Bool, ime: ChangePolicy, owner: GrantOwner) {
+    /// Adds an approval to the task's grant for `owner`, the client it was given to. It joins the task's grant only if
+    /// that is `owner`'s or a config grant (which then becomes `owner`'s); another client's grant is refused (one whose
+    /// client has exited ends first, endIfOwnerGone). Never merged into a grant someone else can use.
+    private func give(_ a: AppAccess, taskID: String, electronAX: Bool, ime: ChangePolicy, owner: GrantOwner) throws {
+        endIfOwnerGone(taskID)
         let base = grants.current(taskID, now: now())
-            ?? Grant(taskID: taskID, bundleIDs: [], allowLaunch: false, expiresAt: a.expiresAt, source: .approval,
-                     electronAX: electronAX, imePolicy: ime, owner: owner)
-        grants.update(taskID, base.adding(a))
+        if let o = base?.owner, o != owner {
+            throw Denial("grant_owner_mismatch", "task \(taskID)'s approvals belong to another client; an approval is "
+                         + "not merged into them")
+        }
+        let g = base ?? Grant(taskID: taskID, bundleIDs: [], allowLaunch: false, expiresAt: a.expiresAt, source: .approval,
+                              electronAX: electronAX, imePolicy: ime, owner: owner)
+        grants.update(taskID, g.adding(a, owner: owner))
     }
 
     /// The task's active grant, for this connection only: every use of a grant goes through here (owner check).
@@ -359,6 +382,31 @@ extension Dispatcher {
                          + "not by this connection")
         }
         book.turnOwner[taskID] = GrantOwner(conn)
+    }
+
+    /// The refusal for a task another running client holds, if one does: the owner of its approvals
+    /// (grant_owner_mismatch) or of its turns (turn_owner_mismatch). A config grant has no owner, and a client that
+    /// has exited holds nothing. `grant`: the task's grant when the caller has it already.
+    func heldElsewhere(_ taskID: String, grant: Grant? = nil) -> String? {
+        if let o = (grant ?? grants.current(taskID, now: now()))?.owner, !o.matches(conn), !ownerGone(o) {
+            return "grant_owner_mismatch"
+        }
+        if let o = book.turnOwner[taskID], !o.matches(conn), !ownerGone(o) { return "turn_owner_mismatch" }
+        return nil
+    }
+
+    /// grants.revoke: only the client that holds the task, or anyone when no running client does.
+    func checkHoldsTask(_ taskID: String) throws {
+        endIfOwnerGone(taskID)
+        switch heldElsewhere(taskID) {
+        case "grant_owner_mismatch"?:
+            throw Denial("grant_owner_mismatch", "task \(taskID)'s approvals belong to the client that asked for them, "
+                         + "not to this connection")
+        case "turn_owner_mismatch"?:
+            throw Denial("turn_owner_mismatch", "task \(taskID)'s turns are marked by the client that started them, "
+                         + "not by this connection")
+        default: return
+        }
     }
 
     /// access.request may grant something new (the persistent list, a dialog) only during a turn this connection
