@@ -13,6 +13,17 @@ step() { print "pre-push: $1" }
 priv=.git/info/private-patterns
 [[ -s $priv ]] || fail "$priv is missing or empty: add your private strings (one per line) on this machine first"
 
+# What is pushed (git gives "<local ref> <local sha> <remote ref> <remote sha>" lines on stdin). The tests and scans
+# below run on the checkout, so every ref pushed must be its HEAD; a deletion pushes nothing.
+zero=0000000000000000000000000000000000000000
+refs=$(/bin/cat)
+head=$(git rev-parse HEAD)
+while read -r lref lsha _rref _rsha; do
+  [[ -z $lsha || $lsha == $zero ]] && continue
+  [[ $(git rev-parse "$lsha^{commit}") == $head ]] \
+    || fail "$lref is not the checked-out commit: the checks run on the checkout, so check it out and push from there"
+done <<< "$refs"
+
 step "swift test"
 # Capture first: `swift test | grep -q` + pipefail fails spuriously when grep exits early (SIGPIPE).
 # A failure keeps the output (2026-10-16: two refusals could not be reproduced by hand; .audit/ is ignored).
@@ -52,23 +63,42 @@ step "swiftlint"
 swiftlint lint --quiet >/dev/null 2>&1 || fail "swiftlint errors: run 'swiftlint lint'"
 
 step "privacy: tracked files"
-generic='BEGIN [A-Z ]*PRIVATE KEY|sk-[A-Za-z0-9_-]{16,}|/Users/[A-Za-z0-9._-]+|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}'
-# /Users/a1/ is the fixed VM guest account (vm-lib.sh GUEST_USER; PLAN-v2 §3.2), not a person: only that substring is
-# discounted, so a line that also holds any other /Users/<name> still fails. The project's public bug-report address
-# (README "Bug reports") is discounted the same way.
-hits=$(git grep -nIE "$generic" HEAD -- . | grep -vE "users\.noreply\.github\.com|@example\.|git@github\.com" \
-  | perl -ne '(my $s = $_) =~ s{/Users/a1/|devinwild48\@gmail\.com}{}g; print if $s =~ m{'"$generic"'}' || true)
+# Paths (also JSON-escaped, a backslash before each slash), emails (a TLD in any case), private keys and API keys.
+generic='BEGIN [A-Z ]*PRIVATE KEY|sk-[A-Za-z0-9_-]{16,}|/Users/[A-Za-z0-9._-]+|\\/Users\\/[A-Za-z0-9._-]+|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'
+# Allowed substrings are cut out of a line before it is matched, never the whole line, so a line that also holds
+# anything else still fails: GitHub noreply and example addresses, git@github.com, /Users/a1/ (the fixed VM guest
+# account, vm-lib.sh GUEST_USER, not a person) and the project's public bug-report address (README "Bug reports").
+leaks() {
+  perl -ne '(my $s = $_) =~ s{users\.noreply\.github\.com|\@example\.|git\@github\.com|/Users/a1/|\\/Users\\/a1\\/|devinwild48\@gmail\.com}{}g;
+            print if $s =~ m{'"$generic"'}'
+}
+hits=$(git grep -nIE "$generic" HEAD -- . | leaks || true)
 [[ -z "$hits" ]] || fail "generic privacy patterns in tracked files:\n$hits"
-n=$(git grep -cIF -f "$priv" HEAD -- . 2>/dev/null | awk -F: '{s+=$NF} END {print s+0}')
-[[ $n -eq 0 ]] || fail "$n private-pattern hit(s) in tracked files (git grep -nIF -f $priv HEAD)"
+# Private patterns in any case: a name or number written in another case is the same leak.
+n=$(git grep -ciIF -f "$priv" HEAD -- . 2>/dev/null | awk -F: '{s+=$NF} END {print s+0}')
+[[ $n -eq 0 ]] || fail "$n private-pattern hit(s) in tracked files (git grep -niIF -f $priv HEAD)"
 
 step "privacy: commits being pushed"
-while read -r _lref lsha _rref rsha; do
-  [[ $lsha == 0000000000000000000000000000000000000000 ]] && continue
-  range=$lsha; [[ $rsha != 0000000000000000000000000000000000000000 ]] && range="$rsha..$lsha"
-  bad=$(git log --format='%ae %ce' $range | tr ' ' '\n' | sort -u | grep -v 'users\.noreply\.github\.com$' || true)
+# Every commit pushed, not only HEAD's tree: a path one commit adds and a later one removes stays in the history. The
+# commits are those no remote-tracking ref already has (all of them for a new repository); a merge is read against
+# its first parent, so a conflict resolution is scanned too.
+while read -r _lref lsha _rref _rsha; do
+  [[ -z $lsha || $lsha == $zero ]] && continue
+  commits=$(git rev-list "$lsha" --not --remotes)
+  [[ -n $commits ]] || continue
+  bad=$(print -r -- $commits | git log --stdin --no-walk --format='%ae %ce' | tr ' ' '\n' | sort -u \
+        | grep -v 'users\.noreply\.github\.com$' || true)
   [[ -z "$bad" ]] || fail "commit author/committer email is not a GitHub noreply address"
-  git log --format='%an %ae %cn %ce %B' $range | grep -qIF -f "$priv" && fail "private pattern in commit metadata/messages"
-done
+  # The added lines, without their leading +, which would otherwise pass for an email's local part.
+  added=$(print -r -- $commits | git log --stdin --no-walk -p --diff-merges=first-parent --no-color --format= \
+          | sed -n 's/^+//p' | grep -v '^++ ' || true)
+  hits=$(print -r -- $added | leaks || true)
+  [[ -z "$hits" ]] || fail "generic privacy patterns added by a commit being pushed:\n$hits"
+  print -r -- $added | grep -qiF -f "$priv" && fail "private pattern added by a commit being pushed (git log -p)"
+  meta=$(print -r -- $commits | git log --stdin --no-walk --format='%an %ae %cn %ce %B')
+  hits=$(print -r -- $meta | leaks || true)
+  [[ -z "$hits" ]] || fail "generic privacy patterns in commit metadata/messages:\n$hits"
+  print -r -- $meta | grep -qiF -f "$priv" && fail "private pattern in commit metadata/messages"
+done <<< "$refs"
 
 step "all checks passed"
