@@ -1,6 +1,6 @@
 /**
- * The plugin page's tab shell (stage 3c): a tab bar over one panel. 守护进程 (the daemon tab) is the stage-2 page as
- * it was (page.ts, unchanged) and the default; the seven settings tabs follow in the native window's order
+ * The plugin page's tab shell: a tab bar over one panel. 守护进程 (the daemon tab) is the daemon page as it was
+ * before the tabs (page.ts, unchanged) and the default; the seven settings tabs follow in the native window's order
  * (model.ts SETTINGS_TABS). dsh's summary view gets the daemon page alone, as before.
  *
  * The settings tabs share one SettingsPage, mounted only while one of them is shown, so the snapshot is read only

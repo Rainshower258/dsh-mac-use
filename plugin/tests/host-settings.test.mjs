@@ -1,4 +1,4 @@
-// The plugin page's settings routes (stage 3b, contracts H1–H5: plugin/src/daemon/settings.ts, routes.ts, the manager's
+// The plugin page's settings routes (plugin/src/daemon/settings.ts, routes.ts, the manager's
 // settingsGate). No real daemon is reached and no real command runs: the host acts on a fake Mac (world, through the
 // System facade) and talks to a fake daemon client (clients, through HostOptions.settingsClient).
 import { test } from 'node:test'
@@ -23,7 +23,7 @@ const RUNTIME_FLAGS = '0x10000(runtime)'
 /** The daemon's settings.action names, written out (Dispatcher.settingsActions). */
 const ACTIONS = ['choose_log_directory', 'use_default_log_directory', 'choose_app', 'export_settings', 'export_audit', 'import',
   'import_confirm', 'reveal_log']
-/** Stage 2's routes, which this stage leaves as they are. */
+/** The daemon tab's routes, which the settings routes leave as they are. */
 const STAGE2 = ['acceptIdentity', 'cancel', 'clt', 'install', 'permissions', 'restart', 'selfcheck', 'start', 'status', 'stop']
 const ZERO_PARAMETER = ['settings.snapshot', 'settings.cancelVerify', ...ACTIONS.map((a) => `settings.action.${a}`)]
 /** The four daemon methods the host may call, and nothing else. */
@@ -220,7 +220,7 @@ function hostOn(w, c = clients()) {
 
 // ------------------------------------------------------------------------------------------------ routes
 
-test('routes: stage 2\'s, settings.snapshot, settings.apply, settings.cancelVerify and one per action, stage 4b\'s mode check; nothing else', () => {
+test('routes: the daemon tab\'s, settings.snapshot, settings.apply, settings.cancelVerify and one per action, the mode check\'s; nothing else', () => {
   const { routes } = hostOn(running())
   const expected = [...STAGE2, 'settings.snapshot', 'settings.apply', 'settings.cancelVerify', ...ACTIONS.map((a) => `settings.action.${a}`),
     'modeCheck', 'modeCheckRefresh']

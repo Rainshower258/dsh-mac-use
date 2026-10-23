@@ -24,7 +24,7 @@ const { buildView, readStatus, opensslSha1, FINGERPRINT_COMMAND, P12_FINGERPRINT
   compiled('./view.js')
 const { NS, zh, en } = compiled('./locale.js')
 
-/** The error codes of the shared contract (PLAN-阶段2「实现后定下的约定」), then the page's own. */
+/** The host's error codes (plugin/src/daemon/manager.ts), then the page's own. */
 const HOST_CODES = ['busy', 'ssh_session', 'no_gui_session', 'clt_missing', 'identity_failed', 'identity_ambiguous',
   'identity_missing', 'identity_changed', 'copy_failed', 'build_failed', 'not_release_build', 'sign_failed', 'signature_mismatch',
   'stop_failed', 'replace_failed', 'start_failed', 'selfcheck_failed', 'selfcheck_timeout', 'not_installed',
@@ -1316,7 +1316,7 @@ test('the foot of the page says how to update the plugin and that adding one nee
   assert.match(readme, /Adding a plugin needs pnpm[^]*`npm i -g pnpm`[^]*exit code 127/)
 })
 
-// --- the 模式检查 section (stage 4b: api/cu-runtime.modeCheck, modeCheckRefresh) ---
+// --- the 模式检查 section (api/cu-runtime.modeCheck, modeCheckRefresh) ---
 
 const { buildModeCheckView, readModeCheck } = compiled('./view.js')
 const tEn = translator({ ...en, ...compiled('./settings/locale/index.js').en })

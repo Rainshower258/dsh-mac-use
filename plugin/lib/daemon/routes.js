@@ -1,5 +1,5 @@
 /**
- * The plugin page's routes (PLAN-阶段2 「宿主服务」, PLAN-阶段3 二 B), registered on dsh's connection: exact routes
+ * The plugin page's routes, registered on dsh's connection: exact routes
  * under /api that only the signed-in owner reaches (dsh answers 401/403 to anyone else). Each is POST and answers JSON
  * with cache-control no-store. Every route but settings.apply takes no parameter: the request's body and query are
  * never read. The page calls them with `fetch('api/cu-runtime.<op>', { method: 'POST' })`; the model's tools never do.
@@ -19,7 +19,7 @@
  * The mode check's result is wrapped in `{ ok: true, result }` since the result's own `ok` (false when a profile
  * fails or is skipped) is not the route's outcome; an unexpected host error answers HTTP 500 `internal`.
  *
- * The settings routes (stage 3b, H1–H5) reach the daemon through settings.ts's facade, after the manager's
+ * The settings routes reach the daemon through settings.ts's facade, after the manager's
  * settingsGate: `busy` while the install task stops, replaces or starts the daemon, `not_running` unless the verified
  * installed app runs (or the daemon cannot be reached). settings.apply's body is checked first (readApplyRequest): any
  * failure answers HTTP 400 `bad_request` and nothing reaches the gate or the daemon. A daemon refusal is passed as

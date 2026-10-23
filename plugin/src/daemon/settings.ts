@@ -1,5 +1,5 @@
 /**
- * The daemon's settings for the plugin page (PLAN-阶段3 二 B, contracts H1–H5 of stage 3b): a narrow facade over the
+ * The daemon's settings for the plugin page: a narrow facade over the
  * tools row's CURuntimeClient (snapshot, apply, action, cancelVerify, nothing else), the check of settings.apply's body
  * that mirrors the daemon's SettingsChange.decode, and the mapping of the daemon's answers and refusals to what the page
  * is shown. routes.ts registers the routes; the daemon checks every change again, decides itself whether it loosens and
@@ -39,7 +39,7 @@ export const SETTINGS_ACTIONS = ['choose_log_directory', 'use_default_log_direct
   'export_audit', 'import', 'import_confirm', 'reveal_log'] as const
 export type SettingsAction = typeof SETTINGS_ACTIONS[number]
 
-/** The snapshot's top-level keys that reach the page (H4); any other key the daemon answers with is dropped. */
+/** The snapshot's top-level keys that reach the page; any other key the daemon answers with is dropped. */
 export const SNAPSHOT_KEYS = ['started_at', 'grants', 'persistent', 'denylist', 'hard_deny', 'access', 'access_choices',
   'chords', 'privacy', 'behavior', 'logs', 'recent_refusals', 'recent_changes', 'permissions', 'pending', 'last_outcome',
   'picked_app', 'import_preview', 'panel'] as const
@@ -48,7 +48,7 @@ export const SNAPSHOT_KEYS = ['started_at', 'grants', 'persistent', 'denylist', 
 export const RESULT_KEYS = ['status', 'summary', 'panel'] as const
 
 /**
- * The refusal reasons the page knows (H3): passed through as the error code. Any other reason, and any other daemon
+ * The refusal reasons the page knows: passed through as the error code. Any other reason, and any other daemon
  * error, is daemon_error.
  */
 export const KNOWN_REASONS: ReadonlySet<string> = new Set(['verification_required', 'verify_busy', 'verify_cooldown',
@@ -109,7 +109,7 @@ function pick(o: Record<string, unknown>, keys: readonly string[]): Record<strin
 }
 
 /**
- * The narrow facade over the daemon's settings methods (H5). Every method opens one client from the factory, sends
+ * The narrow facade over the daemon's settings methods. Every method opens one client from the factory, sends
  * one request without starting the daemon, closes the client whatever happened, and either returns what the page gets
  * or throws a SettingsFailure (settingsError); an answer of an unexpected shape is daemon_error.
  */
@@ -424,7 +424,7 @@ async function readAtMost(request: Request, max: number): Promise<Uint8Array> {
 }
 
 /**
- * settings.apply's request (H2): the PAGE_HEADER header with the value 1; a JSON content-type; content-length, when
+ * settings.apply's request: the PAGE_HEADER header with the value 1; a JSON content-type; content-length, when
  * present, a whole number of at most MAX_APPLY_BYTES, and at most that many bytes read; UTF-8 text that is a JSON object
  * with exactly one key, `change`, which validateChange accepts. Returns the fresh change; throws a BadRequest
  * otherwise. Nothing of the request but these headers and the body is read.

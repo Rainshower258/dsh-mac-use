@@ -345,7 +345,7 @@ function hostOn(w, { connection = true, profileContext = true } = {}) {
 test('routes: one POST route per operation under /api/cu-runtime.<op>, buffered, JSON, no-store', async () => {
   const w = world()
   const { routes, call } = hostOn(w)
-  // Stage 3b's settings routes besides (host-settings.test.mjs covers them), and stage 4b's mode check
+  // The settings routes besides (host-settings.test.mjs covers them), and the mode check's
   // (mode-check.test.mjs).
   assert.deepEqual(routes.map((r) => r.path).filter((p) => !p.startsWith('/api/cu-runtime.settings.')).sort(), ['acceptIdentity',
     'cancel', 'clt', 'install', 'modeCheck', 'modeCheckRefresh', 'permissions', 'restart', 'selfcheck', 'start', 'status',
@@ -362,7 +362,7 @@ test('routes: one POST route per operation under /api/cu-runtime.<op>, buffered,
   assert.equal(body.app.installed, false)
 })
 
-// Every route but settings.apply, whose body is one checked change (H2, host-settings.test.mjs); the other settings
+// Every route but settings.apply, whose body is one checked change (host-settings.test.mjs); the other settings
 // routes' no-body pin is there too.
 test('routes take no parameter: a body or a query naming another app, identity or path changes nothing', async () => {
   const w = world()
@@ -1585,7 +1585,7 @@ const VERDICTS = [
   }, 'identity_missing'],
   ['several identities of the name', (w) => { installAt(w); w.identities = [SHA, OTHER_SHA] }, 'identity_ambiguous'],
   ['CUBench true (a bench build)', (w) => installAt(w, P.app, { bench: true }), 'not_release_build'],
-  ['CUBench missing (a build from before R1)', (w) => installAt(w, P.app, { bench: null }), 'not_release_build'],
+  ['CUBench missing (an older build)', (w) => installAt(w, P.app, { bench: null }), 'not_release_build'],
   ['signed by another certificate', (w) => installAt(w, P.app, { signer: OTHER_SHA }), 'signature_mismatch'],
   ['codesign --verify failing', (w) => {
     installAt(w)
@@ -1647,7 +1647,7 @@ test("the manager's own check is the shared one (verifyApp): its rules are writt
 /** The action log's records. */
 const records = (w) => (w.files.get(P.actionLog) ?? '').trim().split('\n').filter((l) => l !== '').map((l) => JSON.parse(l))
 
-test('an install that stopped a daemon it may not start again (a build from before R1, or without hardened runtime): '
+test('an install that stopped a daemon it may not start again (an older build without CUBench, or one without hardened runtime): '
   + 'its stop mark goes, and the log says why and that a release build must be installed', async () => {
   for (const [what, old] of [['no CUBench', plist('20261020.133925-b071a06', null, SHA, null, '0x0(none)')],
     ['no hardened runtime', plist('20261020.150000-abc1234', PKG_HASH, SHA, false, '0x0(none)')]]) {

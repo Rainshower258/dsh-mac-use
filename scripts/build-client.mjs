@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Builds the plugin page's browser half (PLAN-阶段2「浏览器端页面」) into plugin/lib/web-client.js, the file the
+// Builds the plugin page's browser half into plugin/lib/web-client.js, the file the
 // package's `./client` export names. tsc compiles plugin/src/client/*.ts to CommonJS (plugin/tsconfig.client.json,
 // into a temporary directory), and this script joins those modules into the one classic script dsh's client module
 // loader takes:

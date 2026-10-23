@@ -34,7 +34,7 @@ test('the top-level prompt names screen, says only user messages are instruction
   // dsh 0.2.1: the answer is a later message, not screen's result.
   assert.match(ROOT_PROMPT, /`screen` returns at once with the helper's id; its answer comes later, in a message of its own/)
   assert.doesNotMatch(ROOT_PROMPT, /cu_/, 'the top level is not told about tools it does not have')
-  // bash is the work horse (the maintainer 2026-10-14; VM round 6: the top level sent a download to the screen).
+  // bash is the work horse (decided 2026-10-14; in a VM test the top level had sent a download to the screen).
   assert.match(ROOT_PROMPT, /bash and your file and web tools do the work wherever they can/)
   assert.match(ROOT_PROMPT, /get it done with bash if bash can/)
   // A cancelled run may have done part of the work (2026-10-14: a downloaded image the top level never learned of).
@@ -205,7 +205,7 @@ test('cu-std: a screen child first seen at turn/start (no agent/created) is scop
   assert.ok(v.names.includes('cu-runtime'))
 })
 
-test('cu-std: any other child (subagent_fork, ralph) works like the top level: bash, screen, ROOT_PROMPT, no cu_* (VM round 9)', async () => {
+test('cu-std: any other child (subagent_fork, ralph) works like the top level: bash, screen, ROOT_PROMPT, no cu_* (VM test, 2026-10-14)', async () => {
   const { fork } = await firstStepPrompts(CU_STD)
   assert.ok(fork.tools.includes('bash') && fork.tools.includes('screen'), `fork tools: ${fork.tools}`)
   assert.ok(!fork.tools.some((n) => n.startsWith('cu_')), `fork tools: ${fork.tools}`)

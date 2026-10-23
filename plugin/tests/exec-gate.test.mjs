@@ -275,7 +275,8 @@ test('cu-std does not offer workflow: its scripts run inside dsh, outside the sa
   assert.ok(gate.GATED.has('workflow'), 'still gated if a composition offers it anyway')
 })
 
-// after-screen (the maintainer 2026-10-14): bash is dsh's work horse until screen content may be in the conversation.
+// after-screen (cu-std's default from 2026-10-14 to 2026-10-16): bash is dsh's work horse until screen content may be
+// in the conversation.
 
 const callEvent = (name) => ({ type: 'tool/call', seq: 0, time: 0, data: { turn: 1, step: 1, callId: 'x', name, arguments: '{}' } })
 const sessionOf = (names = [], header = {}) => ({ events: names.map(callEvent), header })
@@ -395,7 +396,7 @@ test('negative control (after-screen): a listener ahead of the gate cannot let a
   assert.match((await fwd.run('workflow')).error.message, /not approved/, 'workflow is always confirmed, guard included')
 })
 
-test('cu-std (P3, 2026-10-16) leaves bash to dsh (confirm off) and full access per call; the gate itself defaults to always', async () => {
+test('cu-std (since 2026-10-16) leaves bash to dsh (confirm off) and full access per call; the gate itself defaults to always', async () => {
   const { readFileSync } = await import('node:fs')
   const patch = readFileSync(new URL('../../profiles/cu-std/cordis.patch.yml.in', import.meta.url), 'utf8')
   const row = patch.match(/- id: cu-exec-gate\n((?: {6}.*\n)+)/)

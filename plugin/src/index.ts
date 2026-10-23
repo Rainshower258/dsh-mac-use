@@ -1,5 +1,5 @@
 /**
- * dsh plugin for cu-runtime (PLAN-v2 R4). Registers the `cu_*` tools; the daemon makes every security decision.
+ * dsh plugin for cu-runtime. Registers the `cu_*` tools; the daemon makes every security decision.
  * The plugin only connects to the daemon's socket (it never starts it: TCC would then credit the wrong process),
  * grants each task (one dsh session) the configured apps on its first tool call, and revokes that grant when the
  * turn ends.
@@ -54,7 +54,7 @@ export interface Config {
   /** The installed app autoStart checks and opens. */
   appPath: string
   /**
-   * Step limit per task, 0 = none (the R5 bench sets it). Past it the cu_* tools refuse and ask for the answer; after
+   * Step limit per task, 0 = none (the bench sets it). Past it the cu_* tools refuse and ask for the answer; after
    * STEP_GRACE more steps the plugin rejects further steps, which ends the turn.
    */
   maxSteps: number
@@ -145,7 +145,7 @@ export const SAFETY_PROMPT = [
 
 /**
  * The same with a person to approve apps (appApproval dialog: the bundle's 电脑操作 mode, cu-std): apps come through
- * escalation, as dsh's bash escalates its sandbox, not through cu_request_app (PLAN-v2 第二段修改计划 B). The bench keeps
+ * escalation, as dsh's bash escalates its sandbox, not through cu_request_app. The bench keeps
  * SAFETY_PROMPT.
  */
 export const DIALOG_SAFETY_PROMPT = SAFETY_PROMPT.replace([
@@ -369,7 +369,7 @@ export function apply(ctx: Context, config: Config): void {
       const visible = visibleTools({ agent: subject })
       const sees = visible.some((n) => names.includes(n))
       // Any other child that sees the cu_* tools (subagent_fork, ralph's rounds, …) inherited them from the global
-      // registry: it works like the top level, bash included (VM 2026-10-14, round 9: a fork child had been masked to
+      // registry: it works like the top level, bash included (VM test, 2026-10-14: a fork child had been masked to
       // cu_* only). One that sees them alone was left them by its delegation tool (dsh 0.2.0's toolFilter.allow).
       if (sees && visible.every((n) => names.includes(n))) {
         if (id !== undefined) screenIds.add(id)

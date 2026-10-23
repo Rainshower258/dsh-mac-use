@@ -1,5 +1,5 @@
 /**
- * Automatic retries (PLAN-v2 R4): only refusals the daemon classes `after_delay` (refused before anything ran,
+ * Automatic retries: only refusals the daemon classes `after_delay` (refused before anything ran,
  * transient), at most 3 times, after 0.5 / 1 / 2 s. Everything else goes back to the model; `outcome_unknown`
  * is never retried because the action may already have happened. A watchdog timeout of a method that may act
  * (mayAct) is `outcome_unknown` whatever class the daemon sent (a daemon before 2026-10-23 sent `after_delay` for

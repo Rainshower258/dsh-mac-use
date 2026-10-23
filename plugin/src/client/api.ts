@@ -1,5 +1,5 @@
 /**
- * The host's routes (PLAN-阶段2 route table): `POST api/cu-runtime.<op>`, document-relative (dsh serves the page
+ * The host's routes (daemon/routes.ts): `POST api/cu-runtime.<op>`, document-relative (dsh serves the page
  * under its own base path), no body and no parameters, JSON back. dsh lets only the signed-in owner reach them.
  *
  * @module

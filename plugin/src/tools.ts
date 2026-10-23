@@ -1,5 +1,5 @@
 /**
- * Model-facing tools (PLAN-v2 §7). Every policy decision is the daemon's; the plugin maps stable element ids to the
+ * Model-facing tools. Every policy decision is the daemon's; the plugin maps stable element ids to the
  * latest snapshot, retries only `after_delay` refusals, and renders results. Screen text goes out under an
  * "untrusted observation" heading: it is data, never instructions.
  *
@@ -27,7 +27,7 @@ export interface TaskConfig {
   imePolicy?: 'leave' | 'ask' | 'takeover'
   /** With `ask`: one approval covers this one input (`call`) or the rest of the task (`task`). */
   imeApproval?: 'call' | 'task'
-  /** Soft step limit per task (0 = none): past it every cu_* tool refuses and asks for the answer (R5). */
+  /** Soft step limit per task (0 = none; the bench sets it): past it every cu_* tool refuses, asking for the answer. */
   maxSteps?: number
   /**
    * B prototype (cu-std): in a subagent, asking follows the top-level session's dsh approval policy. dsh seeds
@@ -89,13 +89,13 @@ export interface TaskState {
 
 export type AccessMode = 'read' | 'full'
 
-/** cu_steps (C5, 2026-10-15): the actions a batch may hold. Not looking, not opening apps. */
+/** cu_steps (added 2026-10-15): the actions a batch may hold. Not looking, not opening apps. */
 export const STEP_TOOLS = ['cu_click', 'cu_type', 'cu_key', 'cu_scroll', 'cu_drag', 'cu_set_value', 'cu_ax_action', 'cu_menu'] as const
 export const MAX_BATCH_STEPS = 16
 
 /**
  * The tools whose calls touch an app (cu_observe through its `app`, cu_steps through its steps) and so may ask the
- * user for it (P2, 2026-10-16): they take a `justification` for the dialog.
+ * user for it (since 2026-10-16): they take a `justification` for the dialog.
  */
 const APP_TOOLS = new Set(['cu_observe', 'cu_launch', 'cu_menu', 'cu_click', 'cu_type', 'cu_key', 'cu_scroll', 'cu_drag', 'cu_set_value', 'cu_ax_action', 'cu_steps'])
 
@@ -147,8 +147,8 @@ export class Tasks {
   /** turn/start's mark (index.ts; it only connects, so it fails while the daemon is not running). */
   startTurn(id: string, mark: Promise<boolean>): void { this.turns.set(id, { done: mark }) }
   /**
-   * Before a task's daemon calls (appApproval dialog): its turn is marked, late when turn/start found no daemon (M4:
-   * the daemon gives approvals only in a turn the asking client marked, and learns dsh's own app from the mark). One
+   * Before a task's daemon calls (appApproval dialog): its turn is marked, late when turn/start found no daemon (the
+   * daemon gives approvals only in a turn the asking client marked, and learns dsh's own app from the mark). One
    * late mark at a time; a failed one is not thrown, since the daemon refuses what needs it (approval_no_turn).
    */
   async ensureTurn(id: string, mark: () => Promise<unknown>): Promise<void> {
@@ -326,8 +326,8 @@ export function defineCuTools(deps: ToolDeps): ToolDefinition[] {
   const justifications = new WeakMap<ToolExecution, string>()
 
   /**
-   * P2 (2026-10-16): an app the task has no approval for is asked for the moment a call touches it, as the official
-   * cua-macos provider asks on getApp: one dialog, full mode (P1: see, click, type, open), the call's justification
+   * Since 2026-10-16 an app the task has no approval for is asked for the moment a call touches it, as the official
+   * cua-macos provider asks on getApp: one dialog, full mode (see, click, type, open), the call's justification
    * shown as the model's untrusted reason. Before 10-16 the call was first refused and only its resend with `access`
    * asked (bash's sandbox escalation copied): one more model round per app, and a chance to guess coordinates instead.
    * Nothing is asked under dsh's approval policy `never` (or without the service), or for an app whose dialog already
@@ -337,8 +337,8 @@ export function defineCuTools(deps: ToolDeps): ToolDefinition[] {
   const askAccess = async (t: TaskState, exec: ToolExecution, app: string): Promise<void> => {
     const policy = approvalPolicy(exec)
     if (policy !== 'ask') {
-      // Say how it comes to be off (2026-10-14, the maintainer's Mac: the session had been switched to full access,
-      // and the user was told only that no app was approved).
+      // Say how it comes to be off (seen on the development Mac, 2026-10-14: the session had been switched to full
+      // access, and the user was told only that no app was approved).
       const off = policy === 'never'
         ? ' (approvals are switched off in this session, as dsh\'s full-access mode does: the user can switch the '
           + 'session back to a mode that asks, then the call can ask again)'
@@ -546,7 +546,7 @@ export function defineCuTools(deps: ToolDeps): ToolDefinition[] {
         lines.push(`--- the look after the last step failed: ${explain(e).message}`)
       }
       // With the image, the look staged its own content for finalizeContent, which replaces the tool's text: the step
-      // lines go in front of it (VM 2026-10-15, round 14: a refused cmd+b vanished behind the image, and the model read
+      // lines go in front of it (VM test, 2026-10-15: a refused cmd+b vanished behind the image, and the model read
       // the batch as "pressed, no visible effect").
       const content = staged.get(exec)
       if (content !== undefined && content[0]?.type === 'text') {
@@ -571,7 +571,8 @@ export function defineCuTools(deps: ToolDeps): ToolDefinition[] {
       const lacks = e.data.needs_mode === 'full' || e.data.needs_mode === 'read' || e.reason === 'not_granted' || e.reason === 'no_grant'
       if (!lacks) throw e
       if (e.reason === 'no_grant') t.apps = []  // the task's approvals ended (30 minutes, or revoked)
-      // full always (P1): one dialog covers the whole task on that app, running or not (a full approval lets cu_launch open it).
+      // full always: one dialog covers the whole task on that app, running or not (a full approval lets cu_launch
+      // open it).
       if (await silentAccess(t, exec, params.app, 'full') !== true) await askAccess(t, exec, params.app)
       return send()
     }
@@ -692,7 +693,7 @@ export function defineCuTools(deps: ToolDeps): ToolDefinition[] {
       },
       async (args, exec, t) => {
         if (typeof args.app === 'string' && dialog) {
-          // A read approval (an older "always" entry) is enough to look; else the user is asked for full (P1).
+          // A read approval (an older "always" entry) is enough to look; else the user is asked for full.
           const ok = await silentAccess(t, exec, args.app, 'read')
           // Approving a look at an app that is not running shows nothing; opening it is one full dialog (2026-10-09).
           if (ok === 'not_running') {

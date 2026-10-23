@@ -1,7 +1,8 @@
 /**
- * The settings routes (stage 3b H1), document-relative like the daemon tab's: `POST api/cu-runtime.settings.snapshot`,
- * `.settings.apply` (the one with a body), `.settings.cancelVerify` and `.settings.action.<name>`. dsh lets only the
- * signed-in owner reach them; each one has the host check the daemon (codesign) before it asks it anything.
+ * The settings routes (daemon/routes.ts), document-relative like the daemon tab's:
+ * `POST api/cu-runtime.settings.snapshot`, `.settings.apply` (the one with a body), `.settings.cancelVerify` and
+ * `.settings.action.<name>`. dsh lets only the signed-in owner reach them; each one has the host check the daemon
+ * (codesign) before it asks it anything.
  *
  * @module
  */

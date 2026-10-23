@@ -200,7 +200,7 @@ test('cu_request_app without a person (bench, headless): one access.request, not
   assert.equal(h.calls.filter((c) => c.method === 'access.status').length, 0)
 })
 
-// ---------------------------------------------------------------- approvals on first touch (cu-desktop; P2, 2026-10-16)
+// ---------------------------------------------------------------- approvals on first touch (cu-desktop, since 2026-10-16)
 
 const ask = { overrideOf: () => undefined, config: { policy: 'ask' } }
 const pending = { status: 'pending', request_id: 'dlg-1', app: { bundle_id: 'com.tencent.qq' }, mode: 'read' }
@@ -232,7 +232,7 @@ function desktop({ approval = ask, grant = (p) => granted('com.tencent.qq', p.mo
 }
 let interactiveModes = []
 
-test('cu-desktop (P2, 2026-10-16): the first call touching an app asks the user once, full mode, with the justification; approved, nothing is asked again', async () => {
+test('cu-desktop (since 2026-10-16): the first call touching an app asks the user once, full mode, with the justification; approved, nothing is asked again', async () => {
   interactiveModes = []
   const h = desktop()
   assert.match((await h.tools.cu_observe.execute({}, h.exec)).text, /No app is approved.*cu_observe with app/)
@@ -489,7 +489,7 @@ test('cu_type: a value set through AX tells the model to check the app reacted; 
   assert.equal(h.calls.at(-1).params.strategy, 'type')
 })
 
-test('the system prompt asks for "not sure" over deliberating until the timeout (R4: T1 canvas ran out at 420 s)', async () => {
+test('the system prompt asks for "not sure" over deliberating until the timeout (a bench run: T1 canvas ran out at 420 s)', async () => {
   const { SAFETY_PROMPT } = await import('../lib/index.js')
   assert.match(SAFETY_PROMPT, /cannot be read with confidence/)
   assert.match(SAFETY_PROMPT, /not sure/)
@@ -684,7 +684,7 @@ test('cu_launch: an app not yet approved asks once (full), then opens only that 
   assert.equal(harness().tools.cu_launch, undefined)
 })
 
-test('cu_launch open (C3, 2026-10-15): ~ expanded, kept through the dialog, the daemon\'s refusal passed on', async () => {
+test('cu_launch open (added 2026-10-15): ~ expanded, kept through the dialog, the daemon\'s refusal passed on', async () => {
   interactiveModes = []
   let n = 0
   const h = desktop({ grant: (p) => granted('com.apple.textedit', p.mode, 'turn'),
@@ -719,7 +719,7 @@ test('cu_launch that timed out is sent once and tells the model it may have open
   }
 })
 
-// ---------------------------------------------------------------- cu_steps (C5, 2026-10-15)
+// ---------------------------------------------------------------- cu_steps (added 2026-10-15)
 
 /** A desktop harness with QQ approved (one full dialog) and element eaaaaaaa on screen. */
 async function withSteps(responses, services = {}) {
@@ -787,7 +787,7 @@ test('cu_steps: a step refused for lack of approval takes the approval that cove
   assert.equal(harness().tools.cu_steps, undefined, 'bench tasks keep one call per step')
 })
 
-test('cu_steps with the image: the step lines stay in front of the look (VM round 14: a refused cmd+b vanished behind the image)', async () => {
+test('cu_steps with the image: the step lines stay in front of the look (VM test, 2026-10-15: a refused cmd+b vanished behind the image)', async () => {
   // A model that takes images: the look stages its text and the image for finalizeContent (admitImage), which
   // replaces the tool's text; without the fix the batch's own lines were lost.
   const services = { attachments: { saveImages: async () => [{ attachmentId: 'sha256:x' }] },
@@ -978,7 +978,7 @@ test('cu_menu: one full dialog on first touch; listings and unknown titles come 
   assert.equal(harness().tools.cu_menu, undefined)
 })
 
-// M4 (2026-10-14): the daemon gives approvals only in a turn the asking client marked. turn/start marks with
+// Since 2026-10-14 the daemon gives approvals only in a turn the asking client marked. turn/start marks with
 // start:false, so a daemon that comes up with this turn's first cu_* call is marked late, before that call.
 
 test('a turn the daemon did not see start is marked late, once, before the first daemon call', async () => {

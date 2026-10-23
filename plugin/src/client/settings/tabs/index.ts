@@ -1,5 +1,5 @@
 /**
- * The settings tabs, in the native window's order. How a tab module plugs in (round 2 fills the six stubs without
+ * The settings tabs, in the native window's order. How a tab module plugs in (a tab is added or changed without
  * touching any shared file):
  *
  * - settings/tabs/<id>.ts exports `tab: TabModule` (settings/tab.ts) with `id: '<id>'` and

@@ -1,5 +1,5 @@
 /**
- * Stable element ids and diffs (PLAN-v2 R4). The daemon's element ids (a1, o7) are valid only in the snapshot they
+ * Stable element ids and diffs. The daemon's element ids (a1, o7) are valid only in the snapshot they
  * came from. The model gets ids derived from each element's key (a hash of role, identifier, text, frame, window,
  * source), which stay the same across observes while the element is unchanged; the plugin maps them to the latest
  * snapshot's id and generation. That lets observe send only what changed after the first call. A changed element

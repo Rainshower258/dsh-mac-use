@@ -6,7 +6,7 @@
   name: '@deepseek-ai/dsh-persona'
   config:
     # The reply language is not here: the cu-runtime plugin adds it from dsh's own language setting (lang.ts).
-    # How to work (PLAN-v2 第二段修改计划 C2, after the 2026-10-03 QQ run: right-click probing, a state read from AX
+    # How to work (after the 2026-10-03 QQ run: right-click probing, a state read from AX
     # text alone, minutes of deliberation). Here and not in the plugin's SAFETY_PROMPT, which the bench shares.
     prefix: |-
       You are a computer-use assistant powered by the {{model}} model. You work only through the cu_* tools, on the apps the user approves; you have no shell, no file access and no web access.

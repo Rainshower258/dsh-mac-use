@@ -1,9 +1,9 @@
 # B PROTOTYPE: computer use inside dsh's standard mode (bash, files, web, subagents), through a `screen` subagent.
-# On a real Mac only with scripts/install-cu-std.sh --real-mac. bash shares the user's identity with the daemon (合并方案-
-# 调研-20261010.md ②); what stands between them: the daemon refuses grants.set in daily mode and binds approvals to the
-# client that asked, and confined commands cannot read the daemon's state dir or connect to its socket (the `sandbox`
-# row below). bash itself runs under dsh's own rules (P3, 2026-10-16: the official dsh keeps bash and computer use
-# apart; the per-call confirmation after screen content, `confirm: after-screen`, is kept as an option, off by default).
+# On a real Mac only with scripts/install-cu-std.sh --real-mac. bash shares the user's identity with the daemon; what
+# stands between them: the daemon refuses grants.set in daily mode and binds approvals to the client that asked, and
+# confined commands cannot read the daemon's state dir or connect to its socket (the `sandbox` row below). bash itself
+# runs under dsh's own rules (since 2026-10-16: the official dsh keeps bash and computer use apart; the per-call
+# confirmation after screen content, `confirm: after-screen`, is kept as an option, off by default).
 # Installed by scripts/install-cu-std.sh into ~/.dsh-cu-std.
 #
 # What it composes on top of the standard host: the cu-runtime plugin (cu_* tools, global) and one more delegation tool,
@@ -52,8 +52,8 @@
     - id: cu-exec-gate
       name: '@GATE@'
       config:
-        # off (P3, 2026-10-16): bash works under dsh's standard rules, as in dsh without this plugin. after-screen
-        # (the maintainer 2026-10-14, the default until 10-16) asks for every call once screen content may be in the
+        # off (since 2026-10-16): bash works under dsh's standard rules, as in dsh without this plugin. after-screen
+        # (the default from 2026-10-14 until 2026-10-16) asks for every call once screen content may be in the
         # conversation. Commands outside the sandbox: dsh's escalation prompt, per call, whatever this says.
         confirm: "off"   # quoted: bare off is YAML 1.1 for false
         fullAccess: true

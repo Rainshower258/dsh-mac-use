@@ -1,5 +1,5 @@
 /**
- * Client for the cu-runtime daemon (PLAN-v2 §5.4, R4). It never spawns the daemon: a daemon spawned by node would
+ * Client for the cu-runtime daemon. It never spawns the daemon: a daemon spawned by node would
  * get node's TCC permissions, not the app's. With an AutoStart (config autoStart: cu-std, the bundle's 电脑操作 mode)
  * it asks LaunchServices to start the app when the daemon cannot be reached (autostart.ts); otherwise it only
  * connects. JSON-RPC 2.0 over the Unix socket, each frame a 4-byte little-endian length and the JSON body; the first
@@ -173,7 +173,7 @@ export class CURuntimeClient {
         socket.on('close', () => {
             // Gone while this client still held it (close() lets go first): the daemon was stopped, or exited, unless it
             // only closed an idle connection (5 minutes without a request, idle_timeout) and still listens: that is no stop
-            // (2026-10-14, the maintainer's Mac: an idle close had left the mark while the daemon ran on).
+            // (seen on the development Mac, 2026-10-14: an idle close had left the mark while the daemon ran on).
             if (this.socket === socket && greeted && this.autoStart !== undefined) {
                 const auto = this.autoStart;
                 const sock = join(this.stateDir, 'daemon.sock');

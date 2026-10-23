@@ -43,7 +43,7 @@ export function uiLanguage(settings, system = systemLocale) {
     return tag.toLowerCase().startsWith('zh') ? 'zh' : 'en';
 }
 /**
- * The reply language with a person at this Mac (appApproval dialog; the maintainer, 2026-10-10): dsh's language, until
+ * The reply language with a person at this Mac (appApproval dialog; decided 2026-10-10): dsh's language, until
  * the person asks for another.
  * A message in another language is not such a request: the input method may just have been on the wrong one.
  */

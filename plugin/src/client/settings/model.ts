@@ -1,9 +1,9 @@
 /**
  * The settings tabs' shared model, pure (no React, no fetch; plugin/tests/client-settings-*.test.mjs load the
  * compiled module): the tabs, the snapshot the host answers (`POST api/cu-runtime.settings.snapshot`, the daemon's
- * settings.snapshot with only the H4 keys) checked on arrival, how often it is read, and the words for what the
- * snapshot and the routes say: the change waiting for the owner check, the last settled outcome, an action's answer,
- * and every error code (stage 3b H3).
+ * settings.snapshot with only the keys the host passes on) checked on arrival, how often it is read, and the words
+ * for what the snapshot and the routes say: the change waiting for the owner check, the last settled outcome, an
+ * action's answer, and every error code.
  *
  * @module
  */
@@ -16,7 +16,7 @@ export const SETTINGS_TABS = ['overview', 'access', 'apps', 'shortcuts', 'privac
 
 export type SettingsTab = typeof SETTINGS_TABS[number]
 
-/** The page's tabs: the daemon's (the stage-2 page, the default), then the settings tabs. */
+/** The page's tabs: the daemon's (page.ts, the default), then the settings tabs. */
 export const PAGE_TABS = ['daemon', ...SETTINGS_TABS] as const
 
 export type PageTab = typeof PAGE_TABS[number]
@@ -312,7 +312,7 @@ export function appName(snapshot: Snapshot | null, bundleId: string): string | n
   return null
 }
 
-// --- errors (stage 3b H3) ---
+// --- errors ---
 
 /** A settings route's failure: the host's `error` (`data.until`, epoch seconds, with verify_cooldown), or the page's. */
 export interface SettingsFailure {

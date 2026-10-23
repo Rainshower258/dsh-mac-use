@@ -1,4 +1,4 @@
-// The plugin page's tab shell and the settings tabs' shared model (plugin/src/client/settings, stage 3c round 1):
+// The plugin page's tab shell and the settings tabs' shared model (plugin/src/client/settings):
 // the tab bar with the daemon tab as it was and the default, the settings model (when and how often the snapshot is
 // read, the routes and their headers), the pending banner and its cancel, the outcome notices and the answers, every
 // error code's text, the locale files, the shared pieces and their fallbacks. The bundle is built into a temporary
@@ -40,7 +40,10 @@ const t = translator(ZH)
 const NOW = 1_760_947_200_000
 const SEC = NOW / 1000
 
-/** A snapshot as the host answers it (the daemon's settings.snapshot, H4 keys), with `over` replacing top-level keys. */
+/**
+ * A snapshot as the host answers it (the daemon's settings.snapshot, the keys the host passes on), with `over`
+ * replacing top-level keys.
+ */
 function snapshot(over = {}) {
   return {
     started_at: SEC - 3600,
@@ -280,7 +283,7 @@ function mountShell(answers, { primitives = {}, view = 'page', dict = ZH } = {})
   return page
 }
 
-/** The host cannot be reached: the daemon tab's status read and its 模式检查 section's read (stage 4b) both fail. */
+/** The host cannot be reached: the daemon tab's status read and its 模式检查 section's read both fail. */
 const STATUS_DOWN = { status: UNREACHABLE, modeCheck: UNREACHABLE }
 
 // --- the tab shell ---
@@ -296,7 +299,7 @@ test('the daemon tab is the default and unchanged; the bar lists the daemon tab 
   assert.equal(panel.props['data-cu-runtime-tab-panel'], 'daemon')
   assert.equal(panel.props.id, 'cu-runtime-panel-daemon')
   assert.equal(panel.props['aria-labelledby'], 'cu-runtime-tab-daemon')
-  // The stage-2 page itself, with the very props dsh gave the shell.
+  // The daemon page (page.ts) itself, with the very props dsh gave the shell.
   const daemon = page.react.drawn.filter((d) => d.name === 'Page')
   assert.equal(daemon.length, 1)
   assert.deepEqual(Object.keys(daemon[0].props).sort(), ['children', 't', 'view'])
@@ -588,7 +591,7 @@ test('outcomeNotice: every outcome has its text; refused with a reason the page 
 
 // --- errors ---
 
-test('every 3b H3 code has its own text in Chinese and English; verify_cooldown counts the seconds to data.until', () => {
+test('every settings error code has its own text in Chinese and English; verify_cooldown counts the seconds to data.until', () => {
   const KNOWN_REASONS = ['verification_required', 'verify_busy', 'verify_cooldown', 'verify_unavailable', 'verify_failed',
     'verify_cancelled', 'approval_open', 'settings_unavailable', 'nothing_pending', 'settings_changed', 'not_found',
     'app_not_grantable', 'app_not_found', 'hard_denied', 'user_denied', 'invalid_chord', 'chord_never_allowed',

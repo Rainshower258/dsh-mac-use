@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os'
 import { join, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-// scripts/source-hash.sh against the shared contract (PLAN 阶段 2, 版本标识, with scripts/build-app.sh added):
+// scripts/source-hash.sh against its contract with the host (CUSourceHash, the version the host compares):
 // Package.swift, every regular file under Sources/ except .DS_Store, and scripts/build-app.sh, "<path>\t<sha256>\n"
 // per file in byte order, sha256 of the lines. The reference below is written from that contract alone; only temp
 // dirs this test creates are touched.

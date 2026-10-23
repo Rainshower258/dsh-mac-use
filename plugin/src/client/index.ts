@@ -1,5 +1,5 @@
 /**
- * The browser half of the cu-runtime bundle (PLAN-阶段2「浏览器端页面」, stage 3c). dsh's web client loads it from the
+ * The browser half of the cu-runtime bundle. dsh's web client loads it from the
  * package's `./client` export for the top-level row named `cu-runtime`, as a client plugin with the slots and locale
  * services; it puts the plugin page (settings/shell.ts: the daemon tab, page.ts, then the daemon's settings tabs) on
  * the bundle's detail page, slot `plugins.bundle.config` keyed by the package name. scripts/build-client.mjs bundles

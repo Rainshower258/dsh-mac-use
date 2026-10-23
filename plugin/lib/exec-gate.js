@@ -1,10 +1,10 @@
 /**
  * B prototype (cu-std): calls of a tool that runs commands or code (bash, pwsh, workflow) wait for the person's
- * approval of that one call, in dsh's own approval UI. Which calls (`confirm`, the maintainer 2026-10-14):
+ * approval of that one call, in dsh's own approval UI. Which calls (`confirm`):
  * - `always` (the default here, so a gate loaded without config stays strict): every one;
  * - `after-screen` (cu-std's default 2026-10-14 to 10-16, now an option): once screen content may be in the
  *   conversation (screenSeen), every one; before that, bash runs under dsh's standard rules;
- * - `off` (cu-std since P3, 2026-10-16: the official dsh keeps bash and computer use apart, and the per-call
+ * - `off` (cu-std's setting since 2026-10-16: the official dsh keeps bash and computer use apart, and the per-call
  *   confirmation cost more than it caught): none for that reason.
  * Whatever the mode, every workflow call is asked. A bash or pwsh call that escalates its sandbox mode to one strictly
  * wider than the session's current mode is asked by dsh itself, once, and not again here (escalates); one that names
@@ -161,7 +161,7 @@ export function currentModeOf(exec, policy) {
  * A bash or pwsh call that asks for a sandbox mode strictly wider than the session's current one (`currentMode`).
  * dsh's escalation goes through its approval service for exactly those, for that one call, before anything runs
  * (dsh-tool-bash, dsh-sandbox's approveEscalation; outcomes are allowed-once or a refusal, no session-wide allow), and a
- * session whose policy is never refuses it unasked. So the gate does not ask it a second time (VM 2026-10-14, round 7:
+ * session whose policy is never refuses it unasked. So the gate does not ask it a second time (VM test, 2026-10-14:
  * the same `cp` to the Desktop was asked twice). Anything else is not left to dsh (fail closed): the current mode
  * requested again, which dsh runs unasked, a narrower or unknown mode, a value that is not a string, or a current mode
  * that cannot be read.

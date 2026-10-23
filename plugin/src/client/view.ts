@@ -1,5 +1,5 @@
 /**
- * The page's view model: the host's status JSON (POST api/cu-runtime.status, PLAN-阶段2 route table) in, the text,
+ * The page's view model: the host's status JSON (POST api/cu-runtime.status, daemon/routes.ts) in, the text,
  * states and enabled buttons the page draws out. Pure (no React, no fetch), so the decisions are unit tested
  * (plugin/tests/client.test.mjs loads the compiled module).
  *
@@ -268,7 +268,7 @@ export interface ViewOptions {
   readonly statusError?: Failure | null
 }
 
-/** The codes the host's task and action failures carry (PLAN-阶段2「实现后定下的约定」), each with its own text. */
+/** The codes the host's task and action failures carry (plugin/src/daemon/manager.ts), each with its own text. */
 export const HOST_ERROR_CODES = ['busy', 'ssh_session', 'no_gui_session', 'clt_missing', 'identity_failed',
   'identity_ambiguous', 'identity_missing', 'identity_changed', 'copy_failed', 'build_failed', 'not_release_build',
   'sign_failed', 'signature_mismatch', 'stop_failed', 'replace_failed', 'start_failed', 'selfcheck_failed',

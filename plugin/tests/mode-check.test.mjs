@@ -1,4 +1,4 @@
-// The plugin's mode self-check (stage 4b, G1: plugin/src/daemon/mode-check.ts, its routes and the host's run after
+// The plugin's mode self-check (plugin/src/daemon/mode-check.ts, its routes and the host's run after
 // loading). The rules run on composed configs shaped as `dsh --dump-config` prints them (dsh 0.2.1-rc.2); the run goes
 // through a fake System, or, on the fixtures the retired scripts/check-dsh-profiles.sh was tested with, the real runner
 // and file system with a fake `dsh` on PATH in a scratch home. No real dsh runs and no real dsh home is read.
@@ -486,7 +486,7 @@ async function portVerdicts(dumps, { electron = {}, fails = [] } = {}) {
   }
 }
 
-test('on the fixtures of the retired check-dsh-profiles tests, the port gives the verdicts that script gave (stage 4b)', async () => {
+test('on the fixtures of the retired check-dsh-profiles tests, the port gives the verdicts that script gave', async () => {
   const nested = (name) => [...STANDARD, '      - id: cu-runtime-again', `        name: ${name}`]
   const extraRows = ({ quote = '' } = {}) => [
     '- id: preset-standard', "  name: '@deepseek-ai/dsh-agent-preset'", '  config:', '    id: standard', '    plugins:',

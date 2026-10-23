@@ -1,5 +1,5 @@
 /**
- * The plugin's mode self-check (stage 4b, G1): every profile of the running dsh's home is checked through its composed
+ * The plugin's mode self-check: every profile of the running dsh's home is checked through its composed
  * config (`dsh --profile <p> --dump-config`), by the rules the retired scripts/check-dsh-profiles.sh applied to the
  * everyday home: the cu_* tools only in the bundle's own mode (preset-cu-runtime), with onlyCuTools on,
  * approval by dialog and exclusive not off; no other computer-use plugin anywhere. The runtime layer of the same rule

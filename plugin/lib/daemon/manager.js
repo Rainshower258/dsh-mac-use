@@ -1,5 +1,5 @@
 /**
- * The daemon's management from dsh's plugin page (PLAN-阶段2 「宿主服务」): its status, the build-and-install task,
+ * The daemon's management from dsh's plugin page: its status, the build-and-install task,
  * start, stop, restart, the permission prompts, the Command Line Tools installer, a self-check. host.ts exposes each
  * operation as one owner-only route without parameters; nothing here forwards a daemon RPC, and the status carries no
  * token, audit or screen content.
@@ -609,7 +609,7 @@ export class DaemonManager {
         return { accessibility: result.accessibility, screenRecording: result.screenRecording };
     }
     /**
-     * Whether the settings routes may talk to the daemon now (stage 3b, H3): busy while this System's install task is in
+     * Whether the settings routes may talk to the daemon now: busy while this System's install task is in
      * a phase that stops, replaces or starts it (SETTINGS_BUSY_PHASES); not_running unless the installed app is one this
      * host starts (verifyInstalled, what status() reports as signature ok: a release build satisfying the designated
      * requirement, with hardened runtime) and a daemon of that app's executable runs (daemonPids, status().running). null
@@ -1041,9 +1041,9 @@ export class DaemonManager {
     /**
      * After a cancel or a failure: a daemon this task stopped, and whose app was not replaced, runs again if the
      * installed app may be started (verifyInstalled). Returns why it does not when it does not (a refusal: e.g.
-     * not_release_build for a build from before R1 or without hardened runtime; or the start's failure), which the task
-     * log says (notRestartedText) and the caller adds to a failure's message and the action log. Either way the stop
-     * mark this task left is removed: it is autoStart's sign of a stop by the user, which this was not.
+     * not_release_build for an older build without CUBench or one without hardened runtime; or the start's failure),
+     * which the task log says (notRestartedText) and the caller adds to a failure's message and the action log. Either
+     * way the stop mark this task left is removed: it is autoStart's sign of a stop by the user, which this was not.
      */
     async restoreAfterStop(task) {
         let notRestarted = null;
