@@ -1,6 +1,6 @@
 {
   "name": "cu-runtime",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Computer use on macOS for dsh: the 电脑操作 mode, whose cu_* tools reach the apps a person approves through the CURuntime daemon.",
   "type": "module",
   "license": "MIT",

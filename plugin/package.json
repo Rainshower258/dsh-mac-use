@@ -1,7 +1,7 @@
 {
   "name": "cu-runtime-plugin",
   "description": "dsh plugin for the cu-runtime computer-use daemon (connect-only).",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "main": "lib/index.js",
