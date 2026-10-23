@@ -38,9 +38,12 @@ pkill -x cu-runtime
 
 下面的命令都在"终端"App 的窗口里执行（启动台或 Spotlight 里搜"终端"）。**不要通过 SSH 远程执行**，dsh 也要在本机的图形界面里运行：签名要用登录钥匙串，SSH 会话里钥匙串是锁着的，签名会报 `errSecInternalComponent`；插件页在 SSH 会话里会拒绝安装、签名和启动守护进程。
 
-### 2.0 用 install.sh 预检并获得引导（推荐）
+### 2.0 两种添加方式
 
-拿到源码（2.2）以后，在终端执行：
+- **用仓库链接（推荐）**：装好 2.1 的前置条件后，在插件页「添加插件」里直接填仓库链接 `https://github.com/Rainshower258/dsh-mac-use`（2.4）。dsh 用 pnpm 下载这个仓库；仓库里带着构建好的插件文件，不用自己构建，也用不到下面的 install.sh 和 2.2。
+- **从源码（要改代码或调试时）**：获取源码（2.2），用下面的 install.sh 预检并构建，再在插件页按路径添加（2.4）。
+
+从源码添加时，拿到源码（2.2）以后，在终端执行：
 
 ```sh
 zsh ~/cu-runtime/scripts/install.sh
@@ -111,11 +114,15 @@ zsh ~/cu-runtime/scripts/install.sh
 
    浏览器会打开 dsh 网页，第一次打开会弹出 **"Add an API key to get started"**：把 key 填进 "API key" 一栏，点 **Save and continue**。（`dsh web` 会把当前目录当成默认工作区，所以先 `cd ~`，不要在源码目录里运行。）key 只存在日常的 `~/.dsh` 里，只有一份。
 
-### 2.2 获取代码
+### 2.2 获取代码（只在从源码添加，或要用第 6、9 节的脚本时需要）
 
-下载源码 zip。用 Safari 下载时，它一般会**自动解压**，并删掉 zip，"下载"文件夹里直接出现一个 `cu-runtime-main` 文件夹；没有自动解压的话，双击 zip 即可。
+在终端执行：
 
-把这个文件夹改名为 `cu-runtime`，放在哪里都可以。下文以放在个人文件夹为例，路径是 `~/cu-runtime`；放在别处（比如桌面，`~/Desktop/cu-runtime`）的话，把下文命令里的路径换掉。dsh 按路径加载这份源码，所以添加插件以后不要移动或删除它。
+```sh
+git clone https://github.com/Rainshower258/dsh-mac-use.git ~/cu-runtime
+```
+
+也可以在仓库页面点 Code → Download ZIP。用 Safari 下载时，它一般会**自动解压**，并删掉 zip，"下载"文件夹里直接出现一个 `dsh-mac-use-main` 文件夹；没有自动解压的话，双击 zip 即可。把这个文件夹改名为 `cu-runtime`，放在哪里都可以。下文以放在个人文件夹为例，路径是 `~/cu-runtime`；放在别处（比如桌面，`~/Desktop/cu-runtime`）的话，把下文命令里的路径换掉。dsh 按路径加载这份源码，所以添加插件以后不要移动或删除它。
 
 ### 2.3 签名证书
 
@@ -139,7 +146,7 @@ zsh scripts/make-signing-identity.sh
 
 ### 2.4 添加插件并安装守护进程
 
-用了 2.0 的脚本的话，第 1 步已经做完。手动安装时：
+用仓库链接添加时，跳过第 1 步。从源码添加时，用了 2.0 的 install.sh 的话，第 1 步也已经做完；没用的话：
 
 1. **构建插件**（第一次还要安装依赖）：
 
@@ -154,7 +161,7 @@ zsh scripts/make-signing-identity.sh
    > 维护者注：维护者自己的机器上，`plugin/node_modules` 是用 `plugin/scripts/link-deps.sh` 链到上游参考仓库的，那里**不要**运行 `npm ci` 或 `npm install`，否则 npm 会顺着链接写进上游目录。
 
 2. **启动日常的 dsh**：`dsh --profile web`，或者打开 dsh 的桌面版。
-3. **添加插件**：在 dsh 的插件页点「添加插件」，填入这份源码的**完整绝对路径**（例如 `/Users/<用户名>/cu-runtime`；dsh 不认 `~/` 开头的路径；install.sh 的引导会打印出完整路径），添加后点「启用」。
+3. **添加插件**：在 dsh 的插件页点「添加插件」，填入仓库链接 `https://github.com/Rainshower258/dsh-mac-use`；从源码添加时，填这份源码的**完整绝对路径**（例如 `/Users/<用户名>/cu-runtime`；dsh 不认 `~/` 开头的路径；install.sh 的引导会打印出完整路径），添加后点「启用」。
 4. **安装守护进程**：打开这个插件的详情页，在「守护进程」标签点「安装守护进程」。它把源码复制到 `~/Library/Caches/cu-runtime/build` 里构建（第一次要编译几分钟），用 `cu-runtime-signing` 签名（没有就先生成，2.3），确认新 app 是正式版本（不是 bench 构建）并且签名符合要求，然后替换 `~/Applications/CURuntime.app`、启动它并做一次自检。签名时会弹出钥匙串窗口，要求输入登录密码：输入后点 **允许**，不要点"始终允许"（原因见 2.3）。密码框被取消或拒绝、或者屏幕已锁定时，安装失败，已装的 app 保持原样，重新点一次即可。
 
 ### 2.5 授予两项权限
@@ -326,6 +333,8 @@ cu-runtime grants add --full com.tencent.qq # 永久可操作档：执行这条�
 
 ### 6.1 权限排查：开关打开了却不生效
 
+（本节和 6.2、第 9 节用到的脚本在源码里。用仓库链接添加的，先按 2.2 取一份源码。）
+
 系统设置里每项权限给 `dev.cu-runtime.daemon` 只留一条记录，记录里写着当初获得授权的那个 app 的签名要求。证书换过（6.2）或者装过别的证书签的构建以后，旧记录还在列表里、开关也开着，却和现在的 app 对不上，于是插件页一直显示"未授予"。插件页的「授予权限」不会清除已有的记录。处理办法：
 
 ```sh
@@ -345,7 +354,8 @@ tccutil reset ScreenCapture dev.cu-runtime.daemon
 
 ### 6.2 更新源码以后：更新守护进程、清理旧构建
 
-- **更新源码后**，先运行一次 `zsh ~/cu-runtime/scripts/install.sh`（或者在仓库根目录执行 `npm run build`），再重启 dsh：dsh 按路径加载的是源码目录里构建好的文件，不重新构建就仍在运行上一次的构建。然后看插件页「守护进程」标签：已装的 `~/Applications/CURuntime.app` 不是这份源码的正式构建（源码哈希不同、没有 hardened runtime，或者是 2026-10-20 之前装的）时，页面会提示更新，点「更新守护进程」（或「重新安装守护进程」）即可，签名时钥匙串要一次登录密码。
+- **用仓库链接添加的**，要更新时在插件页移除插件，再用同一个链接添加一次，就会装上仓库当前的版本；然后看「守护进程」标签，按下一条更新守护进程。
+- **从源码添加的，更新源码后**，先运行一次 `zsh ~/cu-runtime/scripts/install.sh`（或者在仓库根目录执行 `npm run build`），再重启 dsh：dsh 按路径加载的是源码目录里构建好的文件，不重新构建就仍在运行上一次的构建。然后看插件页「守护进程」标签：已装的 `~/Applications/CURuntime.app` 不是这份源码的正式构建（源码哈希不同、没有 hardened runtime，或者是 2026-10-20 之前装的）时，页面会提示更新，点「更新守护进程」（或「重新安装守护进程」）即可，签名时钥匙串要一次登录密码。
 - **旧构建要清理。** 两项权限认的是签名证书，而不是某一次构建：用正式证书 `cu-runtime-signing` 签过的 CURuntime.app，放在哪里都带着这两项权限，LaunchServices 从归档或旧目录里一样能启动它（自动启动只打开验证过的 `~/Applications/CURuntime.app`，但别的程序仍可以用 `open` 启动这些副本）。能留下的只有 hardened 正式构建（`CUBench` 为 false、带 hardened runtime：3ecf445 起的 `build-app.sh` 才这样构建）；3ecf445 之前的构建都没有 hardened runtime，R1 之前的还认 `--state-dir` 和测试用的开关。列出这台 Mac 上所有的 CURuntime.app：
 
   ```sh

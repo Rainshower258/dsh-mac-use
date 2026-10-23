@@ -10,16 +10,13 @@ Lets DeepSeek Harness (dsh) operate apps on this Mac. The plugin adds a 电脑�
 
 Requires macOS 14 or later, dsh 0.2.1-rc.2 (the web client or the desktop app), Node.js 24, the Xcode Command Line Tools and pnpm (`npm i -g pnpm`; the desktop app brings its own).
 
-```sh
-git clone https://github.com/Rainshower258/dsh-mac-use.git ~/cu-runtime
-zsh ~/cu-runtime/scripts/install.sh
-```
+In dsh:
 
-Then in dsh:
-
-1. Plugin page → 添加插件 (add plugin) → the checkout's full path (e.g. `/Users/<name>/cu-runtime`) → enable it.
+1. Plugin page → 添加插件 (add plugin) → this repository's link, `https://github.com/Rainshower258/dsh-mac-use` → enable it.
 2. The plugin's detail page → 守护进程 (daemon) tab → 安装守护进程 (install daemon) → 授予权限 (grant permissions).
 3. Done when the 模式检查 (mode check) shows 正常 (OK).
+
+To work on the code instead, clone it, run `zsh scripts/install.sh` in the checkout (checks the requirements and builds the plugin), and add the checkout's full path in step 1 (e.g. `/Users/<name>/cu-runtime`).
 
 ## Use
 

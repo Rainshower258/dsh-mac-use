@@ -312,10 +312,10 @@ bench/experiments/run_vm_experiment.sh plugin_smoke.py   # the tools against the
 
 尚未实现：该模式的设置不在 dsh 的插件页上（预设中的行无法在那里配置）。模型及其推理强度属于会话，由用户选择：应选择支持图像输入的模型。该模式的会话（包括截图）与日常 home 的其他会话保存在一起；dsh 的遥测与反馈上传属于 dsh 自身的设置，其反馈上传（`FEEDBACK_ONLY`）会发送用户所提交的会话。
 
-在检出的仓库中（`plugin/node_modules` 由 `plugin/scripts/link-deps.sh` 生成，见上文），在仓库根目录运行 `npm run build` 会构建插件包入口点所指的每个文件：宿主服务与工具（宿主 tsc 输出到 `plugin/lib`）以及插件页（`plugin/lib/web-client.js`，由 `scripts/build-client.mjs` 生成）。`scripts/install.sh` 与 `scripts/install-cu-std.sh` 执行同样的构建，因此从同一检出以 link 方式安装的插件包，其页面与宿主来自同一提交。`plugin/lib` 不受版本跟踪，而 link 安装按原样运行检出中的文件，因此每次 pull 之后、dsh 重启之前都须再次运行 `npm run build`：否则 dsh 运行的是上一次的构建；而当页面文件缺失时（自加入插件页以来尚未构建过的检出），dsh 会拒绝启动整个 profile，而不仅仅是该页面。仍持有插件页出现之前那版插件包的 profile（其顶层行名为 `cu-runtime/host`，工具行名为 `cu-runtime`），须移除插件包并重新添加此版本来更新；模式检查会判定此类 profile 不通过，并说明处理方法。
+在检出的仓库中（`plugin/node_modules` 由 `plugin/scripts/link-deps.sh` 生成，见上文），在仓库根目录运行 `npm run build` 会构建插件包入口点所指的每个文件：宿主服务与工具（宿主 tsc 输出到 `plugin/lib`）以及插件页（`plugin/lib/web-client.js`，由 `scripts/build-client.mjs` 生成）。`scripts/install.sh` 与 `scripts/install-cu-std.sh` 执行同样的构建，因此从同一检出以 link 方式安装的插件包，其页面与宿主来自同一提交。`plugin/lib` 受版本跟踪：在 dsh 的「添加插件」里填仓库的 GitHub 链接时，pnpm 下载仓库，按 package.json 的 `files` 原样安装已提交的文件，不经过构建，所以每个提交都带着它自己源码的构建结果（构建是确定的；pre-push 钩子会拒绝与 `npm run build` 结果不一致的 `plugin/lib`）。按路径安装时 dsh 按原样运行检出中的文件，所以改了插件源码以后，要在 dsh 重启之前运行 `npm run build`：否则 dsh 运行的是上一次的构建。仍持有插件页出现之前那版插件包的 profile（其顶层行名为 `cu-runtime/host`，工具行名为 `cu-runtime`），须移除插件包并重新添加此版本来更新；模式检查会判定此类 profile 不通过，并说明处理方法。
 
 ```sh
-npm run build                                     # from the repository root; again after every pull, before dsh restarts
+npm run build                                     # from the repository root; again after editing the plugin's sources, before dsh restarts
 dsh plugin --profile web add link:$PWD            # from the repository root; remove: dsh plugin --profile web remove cu-runtime
 ```
 

@@ -30,9 +30,13 @@ step "plugin: build + node tests"
 # tsc and then the plugin page (package.json "./client", scripts/build-client.mjs). Before the tests: bundle.test
 # checks that every export's file exists.
 npm run build >/dev/null 2>&1 || fail "plugin build (npm run build: the host tsc, then the plugin page)"
+# plugin/lib is tracked (plugin/.gitignore): an install from the GitHub URL runs the committed build, never builds.
+# The build is deterministic, so a diff here is a build not committed with its sources.
+git diff --quiet HEAD -- plugin/lib && [[ -z $(git ls-files --others --exclude-standard -- plugin/lib) ]] \
+  || fail "plugin/lib differs from the committed build: commit it (npm run build && git add plugin/lib)"
 (cd plugin && node --test tests/*.test.mjs >/dev/null 2>&1) || fail "plugin tests (cd plugin && npm test)"
 
-# After the plugin build: test_failclosed boots dsh with plugin/lib (a fresh clone has no lib before this).
+# After the plugin build: test_failclosed boots dsh with plugin/lib.
 step "pytest bench/tests"
 python3 -m pytest -q bench/tests >/dev/null 2>&1 || fail "pytest bench/tests"
 

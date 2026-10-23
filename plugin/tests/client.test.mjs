@@ -1255,15 +1255,16 @@ test('one documented build makes every entry point: npm run build at the root ru
   }
 })
 
-test('the design doc builds with it and says to build again after every pull; the pre-push hook runs the same build', () => {
+test('the design doc builds with it, says plugin/lib is tracked and to build again after editing; the pre-push hook runs the same build and refuses a stale plugin/lib', () => {
   const readme = readFileSync(join(ROOT, 'docs/DESIGN.md'), 'utf8')
   const from = readme.indexOf('\n## Installable dsh bundle')
   const bundle = readme.slice(from, readme.indexOf('\n## ', from + 1))
   const [, block] = /```sh\n([^]*?)```/.exec(bundle)
   const [build, add] = block.split('\n')
-  assert.match(build, /^npm run build +# from the repository root; again after every pull, before dsh restarts$/)
+  assert.match(build, /^npm run build +# from the repository root; again after editing the plugin's sources, before dsh restarts$/)
   assert.match(add, /^dsh plugin --profile web add link:\$PWD /)
-  assert.match(bundle, /so run `npm run build` again after every pull, before dsh restarts/)
+  assert.match(bundle, /`plugin\/lib` is tracked: dsh's 添加插件 with the repository's GitHub URL[^]*the pre-push hook refuses a `plugin\/lib` that differs/)
+  assert.match(bundle, /after editing the plugin's sources run `npm run build` before dsh restarts/)
   assert.match(bundle, /still holds the bundle from before the plugin page \(its top-level row named `cu-runtime\/host`, its tools row `cu-runtime`\) is updated by removing the bundle and adding this version again/)
   assert.ok(readme.includes('(cd plugin && npm run build && npm test)'), 'the plugin\'s own build and test line')
   assert.doesNotMatch(readme, /tsc -p tsconfig\.build\.json/, 'no documented build that leaves the page out')
@@ -1279,9 +1280,9 @@ test('the design doc builds with it and says to build again after every pull; th
     mkdirSync(join(dir, 'repo/plugin/node_modules'), { recursive: true })
     mkdirSync(join(dir, 'repo/plugin/tests'))
     writeFileSync(join(dir, 'repo/plugin/tests/a.test.mjs'), '')
-    const run = (npmStatus) => {
+    const run = (npmStatus, gitStatus = 0) => {
       rmSync(join(dir, 'calls'), { force: true })
-      for (const [tool, status] of [['npm', npmStatus], ['node', 0]]) {
+      for (const [tool, status] of [['npm', npmStatus], ['node', 0], ['git', gitStatus]]) {
         writeFileSync(join(dir, 'bin', tool), `#!/bin/sh\necho "\${PWD##*/} ${tool} $*" >> '${dir}/calls'\nexit ${status}\n`, { mode: 0o755 })
       }
       const r = spawnSync('/bin/zsh', ['-c', `fail() { print -u2 "FAILED: $1"; exit 1 }\nstep() { print "step: $1" }\n${step}`],
@@ -1290,7 +1291,13 @@ test('the design doc builds with it and says to build again after every pull; th
     }
     const ok = run(0)
     assert.equal(ok.code, 0, ok.err)
-    assert.deepEqual(ok.calls, ['repo npm run build', 'plugin node --test tests/a.test.mjs'], 'the root build, then the tests')
+    const freshness = ['repo git diff --quiet HEAD -- plugin/lib', 'repo git ls-files --others --exclude-standard -- plugin/lib']
+    assert.deepEqual(ok.calls, ['repo npm run build', ...freshness, 'plugin node --test tests/a.test.mjs'],
+      'the root build, the committed build compared with it, then the tests')
+    const stale = run(0, 1)
+    assert.equal(stale.code, 1)
+    assert.match(stale.err, /FAILED: plugin\/lib differs from the committed build: commit it \(npm run build && git add plugin\/lib\)/)
+    assert.deepEqual(stale.calls, ['repo npm run build', freshness[0]], 'no tests on a stale plugin/lib')
     const failed = run(1)
     assert.equal(failed.code, 1)
     assert.match(failed.err, /FAILED: plugin build \(npm run build: the host tsc, then the plugin page\)/)
