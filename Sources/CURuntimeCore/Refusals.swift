@@ -1,7 +1,7 @@
 import Foundation
 
-/// What a client may do after an error (PLAN-v2 R3, 2026-09-29). Every refusal (-32010) carries
-/// `data.executed` and `data.retry`; the R4 plugin retries automatically only `after_delay`, a bounded number of
+/// What a client may do after an error (decided 2026-09-29). Every refusal (-32010) carries
+/// `data.executed` and `data.retry`; the plugin retries automatically only `after_delay`, a bounded number of
 /// times. Everything else goes back to the model.
 public enum RetryClass: String, Sendable, CaseIterable {
     /// Refused before anything was executed, for a transient reason: the same request may succeed a moment later.
@@ -70,9 +70,9 @@ public enum Refusals {
         "debug_disabled": .never,
         "secure_input": .never,
         "frame_too_large": .never,
-        // P5: the screen is locked; the person unlocks it and the model observes again (never retried on its own).
+        // The screen is locked; the person unlocks it and the model observes again (never retried on its own).
         "session_locked": .never,
-        // P4: the clipboard could not be saved before a paste; nothing was pasted.
+        // act.type strategy paste: the clipboard could not be saved before a paste; nothing was pasted.
         "clipboard_unavailable": .never,
         "clipboard_too_large": .never,
         // Approval dialogs (access.*): policy, or a person said no / did not answer. The plugin tells the model.
@@ -88,10 +88,10 @@ public enum Refusals {
         "approval_refused_earlier": .never,
         "approval_rejected": .never,
         "approval_timeout": .never,
-        // The settings methods (Dispatcher+Settings: the window, and from stage 3a the socket's settings.*): never
+        // The settings methods (Dispatcher+Settings: the window, and since 2026-10-21 the socket's settings.*): never
         // the model's to retry.
         "verification_required": .never,
-        // Stage 3a, the daemon's owner check (OwnerCheck) and the settings over the socket: a person at the Mac acts
+        // The daemon's owner check (OwnerCheck) and the settings over the socket: a person at the Mac acts
         // (waits out the check in flight or the cool-down, answers the approval dialog first, tries again), never a
         // client on its own. approval_open: an approval dialog is up; settings_unavailable: no panels (headless);
         // nothing_pending: no change waits for the owner check, or no imported file waits to be confirmed;

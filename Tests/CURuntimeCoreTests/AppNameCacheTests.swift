@@ -2,7 +2,7 @@ import Foundation
 import XCTest
 @testable import CURuntimeCore
 
-/// The settings snapshot's app names, kept for a while (stage 3 review, daemon-3): a hit, a kept miss, expiry by the
+/// The settings snapshot's app names, kept for a while: a hit, a kept miss, expiry by the
 /// injected clock, and the key that ignores case.
 final class AppNameCacheTests: XCTestCase {
     private final class Clock: @unchecked Sendable {

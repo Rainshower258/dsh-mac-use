@@ -134,7 +134,7 @@ final class ZoomDispatchTests: XCTestCase {
         assertAllowed(h.call("zoom", ["task_id": "t1", "snapshot_gen": .number(Double(g)), "rect": rect]), in: h)
         XCTAssertEqual(h.env.zoomRequests.last?.ocr, true)
         XCTAssertNil(h.lastAudit["ocr_off"])
-        // VM round 17 (2026-10-17): with OCR switched off, a zoom still sent its OCR text.
+        // VM test, 2026-10-17: with OCR switched off, a zoom still sent its OCR text.
         try XCTUnwrap(h.dispatcher).settingsSetPrivacy(PrivacySettings(sendOCR: false), verified: false)
         assertAllowed(h.call("zoom", ["task_id": "t1", "snapshot_gen": .number(Double(g)), "rect": rect]), in: h)
         XCTAssertEqual(h.env.zoomRequests.last?.ocr, false)

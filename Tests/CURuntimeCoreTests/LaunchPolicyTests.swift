@@ -3,7 +3,7 @@ import Foundation
 import XCTest
 @testable import CURuntimeCore
 
-/// R1 of stage 2: only a bench build takes --state-dir or starts with a test-harness switch on.
+/// Only a bench build takes --state-dir or starts with a test-harness switch on.
 final class LaunchPolicyTests: XCTestCase {
     private let standard = URL(fileURLWithPath: "/var/empty/home/Library/Application Support/cu-runtime")
     private let other = "/private/tmp/cu-elsewhere"

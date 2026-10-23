@@ -75,7 +75,7 @@ final class AccessTests: XCTestCase {
         XCTAssertEqual(decision["decision"], "deny")
     }
 
-    /// 2026-10-16 (P1): the plugin asks for full by default, so "always" is offered for full too (signed apps); the
+    /// 2026-10-16: the plugin asks for full by default, so "always" is offered for full too (signed apps); the
     /// presenter passes the device owner check before it answers .always, and the daemon pins a full entry.
     func testFullModeOffersAlwaysForASignedAppAndPinsAFullEntry() throws {
         let h = Harness()
@@ -150,7 +150,7 @@ final class AccessTests: XCTestCase {
         XCTAssertEqual(h.presenter.shown.count, 4, "a new turn may ask again")
     }
 
-    /// Widening an app's read approval to full in the same turn is not one of the counted dialogs (P1).
+    /// Widening an app's read approval to full in the same turn is not one of the counted dialogs.
     func testWideningReadToFullIsNotACountedDialog() {
         let h = Harness()
         h.presenter.answer = .turn
@@ -181,7 +181,7 @@ final class AccessTests: XCTestCase {
     private let otherPID = ConnectionInfo(id: 2, peerPID: 999, peerPath: "/usr/local/bin/node", peerPIDVersion: 7)
     private let otherPath = ConnectionInfo(id: 3, peerPID: 4242, peerPath: "/usr/bin/python3", peerPIDVersion: 7)
     private let unknownPeer = ConnectionInfo(id: 4, peerPID: nil, peerPath: nil, peerPIDVersion: nil)
-    /// Same PID and executable, another process (the PID was reused): only the audit token's version tells (R6).
+    /// Same PID and executable, another process (the PID was reused): only the audit token's version tells.
     private let reusedPID = ConnectionInfo(id: 6, peerPID: 4242, peerPath: "/usr/local/bin/node", peerPIDVersion: 8)
     private let noVersion = ConnectionInfo(id: 7, peerPID: 4242, peerPath: "/usr/local/bin/node", peerPIDVersion: nil)
 
@@ -247,7 +247,7 @@ final class AccessTests: XCTestCase {
     }
 
     func testALaterProcessOnTheOwnersPIDIsNotTheOwner() throws {
-        // R6: same PID, same executable, another PID version. It cannot use the approvals; they end (their owner has
+        // Same PID, same executable, another PID version. It cannot use the approvals; they end (their owner has
         // exited: its PID is this connection's), and it is asked again like any successor.
         let h = Harness(config: PolicyConfig())
         assertAllowed(approve(h, fixture, .session), in: h)

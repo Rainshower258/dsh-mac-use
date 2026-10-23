@@ -1,6 +1,6 @@
 import Foundation
 
-// MARK: - One settings change, as the socket names it (stage 3a, 2026-10-21)
+// MARK: - One settings change, as the socket names it (2026-10-21)
 
 /// One access rule set to one of the values the page offers (`access.set`).
 public enum AccessEdit: Equatable, Sendable {
@@ -144,7 +144,7 @@ public enum BehaviorEdit: Equatable, Sendable {
     }
 }
 
-/// One settings change, each touching one item: the only way the socket changes the settings (C-A1). The daemon
+/// One settings change, each touching one item: the only way the socket changes the settings. The daemon
 /// decides on its live settings whether it loosens (Dispatcher.settingsLoosens) and verifies the person itself; the
 /// client never says whether it is verified, and never names a file or folder.
 public enum SettingsChange: Equatable, Sendable {

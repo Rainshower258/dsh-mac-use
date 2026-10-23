@@ -145,7 +145,7 @@ struct TypeParams: Decodable {
     /// Only "leave" (a downgrade: after an approval was refused or a switch failed); the grant's policy otherwise.
     let imePolicy: String?
     /// auto (default): with an element, set the value through AX when that is equivalent to typing it; type: always
-    /// post key events; paste: through the clipboard and ⌘V (P4).
+    /// post key events; paste: through the clipboard and ⌘V.
     let strategy: String?
 }
 

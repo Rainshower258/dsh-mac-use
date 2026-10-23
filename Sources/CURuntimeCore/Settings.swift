@@ -1,6 +1,6 @@
 import Foundation
 
-// MARK: - User settings (PLAN-v2 P1, 2026-10-15)
+// MARK: - User settings (2026-10-15)
 
 /// An app the user put on their own deny list: never granted, never asked about, in any mode. A user-level
 /// HardDeny, minus the "halts everything while frontmost" part (that stays for the system floor only).
@@ -17,7 +17,7 @@ public struct DenyEntry: Codable, Equatable, Sendable {
 }
 
 /// What an app outside every list gets the first time a task touches it (the settings window's "default mode",
-/// PLAN-v2 batch 1, 2026-10-16): a dialog, or a session approval of that mode without one. The full-power mode is
+/// 2026-10-16): a dialog, or a session approval of that mode without one. The full-power mode is
 /// never a default (it is switched on for a limited time only).
 public enum DefaultMode: String, Codable, Sendable, CaseIterable {
     case ask, read, full
@@ -137,7 +137,7 @@ public struct AccessDefaults: Codable, Equatable, Sendable {
     }
 }
 
-/// A chord the user added (the shortcuts page, batch 2, 2026-10-16): allowed in one app, or in every approved app.
+/// A chord the user added (the shortcuts page, 2026-10-16): allowed in one app, or in every approved app.
 public struct CustomChord: Codable, Equatable, Sendable {
     /// Normalized (KeyChord.description), e.g. "cmd+k".
     public let chord: String
@@ -182,7 +182,7 @@ public struct ChordSettings: Codable, Equatable, Sendable {
     }
 }
 
-/// What leaves the machine, and what is kept (the privacy-and-audit page, batch 3, 2026-10-17). Switching a kind of
+/// What leaves the machine, and what is kept (the privacy-and-audit page, 2026-10-17). Switching a kind of
 /// content off is tightening (at once); back on is loosening (verified). Apps on `textOnlyApps` never have a
 /// screenshot sent, whatever the switches.
 public struct PrivacySettings: Codable, Equatable, Sendable {
@@ -205,8 +205,9 @@ public struct PrivacySettings: Codable, Equatable, Sendable {
     }
 
     /// The file is snake_case (convertToSnakeCase / convertFromSnakeCase): "send_ocr" reads back as "sendOcr", so an
-    /// acronym property needs that spelling as its key, or it is never found and takes its default (VM round 17:
-    /// OCR and UI text, switched off, were on again after every daemon start). The names on disk do not change.
+    /// acronym property needs that spelling as its key, or it is never found and takes its default (VM test,
+    /// 2026-10-17: OCR and UI text, switched off, were on again after every daemon start). The names on disk do not
+    /// change.
     enum CodingKeys: String, CodingKey {
         case sendScreenshots, sendZoom, textOnlyApps, clearClipboardOnTurnStart
         case sendAXText = "sendAxText", sendOCR = "sendOcr"
@@ -284,7 +285,7 @@ public struct LogSettings: Codable, Equatable, Sendable {
 
     /// What `new` loosens compared to these: a shorter retention (it deletes audit files at once, so a request
     /// could erase the record of what it did). The directory is neither: it only ever comes from the daemon's own
-    /// folder panel or "use the default", never from a client (stage 3a).
+    /// folder panel or "use the default", never from a client.
     public func loosened(by new: LogSettings) -> [String] {
         new.retentionDays < retentionDays ? ["retention_days"] : []
     }
@@ -300,8 +301,8 @@ public struct LogSettings: Codable, Equatable, Sendable {
     }
 }
 
-/// How the model operates the machine (the behavior-and-model page, batch 4, 2026-10-17). Turning a switch towards
-/// what the daemon allows by default widens what the model can do (stage 3a, once settings reach the socket):
+/// How the model operates the machine (the behavior-and-model page, 2026-10-17). Turning a switch towards
+/// what the daemon allows by default widens what the model can do (since settings reach the socket, 2026-10-21):
 /// coordinate targets on, a higher input-source cap, Electron AX on are loosening (verified); the rest applies at once.
 public struct BehaviorSettings: Codable, Equatable, Sendable {
     /// At a turn's end the focus goes back to the app that was in front when it started (when the plugin asks).
@@ -381,7 +382,7 @@ extension ChangePolicy: Codable {
 }
 
 /// What the settings window owns. Kept in the daemon's state dir as `settings.json` (0600), read at start, written
-/// by the window and, from stage 3a, by the socket's settings methods one closed SettingsChange at a time: the
+/// by the window and, since 2026-10-21, by the socket's settings methods one closed SettingsChange at a time: the
 /// daemon decides what loosens and verifies the person itself; the file never crosses the socket whole.
 /// Tightening takes effect at once; loosening (the person verified first) is recorded as verified.
 public struct UserSettings: Codable, Equatable, Sendable {

@@ -211,7 +211,7 @@ final class SnapshotTargetTests: XCTestCase {
         h.env.elementNow[7] = (Fingerprint.of(role: "AXButton", identifier: "m1", text: "M1", frame: frame), frame)
         let g = try h.snapshot()
         h.env.windows.insert(FakeWindow(CGRect(x: 250, y: 250, width: 200, height: 200), fixture), at: 0)   // a sheet opens
-        // Real events only: AXPress acts on the element itself and is not affected by what covers it (PLAN-v2 §6).
+        // Real events only: AXPress acts on the element itself and is not affected by what covers it.
         assertDenied(click(h, ["element_id": "a1", "snapshot_gen": .number(Double(g)), "via": "event"]), "hit_test_failed", in: h)
         XCTAssertTrue(h.env.clicks.isEmpty)
     }

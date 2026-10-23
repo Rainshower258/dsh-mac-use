@@ -3,11 +3,11 @@ import Foundation
 // MARK: - App display names
 
 extension Dispatcher {
-    /// A model may name an app the way the screen shows it ("DSHFixture") rather than by bundle ID (R4: every
-    /// not_granted was that). The name is looked up among the task's granted apps only, and used only when exactly
-    /// one matches, so it can never reach an app the grant does not already cover; the bundle ID it becomes still
-    /// goes through checkApp (hard-deny, grant). Several matches are refused; no match leaves the request as it was
-    /// (refused as not_granted). Grants are never resolved (they take bundle IDs).
+    /// A model may name an app the way the screen shows it ("DSHFixture") rather than by bundle ID (every
+    /// not_granted in the plugin's test runs was that). The name is looked up among the task's granted apps only, and
+    /// used only when exactly one matches, so it can never reach an app the grant does not already cover; the bundle ID
+    /// it becomes still goes through checkApp (hard-deny, grant). Several matches are refused; no match leaves the
+    /// request as it was (refused as not_granted). Grants are never resolved (they take bundle IDs).
     func resolveAppName(_ params: JSONValue?, _ f: inout [String: JSONValue]) throws -> JSONValue? {
         guard case .object(var o)? = params, let name = o["app"]?.stringValue, let taskID = o["task_id"]?.stringValue,
               // Read-only lookup: grants.active() drops an expired grant, and the real check must still see it.

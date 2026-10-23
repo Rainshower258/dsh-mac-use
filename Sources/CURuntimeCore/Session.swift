@@ -1,8 +1,8 @@
 import Foundation
 
 /// One connection's state. The first message must be `session.hello` carrying the daemon's token.
-/// The token only proves the peer can read a 0600 file (PLAN-v2 §5.4): it stops stray connections
-/// and stale clients, not code already running as this user.
+/// The token only proves the peer can read a 0600 file (docs/DESIGN.md "Connection authentication"): it stops stray
+/// connections and stale clients, not code already running as this user.
 public final class Session {
     public static let protocolVersion = "cu-runtime/1"
 

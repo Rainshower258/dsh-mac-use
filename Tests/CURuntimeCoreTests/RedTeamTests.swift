@@ -2,7 +2,7 @@ import CoreGraphics
 import XCTest
 @testable import CURuntimeCore
 
-/// PLAN-v2 R1 red-team set: requests sent straight to the daemon, no model involved.
+/// Red-team set: requests sent straight to the daemon, no model involved.
 /// Exit condition: every one is refused and every refusal is in the audit log.
 final class RedTeamTests: XCTestCase {
     // MARK: Positive control — without this, "everything refused" could just mean "nothing works".
@@ -63,7 +63,7 @@ final class RedTeamTests: XCTestCase {
         assertDenied(h.call("observe", ["task_id": "other"]), "no_grant", in: h)
     }
 
-    // MARK: Apps named by display name (R4: every not_granted was the model writing "DSHFixture")
+    // MARK: Apps named by display name (every not_granted in the plugin's test runs was the model writing "DSHFixture")
 
     func testDisplayNameResolvesToTheOnlyGrantedMatch() {
         let h = Harness()

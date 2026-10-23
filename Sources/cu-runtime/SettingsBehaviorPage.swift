@@ -2,7 +2,7 @@ import AppKit
 import CURuntimeCore
 import SwiftUI
 
-// MARK: - The behavior-and-model page (SettingsWindow.swift; design: Behavior.html, batch 4, 2026-10-17)
+// MARK: - The behavior-and-model page (SettingsWindow.swift, 2026-10-17)
 //
 // How the model operates (one field per click; coordinate targets on, a higher input-source cap and Electron AX on
 // widen its reach and pass the owner check first, SettingsModel.editBehavior), and the advanced part: activation, import / export (an import lists what it loosens and is verified

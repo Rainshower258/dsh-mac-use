@@ -82,9 +82,9 @@ public protocol SystemEnvironment: AnyObject {
     /// the .app's file name. Only asked about bundle IDs already in a grant (Dispatcher.resolveAppName).
     func displayNames(bundleID: String) -> [String]
     func frontmostBundleID() -> String?
-    /// macOS session lock state (P5, 2026-10-16): true locked, false unlocked on the console, nil unknown.
+    /// macOS session lock state (2026-10-16): true locked, false unlocked on the console, nil unknown.
     func sessionLocked() -> Bool?
-    /// act.type strategy paste (P4): the clipboard's items (every type's data), or nil if any cannot be read.
+    /// act.type strategy paste: the clipboard's items (every type's data), or nil if any cannot be read.
     /// Reading stops past `limit` bytes (`bytes` then exceeds it).
     func pasteboardSnapshot(limit: Int) -> PasteboardContents?
     /// Replaces the clipboard with plain text; the new change count, or nil if writing failed.

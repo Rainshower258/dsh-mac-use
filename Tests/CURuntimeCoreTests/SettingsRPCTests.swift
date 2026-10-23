@@ -2,7 +2,7 @@ import Foundation
 import XCTest
 @testable import CURuntimeCore
 
-/// Stage 3a, contract C-B2 (2026-10-21): the settings over the socket. A loosening change waits for the daemon's own
+/// 2026-10-21: the settings over the socket. A loosening change waits for the daemon's own
 /// owner check and only its ok applies it; nothing from the client stands in for that check; the panels are the
 /// daemon's, and no path, token or audit content goes back over the socket.
 final class SettingsRPCTests: XCTestCase {

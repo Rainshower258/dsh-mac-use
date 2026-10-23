@@ -23,7 +23,7 @@ public struct OCRLine: Sendable, Equatable {
     public let frame: CGRect
 }
 
-/// Per-window OCR cache (PLAN-v2 R2, decision 2026-09-29). Lines are kept in window-local points, so a window that
+/// Per-window OCR cache (decided 2026-09-29). Lines are kept in window-local points, so a window that
 /// only moved needs no OCR at all; a resize drops the window's entry. Between observes the window is compared on a
 /// grid of `cellPt` cells by mean absolute luma difference (not exact hashes: a blinking caret must not count as a
 /// change). Changed cells widen to full-width bands, because text runs in lines and a partial crop would cut them;
@@ -37,7 +37,7 @@ public struct OCRCache: Sendable {
         /// Mean absolute difference (0–255) over a cell's samples above which the cell counts as changed. Biased
         /// low: a missed change serves stale text, a false one only re-reads one band (ids are reused). Estimated at
         /// 4 pt/sample: one changed digit ≈ 3.4, a 1 pt caret blink ≈ 4 (re-read, cheap), a changed period ≈ 1
-        /// (missed). Tuned with data in R5.
+        /// (missed). Tuned with data in R5 (bench/r5/).
         public var madThreshold: Double = 2
         /// Extra margin above and below each band, for text straddling a cell row boundary.
         public var bandPadPt: Double = 8

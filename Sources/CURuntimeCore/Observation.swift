@@ -1,7 +1,7 @@
 import CoreGraphics
 import Foundation
 
-/// Geometry of one SCK capture (PLAN-v2 §4.1). The only internal coordinate system is global screen points.
+/// Geometry of one SCK capture. The only internal coordinate system is global screen points.
 /// Captures are per window (`SCContentFilter(desktopIndependentWindow:)`): `contentRect` is that window's global
 /// frame and `pointPixelScale` comes from the filter. Do NOT use a display filter with `including:` apps here:
 /// on macOS 26 it draws the app's content at the image origin while its `contentRect` still reports the whole
@@ -58,7 +58,7 @@ public struct CaptureGeometry: Equatable, Sendable {
         return CaptureGeometry(contentRect: rect, pointPixelScale: pointPixelScale)
     }
 
-    /// Mapping metadata attached to every image sent to the model (§4.1).
+    /// Mapping metadata attached to every image sent to the model.
     public func mapping(sentSize: CGSize) -> JSONValue {
         let r = contentRect
         return [
@@ -82,7 +82,7 @@ public enum Deadlines {
     public static let shutdown: TimeInterval = 5
 }
 
-/// AX traversal limits (PLAN-v2 §3.1 AXSnapshot).
+/// AX traversal limits (one AX snapshot).
 public struct AXLimits: Sendable, Equatable {
     public var messagingTimeout: TimeInterval = 1.5
     public var timeBudget: TimeInterval = 3.0
@@ -142,7 +142,7 @@ public struct ObservedElement: Sendable, Equatable {
     }
 }
 
-/// What the OCR cache did in one observe: data for tuning its parameters (R5).
+/// What the OCR cache did in one observe: data for tuning its parameters (R5, bench/r5/).
 public struct OCRStats: Sendable, Equatable {
     public var windows = 0
     /// Windows recognized whole (new, resized, or after a failure).
@@ -289,7 +289,7 @@ public struct ObserveResult: Sendable {
     public var sheetIDs: Set<UInt32> = []
     /// Thumbnails of the windows OCR read (see Snapshot.windowThumbs).
     public var windowThumbs: [UInt32: WindowThumb] = [:]
-    /// Time per stage of the observe, in ms (the OS layer names the stages): latency data for R5.
+    /// Time per stage of the observe, in ms (the OS layer names the stages): latency data for R5 (bench/r5/).
     public var phasesMs: [String: Double] = [:]
 
     public init() {}

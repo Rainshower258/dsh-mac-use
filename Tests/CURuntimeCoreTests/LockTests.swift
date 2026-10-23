@@ -1,7 +1,8 @@
 import XCTest
 @testable import CURuntimeCore
 
-/// P5 (2026-10-16): with the screen locked nothing is observed, posted or opened; unknown lock state is not refused.
+/// Screen lock (2026-10-16): with the screen locked nothing is observed, posted or opened; unknown lock state is not
+/// refused.
 final class LockTests: XCTestCase {
     func testALockedScreenRefusesObservingActingAndOpeningBeforeAnythingHappens() throws {
         let h = Harness(config: PolicyConfig(configGrants: true))

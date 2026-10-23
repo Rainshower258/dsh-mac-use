@@ -3,7 +3,7 @@ import XCTest
 @testable import CURuntimeCore
 
 /// The settings window's side of the daemon, continued (SettingsTests grew past SwiftLint's type length, 2026-10-17):
-/// privacy (batch 3), the log's place and retention, behavior with import and reset (batch 4).
+/// privacy, the log's place and retention, behavior with import and reset.
 final class SettingsPrivacyBehaviorTests: XCTestCase {
     private var dir: URL!
 
@@ -26,7 +26,7 @@ final class SettingsPrivacyBehaviorTests: XCTestCase {
     }
 
 
-    // MARK: privacy (batch 3, 2026-10-17)
+    // MARK: privacy (2026-10-17)
 
     private func observe(_ h: Harness, image: Bool = true, ocr: String = "on") -> Result<JSONValue, RPCFailure> {
         h.call("observe", ["task_id": "t1", "include_image": .bool(image), "ocr": .string(ocr)])
@@ -60,7 +60,7 @@ final class SettingsPrivacyBehaviorTests: XCTestCase {
         assertDenied(h.call("zoom", ["task_id": "t1", "snapshot_gen": 1, "element_id": "a1"]), "zoom_off", in: h)
     }
 
-    // VM round 17 (2026-10-17): the window wrote back a whole copy taken at the click once the owner check passed,
+    // VM test, 2026-10-17: the window wrote back a whole copy taken at the click once the owner check passed,
     // undoing what changed while the check was open. An edit applies to the settings as they are then.
     func testAPrivacyEditAfterTheCheckKeepsWhatChangedMeanwhile() throws {
         let h = Harness(settings: MemorySettingsStore(UserSettings(privacy: PrivacySettings(sendScreenshots: false, sendOCR: false))))
@@ -137,7 +137,7 @@ final class SettingsPrivacyBehaviorTests: XCTestCase {
         XCTAssertNil(h.settingsStore.settings.logs.directory, "nothing saved")
         let chosen = dir.appendingPathComponent("chosen")
         try FileManager.default.createDirectory(at: chosen, withIntermediateDirectories: true)
-        // 30 -> 7 days deletes audit files at once: loosening (stage 3a), refused unverified with nothing changed.
+        // 30 -> 7 days deletes audit files at once: loosening, refused unverified with nothing changed.
         XCTAssertThrowsError(try d.settingsSetLogs(LogSettings(directory: chosen.path, retentionDays: 7))) {
             XCTAssertEqual(($0 as? Denial)?.reason, "verification_required")
         }
@@ -157,7 +157,7 @@ final class SettingsPrivacyBehaviorTests: XCTestCase {
         XCTAssertEqual(try decoder.decode(UserSettings.self, from: Data(#"{"version":2}"#.utf8)).logs, LogSettings())
     }
 
-    // VM round 17 (2026-10-17): through the dispatcher (an AuditSink) the move never happened. FileAudit's
+    // VM test, 2026-10-17: through the dispatcher (an AuditSink) the move never happened. FileAudit's
     // setDirectory returned Int, the protocol's did not, so the call went to the protocol's empty default: the setting
     // was saved, the log stayed where it was until the next start, and the days before were left behind.
     func testChangingTheLogPlaceThroughTheDispatcherMovesTheFilesAndTheWriting() throws {
@@ -255,7 +255,7 @@ final class SettingsPrivacyBehaviorTests: XCTestCase {
         XCTAssertEqual(AuditReader.recentRefusals(directory: dir, now: early, timeZone: cst).count, 1, "read on the writer's day")
     }
 
-    // MARK: behavior, import, reset (batch 4, 2026-10-17)
+    // MARK: behavior, import, reset (2026-10-17)
 
     func testTheBehaviorSettingsCapTheInputSourcePolicyAndElectronAXAndPickTheActivationMethod() throws {
         let h = Harness()
@@ -273,7 +273,7 @@ final class SettingsPrivacyBehaviorTests: XCTestCase {
         XCTAssertFalse(g.electronAX)
         XCTAssertThrowsError(try d.settingsSetBehavior(BehaviorSettings(activationMethod: "teleport")))
         // The default cap lets the plugin's choice through. Back to it raises the cap and switches Electron AX on:
-        // loosening (stage 3a), so verified.
+        // loosening, so verified.
         XCTAssertThrowsError(try d.settingsSetBehavior(BehaviorSettings())) {
             XCTAssertEqual(($0 as? Denial)?.reason, "verification_required")
         }

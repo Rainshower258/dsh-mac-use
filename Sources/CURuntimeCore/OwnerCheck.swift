@@ -14,10 +14,10 @@ public protocol OwnerVerifier: AnyObject {
 /// What OwnerCheck.begin did: started a check, or why not.
 public enum OwnerCheckStart: Equatable, Sendable { case started, busy, cooldown(until: Date), unavailable, approvalOpen }
 
-/// The daemon's one gate for the owner check (PLAN 阶段3 二 A): the only source of `verified: true` on the socket path,
+/// The daemon's one gate for the owner check: the only source of `verified: true` on the socket path,
 /// shared by the settings window, the settings socket methods and the approval dialog's owner check. One check at a
-/// time for the whole daemon: two system checks open at once cancel each other (VM round 17, LAError -4), and that
-/// change was lost without the person noticing.
+/// time for the whole daemon: two system checks open at once cancel each other (VM test, 2026-10-17, LAError -4), and
+/// that change was lost without the person noticing.
 ///
 /// - A start is refused, in this order, with no verifier (`unavailable`), while a check is in flight (`busy`), during
 ///   the cool-down after a failed, cancelled or unavailable verdict (`cooldown(until:)`, refused while now < until;

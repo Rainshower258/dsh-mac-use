@@ -90,7 +90,7 @@ public struct ClickLimit: Sendable, Equatable {
 /// The client a person's approvals belong to: the peer that asked for them (PID, PID version and executable, from
 /// the connection's audit token). Approvals answer one person in one client; another process that reaches the socket
 /// (with the token, as any code of this user can) does not get to use them. All three must match, so a later process
-/// on a reused PID does not either (R6); an unknown PID or version never matches.
+/// on a reused PID does not either; an unknown PID or version never matches.
 public struct GrantOwner: Sendable, Equatable {
     public let pid: Int32?
     public let pidVersion: Int32?

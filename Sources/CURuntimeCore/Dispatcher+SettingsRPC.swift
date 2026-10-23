@@ -1,6 +1,6 @@
 import Foundation
 
-// MARK: - The settings over the socket (stage 3a, contract C-B2, 2026-10-21)
+// MARK: - The settings over the socket (2026-10-21)
 
 /// A panel's answer (SettingsPanels): nil or false is a panel the person closed, or one that failed.
 enum SettingsPanelAnswer: Sendable {

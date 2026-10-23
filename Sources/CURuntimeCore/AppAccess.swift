@@ -1,9 +1,9 @@
 import Foundation
 
-// Daily use on the maintainer's Mac (PLAN-v2, "宿主机日常使用模式", 2026-10-03): an app becomes usable when a person
+// Daily use on a real Mac (decided 2026-10-03): an app becomes usable when a person
 // approves it in the daemon's own dialog the first time the model touches it, observe included. The dialog belongs
 // to this daemon (hard-denied, so the model can neither see nor click it) and shows the app as the system resolved
-// it, never the model's string. "Always" is offered for signed apps in both modes (2026-10-16, P1: the plugin now
+// it, never the model's string. "Always" is offered for signed apps in both modes (since 2026-10-16: the plugin now
 // asks for full by default, as the official cua-macos provider asks once per app); choosing it for full passes the
 // device owner check (Touch ID / password) in the presenter first. The command `cu-runtime grants add --full`
 // still works. Either way the app's signature is recorded at that moment.
@@ -187,7 +187,7 @@ public enum AccessRules {
     /// The dialog closes by itself after this long; no answer counts as a refusal.
     public static let dialogTimeout: TimeInterval = 120
     /// Dialogs per task and turn; more are refused without asking (a flood of dialogs trains people to click allow).
-    /// 3 since 2026-10-16 (P1; 2 was hit by every two-app task). A dialog that widens an app's read approval to full
+    /// 3 since 2026-10-16 (2 was hit by every two-app task). A dialog that widens an app's read approval to full
     /// is not counted: the person already said yes to that app once.
     public static let dialogsPerTurn = 3
     /// An app the person refused is refused without asking until the turn ends (access.turn_end forgets it): the

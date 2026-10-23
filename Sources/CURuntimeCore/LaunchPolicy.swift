@@ -1,7 +1,7 @@
 import Darwin
 import Foundation
 
-/// What a daemon launch may use, decided before it touches its state (stage 2, R1). A release build serves only the
+/// What a daemon launch may use, decided before it touches its state. A release build serves only the
 /// default state directory, reached by leaving `--state-dir` out, and does not start when its config file turns on a
 /// test-harness switch: with either, any code of this user that can run `open` (a model's bash among it) could start
 /// a second daemon holding this app's TCC permissions and grant itself apps with no dialog, or have observe hand out

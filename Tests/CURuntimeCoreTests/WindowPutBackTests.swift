@@ -1,7 +1,7 @@
 import XCTest
 @testable import CURuntimeCore
 
-/// PLAN 阶段 0 (2026-10-17): the approval dialog brought the settings window forward and never put it back. The
+/// 2026-10-17: the approval dialog brought the settings window forward and never put it back. The
 /// window's place is noted before the dialog and put back after it (WindowPutBack, applied by the Mac presenter);
 /// the decision's audit line says whether it had to be.
 final class WindowPutBackTests: XCTestCase {

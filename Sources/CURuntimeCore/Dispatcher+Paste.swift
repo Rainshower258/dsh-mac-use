@@ -1,9 +1,9 @@
 import Foundation
 
-// MARK: - act.type strategy paste (P4) and the screen lock (P5), 2026-10-16
+// MARK: - act.type strategy paste and the screen lock, 2026-10-16
 
 extension Dispatcher {
-    /// act.type strategy paste (P4, 2026-10-16, after the official cua-macos provider's paste): the text goes through
+    /// act.type strategy paste (2026-10-16, after the official cua-macos provider's paste): the text goes through
     /// the clipboard and ⌘V, so no input method sees it and no system state (the input source) changes. The clipboard
     /// is saved first (every type of every item, at most pasteboardLimit bytes) and put back once the app had its
     /// chance to read, unless something else wrote the clipboard meanwhile: then it is left alone and the result says
@@ -53,8 +53,8 @@ extension Dispatcher {
         return .object(out)
     }
 
-    /// P5 (2026-10-16): with the screen locked nothing is observed or posted. A screenshot of the lock screen is
-    /// not a current observation, and input would go to the lock screen (or, worse, the password field). Unknown
+    /// Screen lock (2026-10-16): with the screen locked nothing is observed or posted. A screenshot of the lock screen
+    /// is not a current observation, and input would go to the lock screen (or, worse, the password field). Unknown
     /// (nil) is not refused: the session dictionary is missing under some launch paths, and this guards against
     /// waste, not against an adversary (locking the screen is the person's own act).
     func requireUnlocked() throws {

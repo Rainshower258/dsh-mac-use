@@ -3,7 +3,7 @@ import XCTest
 @testable import CURuntimeCore
 
 final class CaptureGeometryTests: XCTestCase {
-    /// PLAN-v2 §4.1 example: display 1470x956 pt @2x, sent at 1120x728 -> pt = img * (1470/1120).
+    /// Worked example: display 1470x956 pt @2x, sent at 1120x728 -> pt = img * (1470/1120).
     func testPlanExampleMapping() {
         let g = CaptureGeometry(contentRect: CGRect(x: 0, y: 0, width: 1470, height: 956), pointPixelScale: 2)
         XCTAssertEqual(g.nativeSizePx, CGSize(width: 2940, height: 1912))
@@ -38,7 +38,7 @@ final class CaptureGeometryTests: XCTestCase {
         XCTAssertEqual(r.width, 29, accuracy: 1e-6)
     }
 
-    /// VM case from the R2 notes: 1440x900 @2x = 2880x1800 native, ~2.85x per side under a 640k budget.
+    /// VM case: 1440x900 @2x = 2880x1800 native, ~2.85x per side under a 640k budget.
     func testSentSizeFitsBudgetDeterministically() {
         let native = CGSize(width: 2880, height: 1800)
         let s = CaptureGeometry.sentSize(native: native)

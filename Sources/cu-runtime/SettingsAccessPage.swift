@@ -1,7 +1,7 @@
 import CURuntimeCore
 import SwiftUI
 
-// MARK: - The modes-and-defaults page (SettingsWindow.swift; design: Access.html, batch 1, 2026-10-16)
+// MARK: - The modes-and-defaults page (SettingsWindow.swift, 2026-10-16)
 //
 // The three modes explained, then the rules the user sets (UserSettings.access). Each control applies at once when
 // it tightens; a loosening choice goes through the owner check first (SettingsModel.setAccess), and the control

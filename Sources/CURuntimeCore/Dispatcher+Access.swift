@@ -42,7 +42,7 @@ extension Dispatcher {
             guard let imeAsked = ChangePolicy(rawValue: p.imePolicy ?? "leave") else {
                 throw RPCFailure(.invalidParams, "ime_policy must be leave, ask or takeover")
             }
-            // The behavior settings cap the input-source policy and may keep Electron AX off (batch 4).
+            // The behavior settings cap the input-source policy and may keep Electron AX off.
             let ime = settings.behavior.imePolicy(requested: imeAsked)
             if ime != imeAsked { f["ime_policy_capped"] = .string(ime.rawValue) }
             let electronAX = (p.electronAx ?? false) && settings.behavior.electronAXAuto
@@ -82,7 +82,7 @@ extension Dispatcher {
                 throw Denial("approval_refused_earlier", "the user refused \(identity.bundleID) earlier in this turn; "
                              + "it is not asked again in this turn", data: ["app": .string(identity.bundleID)])
             }
-            // The default mode (settings, batch 1): an app outside every list gets a session approval of that mode
+            // The default mode (settings): an app outside every list gets a session approval of that mode
             // without a dialog, for the client that marked this turn; a request above it goes to the dialog as usual.
             // Nothing the person refused this turn (above) and nothing on a list (checked before) comes this way.
             if turnMarked(p.taskId), settings.access.defaultMode.covers(mode) {
@@ -365,7 +365,7 @@ extension Dispatcher {
         throw Denial("grant_owner_mismatch", "task \(g.taskID)'s approvals belong to the client that asked for them, not to this connection")
     }
 
-    /// The owner's process has exited, or its PID now runs another program or another process (R6). Unknown is gone.
+    /// The owner's process has exited, or its PID now runs another program or another process. Unknown is gone.
     func ownerGone(_ o: GrantOwner) -> Bool {
         guard let pid = o.pid else { return true }
         return o.isSucceeded(by: conn) || env.processPath(pid: pid) != o.path
@@ -439,7 +439,7 @@ extension Dispatcher {
         return "\(name) (PID \(pid))"
     }
 
-    /// Approvals whose owner has exited (or whose PID now runs another program, or is this very connection's, R6) end:
+    /// Approvals whose owner has exited (or whose PID now runs another program, or is this very connection's) end:
     /// nobody could use them, and the task's next client (dsh restarted, same conversation) is asked again like a new
     /// one, not refused. The dead client's unfinished turn ends with it (its dialog count). Another client while the
     /// owner runs: checkOwner.

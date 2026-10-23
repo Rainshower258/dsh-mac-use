@@ -1,6 +1,6 @@
 import Foundation
 
-// MARK: - apps.launch `open` (2026-10-15, PLAN-v2 C3)
+// MARK: - apps.launch `open` (2026-10-15)
 
 /// What apps.launch hands the app to open: a file bash made, or a web address (cua-driver's
 /// `launch_app({bundle_id, urls})`). It replaces `open` in bash, which runs outside both the sandbox and the daemon's

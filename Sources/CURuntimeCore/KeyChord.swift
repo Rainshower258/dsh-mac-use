@@ -73,7 +73,7 @@ public struct KeyChord: Hashable, Sendable, CustomStringConvertible {
     }
 }
 
-/// Chord allowlist (PLAN-v2 §5.3 item 4, revised 2026-09-28). A blocklist always leaks: user-defined
+/// Chord allowlist (docs/DESIGN.md "Key chords: allowlist", revised 2026-09-28). A blocklist always leaks: user-defined
 /// shortcuts and third-party global hotkeys (QQ/WeChat screenshot, Raycast, Alfred) fire whatever is
 /// frontmost, and F-key behaviour depends on the fn-lock setting. So:
 /// - no modifiers, or only ⇧: allowed (typing, navigation, return/tab/escape…), except F-keys;
@@ -85,9 +85,9 @@ public enum ChordPolicy {
         "cmd+w", "cmd+n", "cmd+s", "cmd+q", "cmd+delete",
         // 2026-10-14 (real use): a browser's address bar; TextEdit's plain text, a browser's closed tab back.
         "cmd+l", "cmd+shift+t",
-        // 2026-10-15 (VM round 14): bold, italic, underline in an editor (the model fell back to the menu).
+        // 2026-10-15 (VM test): bold, italic, underline in an editor (the model fell back to the menu).
         "cmd+b", "cmd+i", "cmd+u",
-        // 2026-10-15 (VM round 15): selecting to the line's start/end, by word, to the text's start/end; the model
+        // 2026-10-15 (VM test): selecting to the line's start/end, by word, to the text's start/end; the model
         // had pressed shift+right six times in a batch instead. Selection only, no side effect.
         "cmd+shift+left", "cmd+shift+right", "cmd+shift+up", "cmd+shift+down", "opt+shift+left", "opt+shift+right",
         "opt+left", "opt+right", "opt+up", "opt+down",

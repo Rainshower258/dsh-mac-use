@@ -2,7 +2,7 @@ import Foundation
 import XCTest
 @testable import CURuntimeCore
 
-/// The settings window's side of the daemon (PLAN-v2 P1, 2026-10-15): the user's deny list, revoking from the
+/// The settings window's side of the daemon (2026-10-15): the user's deny list, revoking from the
 /// overview, the snapshot, the settings file, and reading refusals back from the audit.
 final class SettingsTests: XCTestCase {
     private var dir: URL!
@@ -106,7 +106,7 @@ final class SettingsTests: XCTestCase {
         XCTAssertEqual(h.dispatcher.settingsSnapshot().persistent.count, 1, "the snapshot only reports; the next use voids the entry")
     }
 
-    // MARK: the access rules (batch 1, 2026-10-16)
+    // MARK: the access rules (2026-10-16)
 
     func testTheDialogCountTimeoutAndSessionLengthComeFromTheSettings() throws {
         let rules = AccessDefaults(defaultMode: .ask, sessionLimitMinutes: 15, dialogsPerTurn: 1, dialogTimeoutSeconds: 60)
@@ -284,7 +284,7 @@ final class SettingsTests: XCTestCase {
         XCTAssertEqual(floor.first { $0.bundleID == HardDeny.daemon }?.category, .selfAndRemote)
     }
 
-    // MARK: the chord allowlist (batch 2, 2026-10-17)
+    // MARK: the chord allowlist (2026-10-17)
 
     private func key(_ h: Harness, _ chord: String, app: String = fixture, task: String = "t1") -> Result<JSONValue, RPCFailure> {
         h.call("act.key", ["task_id": .string(task), "app": .string(app), "chord": .string(chord)])
@@ -420,7 +420,7 @@ final class SettingsTests: XCTestCase {
         XCTAssertEqual(audit.entries.last?["decision"], "error")
     }
 
-    // VM round 17 (2026-10-17): OCR and UI text switched off came back on at every daemon start. On disk sendOCR is
+    // VM test, 2026-10-17: OCR and UI text switched off came back on at every daemon start. On disk sendOCR is
     // "send_ocr", which convertFromSnakeCase reads back as "sendOcr", not the property's key: the field looked
     // absent and took its default (on). Every field, off its default, must come back from the file and the export.
     func testEveryFieldOffItsDefaultSurvivesTheFileAndTheExport() throws {
@@ -471,7 +471,7 @@ final class SettingsTests: XCTestCase {
         XCTAssertTrue(AuditReader.recentRefusals(directory: dir.appendingPathComponent("missing"), now: now, timeZone: TimeZone(secondsFromGMT: 0)!).isEmpty)
     }
 
-    // Both readers skip a line without their word before parsing it (stage 3 review, daemon-3): the lists are the same
+    // Both readers skip a line without their word before parsing it: the lists are the same
     // as a parse of every line gives, with noise around them, the word only inside other text, and lines laid out
     // with spaces (valid JSON the audit itself does not write).
     func testTheAuditReadersGiveTheSameListsAmongNoiseLines() throws {

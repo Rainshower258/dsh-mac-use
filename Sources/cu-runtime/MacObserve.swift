@@ -589,7 +589,7 @@ extension MacEnvironment {
     /// Recognizes a line of text once with the real request settings (textRequest). What it buys is unclear: the
     /// first real whole-window OCR stayed at ~2.5-3.4 s even after a window-sized mixed zh/en prewarm run twice on
     /// OCR's own queue (2026-09-29, 15 min timebox). Unverified lead: the cost may be the first read of an SCK
-    /// (IOSurface-backed) image rather than Vision's models. Kept cheap; bench and R4 do a warm-up observe instead.
+    /// (IOSurface-backed) image rather than Vision's models. Kept cheap; bench and plugin do a warm-up observe instead.
     private static func prewarmVision() -> Bool {
         let size = CGSize(width: 480, height: 64)
         guard let ctx = CGContext(data: nil, width: Int(size.width), height: Int(size.height), bitsPerComponent: 8,

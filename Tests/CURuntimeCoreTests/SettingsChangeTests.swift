@@ -2,7 +2,7 @@ import Foundation
 import XCTest
 @testable import CURuntimeCore
 
-/// Stage 3a (2026-10-21): the settings over the socket, daemon side. The closed SettingsChange and its strict decode,
+/// 2026-10-21: the settings over the socket, daemon side. The closed SettingsChange and its strict decode,
 /// loosening decided by the daemon and enforced by every setter, one-field edits, the snapshot the page reads and the
 /// audit lines it lists.
 final class SettingsChangeTests: XCTestCase {
@@ -59,7 +59,7 @@ final class SettingsChangeTests: XCTestCase {
         }
     }
 
-    // MARK: C-A1: the closed change and its strict decode
+    // MARK: the closed change and its strict decode
 
     func testEveryKindDecodesAndAnExtraOrMissingKeyIsRefused() throws {
         XCTAssertEqual(Set(samples.compactMap { $0.0["kind"]?.stringValue }), Set(SettingsChange.keys.keys), "every kind sampled")
@@ -114,7 +114,7 @@ final class SettingsChangeTests: XCTestCase {
                                                     "note": .string(String(repeating: "n", count: 200))]), "the limits themselves")
     }
 
-    // MARK: C-A1/C-A2: loosening decided by the daemon, enforced by the setters
+    // MARK: loosening decided by the daemon, enforced by the setters
 
     /// Settings tightened on every front, a persistent entry (read, pinned to an old signature), and a log folder.
     private func tightHarness() -> Harness {
@@ -248,7 +248,7 @@ final class SettingsChangeTests: XCTestCase {
         XCTAssertEqual(h.lastAudit["verified"], true)
     }
 
-    // MARK: C-A2: the audit's settings changes
+    // MARK: the audit's settings changes
 
     func testRecentSettingsChangesLeaveOutRequestOnlyLines() throws {
         let fmt = ISO8601DateFormatter()
@@ -292,7 +292,7 @@ final class SettingsChangeTests: XCTestCase {
         XCTAssertEqual(d.settings.logs.directory, inForce)
     }
 
-    // MARK: C-A3: the snapshot the page reads
+    // MARK: the snapshot the page reads
 
     func testTheSnapshotJSONHasThePagesFieldsAndNothingSecret() throws {
         let h = Harness(settings: MemorySettingsStore(UserSettings(

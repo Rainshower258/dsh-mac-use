@@ -2,7 +2,7 @@ import AppKit
 import ApplicationServices
 import CURuntimeCore
 
-/// Input through real events and AX (PLAN-v2 §6). Every call here comes after the policy layer's checks.
+/// Input through real events and AX (docs/DESIGN.md "Actions"). Every call here comes after the policy layer's checks.
 extension MacEnvironment {
     private static let source = CGEventSource(stateID: .hidSystemState)
 

@@ -1,6 +1,6 @@
 import Foundation
 
-// MARK: - A daemon window put back after the approval dialog (PLAN 阶段 0, 2026-10-17)
+// MARK: - A daemon window put back after the approval dialog (2026-10-17)
 //
 // The dialog activates the daemon, and AppKit brings an activated app's main window forward; when the dialog closes
 // it hands that window the key and orders it where the dialog was, and the hand-back that follows activates the app

@@ -79,7 +79,7 @@ final class InterceptionTests: XCTestCase {
     }
 }
 
-/// 2026-10-14 (WeChat 4 on the maintainer's Mac): the app answers the AX hit test with kAXErrorNotImplemented for
+/// 2026-10-14 (WeChat 4 on a real Mac): the app answers the AX hit test with kAXErrorNotImplemented for
 /// every point, so every click was refused. Then, and only then, the window list decides with invisible windows
 /// counted; an invisible window of another app over the point still refuses.
 final class AXNotImplementedTests: XCTestCase {

@@ -17,7 +17,7 @@ public struct ZWindow: Sendable, Equatable {
     }
 }
 
-/// Builds the model's desktop image (PLAN-v2 §4.2): only granted windows show content; any other window in
+/// Builds the model's desktop image: only granted windows show content; any other window in
 /// front of them is a flat block (no pixels from it), so the model never "sees" what is actually covered.
 public enum Composite {
     public enum Op: Sendable, Equatable {
@@ -102,7 +102,7 @@ public enum Composite {
     }
 }
 
-/// MVP is single-display (PLAN-v2 §1): a granted window whose centre is not on the main display is reported as
+/// Single display only: a granted window whose centre is not on the main display is reported as
 /// unsupported instead of being returned with coordinates nobody verified.
 public enum DisplayPolicy {
     public static func unsupportedReason(windowFrame: CGRect, mainDisplay: CGRect, displayCount: Int) -> String? {
@@ -112,7 +112,7 @@ public enum DisplayPolicy {
     }
 }
 
-/// What an element looked like when it was observed; re-read before acting on it (PLAN-v2 §4.3).
+/// What an element looked like when it was observed; re-read before acting on it.
 public enum Fingerprint {
     public static func of(role: String?, identifier: String?, text: String, frame: CGRect?) -> String {
         func r(_ v: CGFloat) -> Int { Int((v / 2).rounded()) * 2 }  // 2 pt grid absorbs sub-point jitter
@@ -120,7 +120,7 @@ public enum Fingerprint {
         return [role ?? "-", identifier ?? "-", String(text.prefix(64)), f].joined(separator: "|")
     }
 
-    /// Short stable key of an element across observes (the plugin's element ids, PLAN-v2 R4): the fingerprint plus
+    /// Short stable key of an element across observes (the plugin's element ids): the fingerprint plus
     /// its source and window, FNV-1a 64-bit, 12 hex digits. Same element unchanged -> same key; any change to role,
     /// identifier, text or frame (2 pt grid) -> a new key. Never contains the text itself.
     public static func key(source: ObservedElement.Source, windowID: UInt32?, fingerprint: String) -> String {

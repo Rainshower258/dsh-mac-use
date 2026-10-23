@@ -2,7 +2,7 @@ import AppKit
 import CURuntimeCore
 import SwiftUI
 
-// MARK: - The settings window follows dsh's appearance (PLAN-v2 P1, 2026-10-15)
+// MARK: - The settings window follows dsh's appearance (2026-10-15)
 
 /// dsh's appearance preference: the ui-theme entry's `preference` (light | dark | system; absent means system), in a
 /// home's settings.yaml up to dsh 0.2.0 or a profile's cordis.patch.yml in 0.2.x (DshThemePreference.resolve). The

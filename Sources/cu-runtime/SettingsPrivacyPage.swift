@@ -2,7 +2,7 @@ import AppKit
 import CURuntimeCore
 import SwiftUI
 
-// MARK: - The privacy-and-audit page (SettingsWindow.swift; design: Privacy.html, batch 3, 2026-10-17)
+// MARK: - The privacy-and-audit page (SettingsWindow.swift, 2026-10-17)
 //
 // What leaves the machine (four switches and the text-only apps), the clipboard, the audit (retention, place,
 // export, the recent settings changes). A switch turned off applies at once; turned on

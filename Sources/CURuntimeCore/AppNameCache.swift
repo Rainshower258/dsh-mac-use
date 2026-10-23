@@ -1,6 +1,6 @@
 import Foundation
 
-/// Apps' display names by bundle ID, for the settings snapshot (stage 3 review, daemon-3). Every snapshot names the
+/// Apps' display names by bundle ID, for the settings snapshot. Every snapshot names the
 /// hard-denied apps and every grant, always and deny entry, and the page asks for one each second while a change is
 /// pending or a panel is open; on the Mac each lookup is LaunchServices behind two main-thread hops. The names do not
 /// change while the daemon runs, so one lookup serves `ttl` seconds.

@@ -1,6 +1,7 @@
 import Foundation
 
-/// How a task may change system state outside the granted app's content (PLAN-v2 R4, 2026-09-29 night).
+/// How a task may change system state outside the granted app's content (decided 2026-09-29; docs/DESIGN.md
+/// "System state changes").
 public enum ChangePolicy: String, Sendable, CaseIterable {
     /// Never change it; work with what is there and say what that risks.
     case leave

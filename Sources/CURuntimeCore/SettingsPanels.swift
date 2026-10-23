@@ -14,7 +14,7 @@ public struct SettingsPermissions: Equatable, Sendable {
 
 /// What only the Mac can do for the settings (main: open/save panels and NSWorkspace; tests: a fake; nil when
 /// headless). Every file path the settings use comes from here, chosen by a person at the Mac, never over the socket
-/// (PLAN 阶段3 二 A). Completions are called once, on any thread; nil or false means the person cancelled or it failed.
+/// Completions are called once, on any thread; nil or false means the person cancelled or it failed.
 public protocol SettingsPanels: AnyObject {
     /// An existing directory the person picked (the log directory).
     func chooseDirectory(completion: @escaping @Sendable (URL?) -> Void)

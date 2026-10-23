@@ -2,7 +2,7 @@ import AppKit
 import CURuntimeCore
 import SwiftUI
 
-// MARK: - The shortcuts page (SettingsWindow.swift; design: Shortcuts.html, batch 2, 2026-10-17)
+// MARK: - The shortcuts page (SettingsWindow.swift, 2026-10-17)
 //
 // The built-in allowlist as switches (off at once, on again verified), the user's own chords (added verified,
 // removed at once), the never-allowed list read-only. A chord is entered by pressing it in the recorder, or typed.
@@ -160,8 +160,8 @@ struct ChordFlow: View {
     }
 }
 
-/// One chord in the flow. A built-in switched off is unmistakable: struck through, dimmed, tagged "off" (the
-/// maintainer, 2026-10-17: it read as "selected"); a toggle lights up on hover so it reads as clickable.
+/// One chord in the flow. A built-in switched off is unmistakable: struck through, dimmed, tagged "off"
+/// (changed 2026-10-17: it read as "selected"); a toggle lights up on hover so it reads as clickable.
 private struct ChordCell: View {
     let item: ChordFlow.Item
     /// Nil for the never-allowed ones (no tag, no hover).

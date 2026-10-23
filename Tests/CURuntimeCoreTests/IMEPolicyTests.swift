@@ -1,7 +1,7 @@
 import XCTest
 @testable import CURuntimeCore
 
-/// Input method policy (PLAN-v2 R4, 2026-09-29 night): leave / ask / takeover, never switching under an uncommitted
+/// Input method policy (decided 2026-09-29): leave / ask / takeover, never switching under an uncommitted
 /// composition, and the input source as one kind of SystemStateChanges (ledger first, layered restores, audit).
 final class IMEPolicyTests: XCTestCase {
     private let pinyin = "com.apple.inputmethod.SCIM.ITABC"

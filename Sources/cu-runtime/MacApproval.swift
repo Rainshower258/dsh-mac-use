@@ -266,8 +266,8 @@ final class MacApprovalPresenter: ApprovalPresenter {
         case .alertThirdButtonReturn: return .session
         case NSApplication.ModalResponse(rawValue: NSApplication.ModalResponse.alertThirdButtonReturn.rawValue + 1):
             guard r.offerAlways else { return .deny }
-            // A permanent full grant is a widening, and widenings pass the device owner check (PLAN-v2, settings
-            // rules): not passed, the approval still holds for this session.
+            // A permanent full grant is a widening, and widenings pass the device owner check (as every
+            // loosening of the settings does): not passed, the approval still holds for this session.
             if r.mode == .full, !verifyOwner(r, ownerCheck) { return .session }
             return .always
         default: return .deny

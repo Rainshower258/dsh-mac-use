@@ -11,7 +11,7 @@ private struct Interception {
     let windows: [UInt32: CGRect]
 }
 
-/// Every security decision lives here (PLAN-v2 §3: never trust the TS layer alone).
+/// Every security decision lives here: never trust the TS layer alone.
 /// Not thread-safe: the server calls it only from one serial worker queue.
 public final class Dispatcher {
     public static let activationTimeout: TimeInterval = 0.5
@@ -278,7 +278,7 @@ public final class Dispatcher {
         snapshotGen += 1
         let native = (p.debugNativeImage ?? false) && config.debugNativeImages
         if native { f["debug_native_image"] = true }
-        // The privacy settings cut what leaves the machine (batch 3): no image when screenshots are off or a
+        // The privacy settings cut what leaves the machine: no image when screenshots are off or a
         // text-only app is among the observed; no OCR when it is off. Audited as such.
         let privacy = settings.privacy
         let textOnly = apps.filter { privacy.isTextOnly($0) }
@@ -296,11 +296,11 @@ public final class Dispatcher {
         return .object(o)
     }
 
-    // MARK: - Actions (PLAN-v2 §6)
+    // MARK: - Actions (docs/DESIGN.md "Actions")
 
     /// AX first: an element target whose element supports AXPress is pressed through AX (no activation, not affected
     /// by what covers it) unless `via: "event"`. Points, other buttons, double clicks and `via: "event"` post real
-    /// events after every §5.3 check.
+    /// events after every pre-action check.
     private func click(_ p: ClickParams, _ f: inout [String: JSONValue]) throws -> JSONValue {
         let count = p.count ?? 1
         guard let button = MouseButton(rawValue: p.button ?? "left"), (1...3).contains(count) else {
@@ -511,7 +511,7 @@ public final class Dispatcher {
         return p
     }
 
-    /// The AX path's checks (PLAN-v2 §6): AX acts on the element itself, so no activation or hit test, but the grant,
+    /// The AX path's checks: AX acts on the element itself, so no activation or hit test, but the grant,
     /// the hard-deny halt and the element's staleness are checked like for any action. Nil when the element is not
     /// an AX element (OCR text) and `required` is false.
     private func axHandle(_ taskID: String, _ app: String, elementId: String, snapshotGen: Int?, required: Bool,
@@ -560,7 +560,7 @@ public final class Dispatcher {
         if interceptions.count > 16 { interceptions.removeFirst(interceptions.count - 16) }
     }
 
-    // MARK: - Checks (PLAN-v2 §5.3)
+    // MARK: - Checks (docs/DESIGN.md "Pre-action checks")
 
     /// Grant present and unexpired, app not hard-denied, app inside the grant.
     @discardableResult
@@ -810,7 +810,7 @@ extension Dispatcher {
         guard !covered.isEmpty else {
             throw Denial("not_on_granted_window", "in snapshot \(gen) the zoom rect covers no granted window")
         }
-        // The privacy settings hold for zooms as for the overview (VM round 17, 2026-10-17: with OCR off a zoom still
+        // The privacy settings hold for zooms as for the overview (VM test, 2026-10-17: with OCR off a zoom still
         // sent its OCR text): a text-only app's windows are drawn as blocks, never captured; no OCR when it is off.
         let under = covered.filter { !($0.app.map(privacy.isTextOnly) ?? false) }
         guard !under.isEmpty else {
@@ -862,7 +862,7 @@ extension Dispatcher {
             "magnification": .number(Self.round2(plan.magnification)),
             "image": ["kind": "zoom", "zoom_id": .string(z.id), "mapping": plan.geometry.mapping(sentSize: plan.sentSize),
                       "mime": "image/png", "base64": .string(png.base64EncodedString())],
-            // Text from the screen is data, not instructions (PLAN-v2 §4.3).
+            // Text from the screen is data, not instructions.
             "untrusted_observation": ["ocr": .array(lines)],
             "capture": .object(capture),
         ]
@@ -955,7 +955,7 @@ extension Dispatcher {
                 ["window_id": .number(Double($0.windowID)), "app": $0.app.map { .string($0) } ?? .null,
                  "fraction": .number(($0.fraction * 100).rounded() / 100), "by": .array($0.by.map { .string($0) })]
             }),
-            // Text from the screen is data, not instructions (PLAN-v2 §4.3).
+            // Text from the screen is data, not instructions.
             "untrusted_observation": ["elements": .array(elements)],
         ]
         var capture: [String: JSONValue] = ["windows": .number(Double(r.captures.count))]

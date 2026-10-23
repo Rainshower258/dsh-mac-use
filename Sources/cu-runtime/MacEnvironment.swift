@@ -64,7 +64,7 @@ final class MacEnvironment: SystemEnvironment {
         return out
     }
 
-    /// P5: as the official cua-macos provider reads it (CGSSessionScreenIsLocked; else on console and logged in).
+    /// Lock state as the official cua-macos provider reads it (CGSSessionScreenIsLocked; else on console and logged in).
     func sessionLocked() -> Bool? {
         guard let d = CGSessionCopyCurrentDictionary() as? [String: Any] else { return nil }
         func flag(_ key: String) -> Bool? { (d[key] as? NSNumber)?.boolValue }
@@ -72,7 +72,7 @@ final class MacEnvironment: SystemEnvironment {
         return flag("kCGSSessionOnConsoleKey") == true && flag("kCGSessionLoginDoneKey") == true ? false : nil
     }
 
-    // P4: the general pasteboard, on the main thread (AppKit).
+    // act.type strategy paste: the general pasteboard, on the main thread (AppKit).
     func pasteboardSnapshot(limit: Int) -> PasteboardContents? {
         onMain { () -> PasteboardContents? in
             let pb = NSPasteboard.general

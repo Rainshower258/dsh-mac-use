@@ -4,7 +4,7 @@ import IOKit.hid
 import ScreenCaptureKit
 import SwiftUI
 
-// MARK: - The settings window (PLAN-v2 P1, 2026-10-15; design: cu-runtime-settings-design, revised 2026-10-16)
+// MARK: - The settings window (2026-10-15, design revised 2026-10-16)
 //
 // A native window of the daemon itself, so the model can neither see nor click it (the daemon is hard-denied).
 // It reads and writes daemon state only through Server.perform (the worker queue, never waiting on it), and the
@@ -34,7 +34,7 @@ final class SettingsModel: ObservableObject {
     }
     static let pageNames = [0: "overview", 1: "apps", 2: "access", 3: "shortcuts", 4: "privacy", 5: "behavior", 6: "logs"]
 
-    /// A click in the window that changes no setting, on record (the maintainer, 2026-10-17: every button traceable).
+    /// A click in the window that changes no setting, on record (decided 2026-10-17: every button traceable).
     func ui(_ action: String, _ fields: [String: JSONValue] = [:]) {
         var f = fields
         f["method"] = "settings.ui"
@@ -235,9 +235,9 @@ final class SettingsModel: ObservableObject {
         }
     }
 
-    /// Privacy (batch 3): switching content off, the clipboard setting and the retention apply at once; switching
+    /// Privacy: switching content off, the clipboard setting and the retention apply at once; switching
     /// content back on or taking an app off the text-only list goes through the owner check.
-    /// The edit (one switch or list entry) is applied to the daemon's settings as they are then (VM round 17: a
+    /// The edit (one switch or list entry) is applied to the daemon's settings as they are then (VM test, 2026-10-17: a
     /// whole copy from the click, written back after the check, switched OCR back off).
     func setPrivacy(_ edit: @escaping (inout PrivacySettings) -> Void) {
         let d = dispatcher
@@ -270,7 +270,7 @@ final class SettingsModel: ObservableObject {
         } catch { message = "\(error)" }
     }
 
-    // The chord allowlist (batch 2): switching a built-in off and removing a chord of the user's apply at once;
+    // The chord allowlist: switching a built-in off and removing a chord of the user's apply at once;
     // switching one on and adding go through the owner check.
     func chordDisable(_ chord: String) { let d = dispatcher; change { try d.settingsChordDisable(chord) } }
     func chordRemove(_ chord: String, app: String?) { let d = dispatcher; change { try d.settingsChordRemove(chord, app: app) } }
@@ -394,8 +394,8 @@ final class SettingsModel: ObservableObject {
 
     /// The owner check before a loosening change, through the daemon's one gate (dispatcher.ownerCheck, shared with
     /// the settings socket methods and the approval dialog): one check at a time for the whole daemon, since a second
-    /// one started while the first was open made macOS cancel the first (VM round 17, LAError -4) and that change was
-    /// lost without the person noticing. OwnerCheck records every start and verdict (never the reason text).
+    /// one started while the first was open made macOS cancel the first (VM test, 2026-10-17, LAError -4) and that
+    /// change was lost without the person noticing. OwnerCheck records every start and verdict (never the reason text).
     /// `done` runs once, on the main thread: true for an ok verdict; false otherwise, after the message says why
     /// (verifyBusy for a start refused while a check or an approval dialog is open, verifyFailed for any other verdict
     /// and for a start refused during the cool-down after a failed or cancelled check or without a verifier) and the
@@ -472,7 +472,7 @@ struct Mono: View {
     var body: some View { Text(text).font(.system(size: 11.5, design: .monospaced)).foregroundColor(DshPalette.labelTertiary) }
 }
 
-/// The design's button: bordered, filled on hover, darker while pressed (the maintainer, 2026-10-16: plain-text
+/// The design's button: bordered, filled on hover, darker while pressed (decided 2026-10-16: plain-text
 /// buttons gave no feedback). Applied to the pages as a whole; a control with its own style opts out.
 struct DshButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View { Label(configuration: configuration) }

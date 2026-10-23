@@ -52,11 +52,11 @@ final class FakeEnv: SystemEnvironment {
 
     func frontmostBundleID() -> String? { frontmost }
 
-    /// P5: the screen lock as the daemon reads it (nil: unknown).
+    /// The screen lock as the daemon reads it (nil: unknown).
     var locked: Bool? = false
     func sessionLocked() -> Bool? { locked }
 
-    /// P4: the clipboard. `pasteboardInterloper`: something else writes it right after our write (one more count).
+    /// The clipboard. `pasteboardInterloper`: something else writes it right after our write (one more count).
     var pasteboard = PasteboardContents(items: [], bytes: 0)
     var pasteboardCount = 1
     var pasteboardUnreadable = false
@@ -351,7 +351,7 @@ final class Harness {
     }
 
     /// act.* calls get a fresh snapshot_gen injected (observe first) unless the test passes one or turns this off,
-    /// so R1-era tests keep testing their check rather than the snapshot plumbing.
+    /// so tests written before snapshots existed keep testing their check rather than the snapshot plumbing.
     var autoSnapshot = true
     /// access.request through call() marks the task's turn first when it is not open, as the plugin does (late), so
     /// tests of other checks keep testing them. Off in the tests of the turn rule itself (TurnOwnerTests).
@@ -421,7 +421,7 @@ func assertAllowed(_ r: Result<JSONValue, RPCFailure>, in h: Harness, file: Stat
 
 func screen(_ x: Double, _ y: Double) -> JSONValue { ["x": .number(x), "y": .number(y), "space": "screen"] }
 
-/// The R1 blocklist, kept as an acceptance set for the allowlist: every one of these must be refused.
+/// The old chord blocklist, kept as an acceptance set for the allowlist: every one of these must be refused.
 let legacyBlockedChords: [String] = [
     "cmd+space", "cmd+opt+space", "ctrl+space", "ctrl+opt+space", "ctrl+cmd+space",
     "cmd+tab", "cmd+shift+tab", "cmd+opt+escape", "cmd+opt+shift+escape",

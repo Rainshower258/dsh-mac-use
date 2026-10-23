@@ -1,6 +1,6 @@
 import Foundation
 
-/// Input vocabulary shared by the policy layer and the OS layer (PLAN-v2 §6, R3).
+/// Input vocabulary shared by the policy layer and the OS layer (docs/DESIGN.md "Actions").
 
 public enum MouseButton: String, Sendable, CaseIterable {
     case left, right, middle
@@ -22,7 +22,7 @@ public enum ActionPath: String, Sendable {
     case auto, ax, event
 }
 
-/// AX actions a client may request with act.ax_action (PLAN-v2 §6). Anything else is refused.
+/// AX actions a client may request with act.ax_action. Anything else is refused.
 public enum AXActionPolicy {
     public static let allowed: Set<String> = ["AXPress", "AXConfirm", "AXRaise", "AXCancel"]
 }
@@ -45,7 +45,7 @@ public enum KeyCodes {
     public static let modifiers: [KeyChord.Modifier: UInt16] = [.cmd: 55, .shift: 56, .opt: 58, .ctrl: 59, .fn: 63]
 }
 
-/// Text input split into what the OS layer posts (PLAN-v2 §6): text in chunks of at most `maxUnits` UTF-16 units
+/// Text input split into what the OS layer posts: text in chunks of at most `maxUnits` UTF-16 units
 /// (never splitting a character: an emoji or a CJK surrogate pair stays whole), and each line break as a separate
 /// Return key press, a tab as a Tab key press. A line break submits in most single-line fields: the tool
 /// description says so.

@@ -1,6 +1,6 @@
 import Foundation
 
-// MARK: - The settings window's view of the daemon (PLAN-v2 P1, 2026-10-15)
+// MARK: - The settings window's view of the daemon (2026-10-15)
 
 /// One approved app inside a grant, as the overview lists it.
 public struct ActiveAppInfo: Sendable, Equatable {
@@ -38,9 +38,10 @@ public struct SettingsSnapshot: Sendable {
 }
 
 /// Called on the worker queue only (Server.perform, or a socket request). Every change is audited as `settings.*`.
-/// Callers: the settings window, and (stage 3a) the socket's settings methods (Dispatcher+SettingsRPC.swift) through
-/// settingsApply (SettingsChange.swift). Each loosening setter refuses unless `verified`: the window passes true after
-/// its own owner check, the socket path only when the daemon's OwnerCheck said ok; a caller's word never counts.
+/// Callers: the settings window, and (since 2026-10-21) the socket's settings methods (Dispatcher+SettingsRPC.swift)
+/// through settingsApply (SettingsChange.swift). Each loosening setter refuses unless `verified`: the window passes
+/// true after its own owner check, the socket path only when the daemon's OwnerCheck said ok; a caller's word never
+/// counts.
 extension Dispatcher {
     public func settingsSnapshot() -> SettingsSnapshot {
         let t = now()
@@ -64,7 +65,7 @@ extension Dispatcher {
                                 logDirectory: effectiveLogDirectory)
     }
 
-    /// The settings page's view (C-A3, stage 3a): snake_case JSON with no secret, token, state-directory path or raw
+    /// The settings page's view: snake_case JSON with no secret, token, state-directory path or raw
     /// audit line. App names come from `names` (the daemon's panels, SettingsPanels.appName), null without one. The
     /// log directory is shown (home as ~) only when the person chose one; the default lives under the state
     /// directory and shows as null with `directory_custom` false. The audit lists keep only time, method, app and
@@ -197,7 +198,7 @@ extension Dispatcher {
     }
 
     /// One edit (the window's control) applied to the access rules as they are when it runs, not to a copy taken at
-    /// the click: what changed meanwhile, while an owner check was open, is kept (VM round 17, 2026-10-17: a whole
+    /// the click: what changed meanwhile, while an owner check was open, is kept (VM test, 2026-10-17: a whole
     /// copy written back after the check undid the change made in between).
     public func settingsEditAccess(verified: Bool, _ edit: (inout AccessDefaults) -> Void) throws {
         var new = settings.access
@@ -205,7 +206,7 @@ extension Dispatcher {
         try settingsSetAccess(new, verified: verified)
     }
 
-    /// Puts an app on the persistent ("always") list from the window (the maintainer, 2026-10-17), pinned to its
+    /// Puts an app on the persistent ("always") list from the window (added 2026-10-17), pinned to its
     /// signature now, like the terminal command. Loosening: verified. The floor, the deny list and an app that is
     /// not installed are refused first (whether verified or not: nothing to verify for), an unsigned app as everywhere.
     public func settingsPersistentAdd(bundleID: String, mode: AppMode, verified: Bool) throws {
@@ -260,7 +261,7 @@ extension Dispatcher {
                       "mode": .string(e.mode), "path": .string(e.path), "verified": true])
     }
 
-    // MARK: behavior, import, reset (batch 4)
+    // MARK: behavior, import, reset
 
     /// One edit applied to the behavior settings as they are when it runs (see settingsEditAccess): two writers never
     /// undo each other with stale copies.
@@ -322,7 +323,7 @@ extension Dispatcher {
         try settingsImport(settings.resetToDefaults(), verified: verified, method: "settings.reset")
     }
 
-    // MARK: privacy (batch 3)
+    // MARK: privacy
 
     /// One edit applied to the privacy settings as they are when it runs (see settingsEditAccess).
     public func settingsEditPrivacy(verified: Bool, _ edit: (inout PrivacySettings) -> Void) throws {
@@ -417,7 +418,7 @@ extension Dispatcher {
         if old.retentionDays != new.retentionDays { audit.setRetention(days: new.retentionDays) }
     }
 
-    // MARK: the chord allowlist (batch 2)
+    // MARK: the chord allowlist
 
     /// Switches a built-in chord off: tightening, at once.
     public func settingsChordDisable(_ text: String) throws {
@@ -485,7 +486,7 @@ extension Dispatcher {
     }
 
     /// Takes an app off the deny list. Loosening: refused unless `verified` (the person passed the owner check,
-    /// Touch ID / password; until stage 3a this setter trusted its only caller, the window, and never checked). An
+    /// Touch ID / password; until 2026-10-21 this setter trusted its only caller, the window, and never checked). An
     /// app that is not on the list is left as it is (nothing loosens).
     public func settingsDenylistRemove(bundleID: String, verified: Bool) throws {
         var s = settings

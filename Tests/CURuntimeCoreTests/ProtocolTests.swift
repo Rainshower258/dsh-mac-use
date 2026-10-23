@@ -47,7 +47,7 @@ final class KeyChordTests: XCTestCase {
 }
 
 final class HardDenyTests: XCTestCase {
-    /// PLAN-v2 §5.2's list must stay covered no matter how the table is edited.
+    /// The original hard-deny list must stay covered no matter how the table is edited.
     func testPlanListIsPresent() {
         for id in ["com.apple.loginwindow", "com.apple.dock", "com.apple.systemuiserver", "com.apple.controlcenter",
                    "com.apple.notificationcenterui", "com.apple.SecurityAgent", "com.apple.systempreferences",

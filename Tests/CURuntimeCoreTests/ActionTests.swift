@@ -2,7 +2,7 @@ import CoreGraphics
 import XCTest
 @testable import CURuntimeCore
 
-/// R3 action layer (PLAN-v2 §6): AX first, real events as the fallback after every §5.3 check.
+/// The action layer (docs/DESIGN.md "Actions"): AX first, real events as the fallback after every pre-action check.
 final class ActionTests: XCTestCase {
     private let frame = CGRect(x: 300, y: 300, width: 40, height: 20)
 

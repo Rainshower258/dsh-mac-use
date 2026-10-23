@@ -2,7 +2,7 @@ import AppKit
 import CURuntimeCore
 import SwiftUI
 
-// MARK: - The logs page (SettingsWindow.swift; the maintainer, 2026-10-17)
+// MARK: - The logs page (SettingsWindow.swift, 2026-10-17)
 //
 // Where the audit log lives (changeable: the daemon moves the files), how long it is kept, a way to the folder,
 // the export, what is recorded, and the recent settings changes read back from it.

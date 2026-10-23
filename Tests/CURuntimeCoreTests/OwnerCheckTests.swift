@@ -2,7 +2,7 @@ import Foundation
 import XCTest
 @testable import CURuntimeCore
 
-/// The daemon's one owner check (OwnerCheck.swift, PLAN 阶段3 二 A): refused starts, exactly one verdict per check,
+/// The daemon's one owner check (OwnerCheck.swift): refused starts, exactly one verdict per check,
 /// the cool-down, the audit, and one check at a time across threads.
 final class OwnerCheckTests: XCTestCase {
     /// A settable clock several threads may read.

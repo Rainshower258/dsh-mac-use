@@ -4,7 +4,7 @@ import Foundation
 // MARK: - The settings window's text (SettingsWindow.swift), by language
 
 /// The strings, by language (ApprovalText does the same for the dialog). Written language, no second person
-/// (the maintainer's review of the design, 2026-10-16).
+/// (decided 2026-10-16, reviewing the design).
 struct SettingsStrings {
     let lang: UILanguage
     private func t(_ zh: String, _ en: String) -> String { lang == .zh ? zh : en }
@@ -102,7 +102,7 @@ struct SettingsStrings {
     var verifyBusy: String { t("已有一项验证正在进行，请先完成或取消。此次点击未生效。", "A verification is already open; finish or cancel it first. This change was not made.") }
     var pid: String { "PID" }
 
-    // The modes-and-defaults page (batch 1, 2026-10-16).
+    // The modes-and-defaults page (2026-10-16).
     var access: String { t("档位与默认", "Modes and defaults") }
     var accessNote: String { t("收紧立即生效。放宽（提高档位、延长时效、增加弹窗次数）需 Touch ID 或密码确认。", "Tightening takes effect at once. Loosening (a higher mode, a longer session, more dialogs) needs Touch ID or the password.") }
     var tierReadTitle: String { t("查看、点击、滚动", "Look, click, scroll") }
@@ -158,7 +158,7 @@ struct SettingsStrings {
         case .full: return full
         }
     }
-    // The shortcuts page (batch 2, 2026-10-17).
+    // The shortcuts page (2026-10-17).
     var shortcuts: String { t("快捷键", "Shortcuts") }
     var shortcutsNote: String { t("仅可操作档可以使用快捷键。不带修饰键或仅带 ⇧ 的按键（字母、回车、Tab、方向键等）始终可用；带 ⌘ ⌃ ⌥ 的组合仅放行下列项。", "Only the operate mode may press shortcuts. Keys without a modifier or with ⇧ alone (letters, Return, Tab, arrows…) are always allowed; combinations with ⌘ ⌃ ⌥ only when listed below.") }
     var builtinChords: String { t("内置允许", "Built in") }
@@ -223,7 +223,7 @@ struct SettingsStrings {
         return (lang == .zh ? zh : en)[chord]
     }
 
-    // The privacy-and-audit page (batch 3, 2026-10-17).
+    // The privacy-and-audit page (2026-10-17).
     var privacy: String { t("隐私与审计", "Privacy and audit") }
     var privacyNote: String { t("已授权应用窗口的内容将发送至模型服务商（当前为 DeepSeek）。本页配置发送范围、审计记录与保留期限。", "What is inside an approved app's windows goes to the model's provider (DeepSeek now). This page sets what is sent, what is recorded and for how long.") }
     var sentContent: String { t("发送内容", "Sent content") }
@@ -293,7 +293,7 @@ struct SettingsStrings {
         }
     }
 
-    // The behavior-and-model page (batch 4, 2026-10-17).
+    // The behavior-and-model page (2026-10-17).
     var behavior: String { t("行为与模型", "Behavior and model") }
     var behaviorNote: String { t("模型操作本机的方式，以及与用户同时操作时的让行规则。", "How the model operates this Mac, and how it yields when the user is operating too.") }
     var operation: String { t("操作", "Operation") }

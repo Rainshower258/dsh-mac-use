@@ -1,7 +1,7 @@
 import CoreGraphics
 import Foundation
 
-/// cu_zoom (PLAN-v2 R2, decision 2026-09-29): a region of the occlusion-blocked composite at up to native
+/// cu_zoom (decided 2026-09-29): a region of the occlusion-blocked composite at up to native
 /// resolution, for text or controls too small in the downscaled overview. A zoom is just another capture geometry
 /// (its rect in global points at the display's scale), so its mapping and `space: "zoom"` points work like the
 /// overview's. Each zoom is tied to the snapshot it was requested against; points in it are checked against that

@@ -2,7 +2,7 @@ import CoreGraphics
 import XCTest
 @testable import CURuntimeCore
 
-/// act.type strategy paste (P4, 2026-10-16): the text goes through the clipboard and ⌘V, the clipboard is saved
+/// act.type strategy paste (2026-10-16): the text goes through the clipboard and ⌘V, the clipboard is saved
 /// first and put back, and no input method or input source is touched.
 final class PasteTests: XCTestCase {
     private let frame = CGRect(x: 300, y: 300, width: 200, height: 24)

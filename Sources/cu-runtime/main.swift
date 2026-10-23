@@ -4,7 +4,7 @@ import CURuntimeCore
 import ScreenCaptureKit
 
 // Launch only through LaunchServices (`open -a CURuntime.app --args …`) or a LaunchAgent, so this app,
-// not whoever spawned it, is the TCC-responsible process (PLAN-v2 §5.4).
+// not whoever spawned it, is the TCC-responsible process.
 //
 //   serve [--state-dir DIR] [--settings]   default DIR: ~/Library/Application Support/cu-runtime; --settings opens
 //                                  the settings window at start; SIGUSR1 opens it later (a reopen Apple event too,

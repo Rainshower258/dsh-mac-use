@@ -7,7 +7,7 @@ public protocol AuditSink: AnyObject {
     /// Moves the log to `directory` (the logs setting): the day files so far go with it. Throws when the directory
     /// cannot be made the daemon's own (StateDir); the log then stays where it was. Returns how many files moved.
     /// The signature must be FileAudit's exactly: when it was `throws` without `-> Int`, FileAudit's method did not
-    /// satisfy it and every call through AuditSink went to the empty default below (VM round 17, 2026-10-17).
+    /// satisfy it and every call through AuditSink went to the empty default below (VM test, 2026-10-17).
     @discardableResult
     func setDirectory(_ directory: URL) throws -> Int
 }

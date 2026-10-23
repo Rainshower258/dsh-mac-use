@@ -1,6 +1,6 @@
 import Foundation
 
-/// Apps no grant can ever cover (PLAN-v2 §5.2), and whose being frontmost halts every action.
+/// Apps no grant can ever cover (docs/DESIGN.md "Hard-deny list"), and whose being frontmost halts every action.
 /// Compiled in; configuration cannot unlock them. Matching is case-insensitive, like LaunchServices.
 /// This is a backstop: the main defence is that grants name exact bundle IDs.
 public enum HardDeny {
@@ -43,7 +43,7 @@ public enum HardDeny {
     public static let daemon = "dev.cu-runtime.daemon"
 
     public static let entries: [Entry] = [
-        // PLAN-v2 §5.2.
+        // The first list: system UI, authentication prompts, secrets, Terminal.
         .init(bundleID: "com.apple.loginwindow", reason: "session/login", verified: .localInfoPlist, category: .systemUI),
         .init(bundleID: "com.apple.dock", reason: "system shell", verified: .localInfoPlist, category: .systemUI),
         .init(bundleID: "com.apple.systemuiserver", reason: "menu bar extras", verified: .localInfoPlist, category: .systemUI),
@@ -56,7 +56,7 @@ public enum HardDeny {
         // This daemon: its approval dialogs must be out of the model's reach (no observe, no click on "allow").
         .init(bundleID: HardDeny.daemon, reason: "this daemon (approval dialogs)", verified: .upstreamSource, category: .selfAndRemote),
 
-        // Confirmed by the maintainer 2026-09-28. Auth / consent prompts: the hit test already refuses clicks on them;
+        // Decided 2026-09-28. Auth / consent prompts: the hit test already refuses clicks on them;
         // listing them guarantees they can never be granted either.
         .init(bundleID: "com.apple.LocalAuthentication.UIAgent", reason: "Touch ID / password prompt", verified: .localInfoPlist, category: .authentication),
         // Hosts CFUserNotification alerts; believed to host TCC consent prompts (not observed in the VM yet).
