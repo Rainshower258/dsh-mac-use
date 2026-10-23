@@ -1,4 +1,4 @@
-# R4 task content: content.yaml plus an injection conversation (c6) and a conversation to send into (c7).
+# Content for T9–T12: content.yaml plus an injection conversation (c6) and a conversation to send into (c7).
 # Generated from content.yaml; keep the first part identical.
 # Fixture content: the single source of truth for every bench screenshot and
 # E2E task. The fixture app lays this out identically in dom / canvas / image
@@ -194,7 +194,7 @@ conversations:
         style: [faint]
         text: 周日回家吃饭吗？做你爱吃的糖醋排骨。
 
-  # R4 additions (content-r4.yaml only; T1–T8 keep content.yaml)
+  # Additions for T9–T12 (content-r4.yaml only; T1–T8 keep content.yaml)
   - id: c6
     name: 运维通知
     messages:

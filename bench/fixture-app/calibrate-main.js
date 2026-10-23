@@ -99,8 +99,9 @@ module.exports = function runCalibration(flags) {
     // [{id, text, x, y, size, ax}] in content points; a line with an existing id is replaced, text '' removes it;
     // ax: false hides the line from accessibility (only its pixels show it, like canvas text).
     lines: (a) => windows.get(a.win ?? 'main').webContents.send('calib:lines', a.lines),
-    // [{id, kind: input|textarea|password, x, y, w, h, label}] in content points: R3 action tests. Values come back
-    // in state (a password field's value too: it is the test's own synthetic string).
+    // [{id, kind: input|textarea|password, x, y, w, h, label}] in content points, for the action tests
+    // (bench/experiments/actions.py). Values come back in state (a password field's value too: it is the test's own
+    // synthetic string).
     fields: (a) => windows.get(a.win ?? 'main').webContents.send('calib:fields', a.fields),
     // level/relative: an Electron level name plus levels above it (relative up to the cursor level is possible).
     alwaysOnTop: (a) => windows.get(a.win ?? 'main').setAlwaysOnTop(Boolean(a.on), a.level ?? 'floating', a.relative ?? 0),
@@ -130,7 +131,7 @@ module.exports = function runCalibration(flags) {
     for (const [name, w] of windows) if (w.webContents === event.sender) markers.set(name, list)
     publish()
   })
-  // R3 action tests: keyboard, click/dblclick, wheel and mouseup events go to events.jsonl, field values to state.
+  // Action tests: keyboard, click/dblclick, wheel and mouseup events go to events.jsonl, field values to state.
   ipcMain.on('calib:event', (event, e) => {
     let name = null
     for (const [n, w] of windows) if (w.webContents === event.sender) name = n

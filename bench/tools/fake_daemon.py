@@ -2,7 +2,8 @@
 """A capability-free stand-in for the cu-runtime daemon's socket (same framing and token handshake). It logs every
 frame it receives and refuses every method with no_grant: it can see nothing and do nothing. Used where starting the
 real daemon would trigger the system's permission prompts (its start-up prewarm touches ScreenCaptureKit), e.g. the
-host-side exclusive check (PLAN-v2, 交接 ⑤). Its log is the "audit": a call that never arrives was stopped earlier.
+host-side check of the plugin's `exclusive` setting (2026-10-03). Its log is the "audit": a call that never arrives
+was stopped earlier.
 """
 import argparse
 import json

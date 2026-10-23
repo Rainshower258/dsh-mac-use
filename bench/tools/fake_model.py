@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """A scripted stand-in for the DeepSeek chat-completions endpoint, for checks that must never reach a real model
-(PLAN-v2, 宿主机日常使用模式, 交接 ⑤). Listens on 127.0.0.1 only, on a random port (written to --port-file). Every
-request is logged (path, model, the tool names it offered: the ground truth of what the model could see). The script
-is fixed and side-effect free: to a user message it answers by calling cu_list_apps with no arguments; after a tool
-result, with plain text. It never calls bash or any other tool.
+(host-side checks of the everyday dsh set-up, e.g. the plugin's `exclusive` setting, 2026-10-03). Listens on
+127.0.0.1 only, on a random port (written to --port-file). Every request is logged (path, model, the tool names it
+offered: the ground truth of what the model could see). The script is fixed and side-effect free: to a user message
+it answers by calling cu_list_apps with no arguments; after a tool result, with plain text. It never calls bash or
+any other tool.
 """
 import argparse
 import json

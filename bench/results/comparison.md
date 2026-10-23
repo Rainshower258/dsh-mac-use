@@ -6,7 +6,7 @@ the real apps are in Results 1d (86Box), 1e and 1f (QQ).
 
 ## Conclusion first
 
-**Scope: preliminary evidence.** A self-built fixture whose ground truth the maintainer controls, one model (`deepseek-v4-flash-vision-exp`, since retired), one host, k=3, and phase-2 cells chosen because the arms differed in phase 1. The real apps are 86Box (3 jobs per arm) and QQ. Read the numbers below with that in mind.
+**Scope: preliminary evidence.** A self-built fixture whose ground truth the bench controls, one model (`deepseek-v4-flash-vision-exp`, since retired), one host, k=3, and phase-2 cells chosen because the arms differed in phase 1. The real apps are 86Box (3 jobs per arm) and QQ. Read the numbers below with that in mind.
 
 **OCR's main value is that it turns on-screen text into elements with ids the model can click.** On the fixture's
 click tasks the model reading the screenshot (B1) estimates pixel coordinates and hits 67% (10/15); with OCR elements
@@ -14,7 +14,7 @@ click tasks the model reading the screenshot (B1) estimates pixel coordinates an
 → B3 97% with zoom). On the 18 phase-2 cells (selected because the arms differed in phase 1, so this is not an overall pass rate), B1 78% → B2 93% → B3 98% (cell-level paired tests: B1 vs B2 p = 0.031, B1 vs B3
 p = 0.016; B2 vs B3 not decidable). Zoom's extra gain on the fixture is content OCR does not output (emoji). The
 same holds on a real app: 86Box/DOS T6, B1 0/3, B2 3/3, B3 3/3. **Default: B3's configuration (OCR on, zoom
-offered)** — a design choice, since B2 vs B3 is not decided by these data; an `auto` OCR threshold is an optional optimisation (R6), not needed for the default.
+offered)** — a design choice, since B2 vs B3 is not decided by these data; an `auto` OCR threshold is an optional optimisation for a later round, not needed for the default.
 
 **Which source reads text best depends on the app** (T7 on QQ, Result 1f). In an Electron app with electron_ax on,
 AX carries the original text: emoji as Unicode, look-alike letters exact, and OCR is the worse reader there
@@ -23,7 +23,7 @@ the text, AX is authoritative; OCR is for pixel-only text; zoom checks what OCR 
 The daemon's dedup (an OCR line overlapping AX text of the same content is dropped, AX kept) already follows it, and
 the T7 models answered from the AX text. Its cost: on QQ, B3 took more steps than B1 (median 8 vs 5) for no accuracy
 gain, zoom checks of text AX already had; B3 stays the default (pixel-only apps need it), and the tool descriptions
-should say that AX text needs no zoom check (R6).
+should say that AX text needs no zoom check (next round).
 
 Background, not a comparison: a separate measurement of the same model (`deepseek-v4-flash-vision-exp`) reports
 61.8% single-step visual grounding on ScreenSpot-v2 (118/191; 59.0% = 118/200 counting the samples with no usable
@@ -199,7 +199,7 @@ cost: B3 took the most steps (median 8 vs B1's 5) for no accuracy gain on QQ.
 
 ## Result 1e — QQ: how much text AX exposes (host, no model)
 
-`bench/experiments/ax_manual_accessibility.py` on the maintainer's own QQ (QQNT 7.0.2), observe only, no model:
+`bench/experiments/ax_manual_accessibility.py` on a real QQ account on the host (QQNT 7.0.2), observe only, no model:
 
 | electron_ax | coverage (OCR lines of the message area found in AX) | evidence |
 |---|---|---|
@@ -211,7 +211,7 @@ already carries (OCRDedup), which are exactly the lines this metric counts as co
 measures low (pooled 11/36; every conversation's denominator shrank, e.g. 19 → 3). The "off" pass is unaffected (AX
 holds almost no text, nothing is dropped). Not re-measured: neither decision needs a better number. electron_ax is on
 for Electron apps such as QQ (0 vs. most of the text), and the default arm is B3 with OCR always on, so an `auto`
-threshold is an optional optimisation (R6), as is an observe switch that turns the dedup off for this measurement.
+threshold is an optional optimisation for a later round, as is an observe switch that turns the dedup off for this measurement.
 
 ## Result 2 — B0 (AX only)
 
@@ -233,7 +233,7 @@ threshold is an optional optimisation (R6), as is an observe switch that turns t
 元 per job from each job's tokens (uncached input, cache reads, output) at DeepSeek's list-price ratio
 (2 : 0.2 : 3 元 per M), scaled by 0.69 so that phase 2 + the latency runs (204 jobs, nothing else billed in that
 window) come to their bill, "6 元多" (≈ 6.5 元). An earlier version scaled to phase 1's 11 元 and overestimated about
-2x: that bill almost certainly also held the 40 safety jobs and the jobs of the 09-30 phase 2 that was stopped and
+2x: that bill almost certainly also held the 40 safety jobs and the jobs of the 2026-09-30 phase 2 that was stopped and
 discarded. Absolute figures are approximate; the ratios between arms do not depend on the scale. All R5 jobs
 (`r5-tables.md` §4):
 
@@ -307,7 +307,7 @@ settle, post-click check).
   wrong only in that pair is excluded by the scorer (`glyph_indistinct`); B3's phase-1 job there was excluded and a
   rerun would most likely be excluded again — no information for its cost. All five arms fail T2-keystring-code on
   canvas/image in phase 1, and 5 of the 7 fabricated answers are this task. **Known limitation**: telling 0/O/1/l/I
-  apart is not measured by this bench. R6: a font in which every character is distinguishable, and a task designed
+  apart is not measured by this bench. Next round: a font in which every character is distinguishable, and a task designed
   for it.
 - **T1's key string `Il1O` sits in the same look-alike set.** It does not decide T1 here (B2 and B3 stay within the CER
   threshold on it; T1's misses are the emoji), but T1 is not a clean measure of glyph reading either.
@@ -321,5 +321,5 @@ settle, post-click check).
   it: B2 11/60 phase-2 jobs, B1 7/60 (+2 `cu_read_text`), B0 and phase 1 a few. dsh refuses each such call
   (`ToolNotFoundError: unknown tool`; nothing reaches the daemon, the offered tool list stays `cu_*`-only and arm-
   correct), so it costs a step, not a boundary. It can only bias against B1/B2 slightly (a wasted step) — not
-  towards them. Fix in R6: the plugin describes only the tools the arm has. Not changed during R5 (fixed config).
+  towards them. Fix in the next round: the plugin describes only the tools the arm has. Not changed during R5 (fixed config).
 - Latency sample is 8 jobs per arm on 4 cells; it shows where time goes, not a tight per-arm figure.

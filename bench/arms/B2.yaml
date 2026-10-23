@@ -1,7 +1,7 @@
 id: B2
 description: B2：B1 + Apple Vision OCR 元素（带缓存，与 AX 去重）
 runtime: cu-runtime
-# Stated explicitly for every cu-runtime arm (it changes the target app; PLAN-v2 R4).
+# Stated explicitly for every cu-runtime arm, since it changes the target app.
 electron_ax: true
 model: { provider: deepseek-official, model: deepseek-v4-flash-vision-exp }
 image_input: true

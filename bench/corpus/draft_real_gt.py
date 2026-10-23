@@ -4,7 +4,7 @@
 Put screenshots in bench/corpus/real/ (gitignored, never leaves this machine),
 then run this. For every PNG without a *.gt.json it writes a *draft* using
 Apple Vision: `lines` in reading order, empty `keystrings` / `regions`, and
-"draft": true. the maintainer proofreads each file, fixes lines, adds keystrings and the
+"draft": true. The maintainer proofreads each file, fixes lines, adds keystrings and the
 few clickable regions needed, and deletes "draft". The offline scorer skips
 files still marked draft.
 

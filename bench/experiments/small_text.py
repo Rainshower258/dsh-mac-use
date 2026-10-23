@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""R2 exit condition (2026-09-28): fixture text too small to read in the downscaled overview must be read correctly
+"""Acceptance check (fixed 2026-09-28): fixture text too small to read in the downscaled overview must be read correctly
 through OCR or cu_zoom. Guest side; run with run_vm_experiment.sh, then small_text_report.py on the host.
 
 Synthetic lines at 8-11 px, hidden from AX (pixels only). Per line: the daemon's OCR reads it (native resolution),

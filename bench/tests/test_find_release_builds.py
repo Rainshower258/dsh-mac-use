@@ -323,7 +323,7 @@ class FindReleaseBuildsTest(unittest.TestCase):
         _, lines = found[str(apps['cache'])]
         self.assertEqual(lines[0], 'CFBundleVersion 20261021.010101-abcdef0, CUBench false, hardened runtime yes')
         self.assertEqual(lines[2], 'a hardened release build signed with the current release identity')
-        # The first R1 attempts: CUBench false, but no hardened runtime.
+        # Release builds from d4faaeb up to b0d4919: CUBench false, but no hardened runtime.
         _, lines = found[str(apps['worktree'])]
         self.assertEqual(lines[2], 'no hardened runtime: built before 3ecf445')
         _, lines = found[str(apps['old-bench'])]

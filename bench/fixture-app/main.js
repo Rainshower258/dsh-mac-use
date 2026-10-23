@@ -12,7 +12,7 @@
 //   --x N --y N               window position in global points (default 80, 80)
 //   --content FILE            content YAML (default bench/fixtures/content.yaml)
 //   --composer on             a real text box over the input area: Enter or the send button sends, logged as a
-//                             `sent` event with the exact text (R4 tasks; off by default so T1–T8 are unchanged)
+//                             `sent` event with the exact text (T10; off by default, so the other tasks are unchanged)
 //   --cmd-file FILE           commands from the harness ({seq, op}); op `reorder` moves the last conversation to
 //                             the top of the list (T11: elements go stale between observe and act)
 'use strict'

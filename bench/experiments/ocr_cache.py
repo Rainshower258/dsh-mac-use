@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""OCR cache experiment (PLAN-v2 R2, decision 2026-09-29), guest side; run with run_vm_experiment.sh.
+"""OCR cache experiment (docs/DESIGN.md "OCR cache", decided 2026-09-29), guest side; run with run_vm_experiment.sh.
 
 The calibration fixture shows synthetic text lines whose rendered rects are the ground truth. They are hidden from
 AX (pixels only, like canvas text) so the OCR path is what gets measured; one extra line is AX-visible. Metrics fixed in

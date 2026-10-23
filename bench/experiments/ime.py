@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""R3 supplement (2026-09-29): chunked typing with the Pinyin input method selected. Guest side; run with
-run_vm_experiment.sh ime.py. Needs bench/tools/bin/inputsource (synced by the runner).
+"""Chunked typing with the Pinyin input method selected (added 2026-09-29, next to the action checks in
+actions.py). Guest side; run with run_vm_experiment.sh ime.py. Needs bench/tools/bin/inputsource (synced by the
+runner).
 
 Unicode keyboard events normally bypass the input method, but not necessarily while the field holds an uncommitted
 Pinyin composition. Per trial (3 each), in a fresh empty input:

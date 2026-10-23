@@ -9,7 +9,7 @@ The marker is the OS itself, not a file that could be copied onto the host: macO
 kern.hv_vmm_present=1 and a VirtualMac hw.model (checked in the cu-base clone and on the host).
 
 The only exemption is the host QQ measurement (experiments/ax_manual_accessibility.py): no model, no dsh, no bash,
-observe only, and the grant is revoked right after (PLAN-v2 R5). It does not call this module.
+observe only, and the grant is revoked right after (an exemption made for R5). It does not call this module.
 """
 from __future__ import annotations
 

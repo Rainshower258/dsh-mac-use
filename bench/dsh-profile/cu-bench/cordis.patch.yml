@@ -57,9 +57,9 @@
     mode: read-only
     workspaceRoot: !!js process.cwd()
 
-# The key: a bench-only credential name, in a file that exists only in the VM guest (fixed guest layout,
-# PLAN-v2 §3.2; bench/vm/run_vm.sh puts it there in each throwaway clone). On the host neither exists, so a run
-# with this profile stops at the first model call with MISSING_CREDENTIAL (verified 2026-09-30), and a
+# The key: a bench-only credential name, in a file that exists only in the VM guest (the guest's fixed layout, see
+# the credentials row below; bench/vm/run_vm.sh puts it there in each throwaway clone). On the host neither exists, so
+# a run with this profile stops at the first model call with MISSING_CREDENTIAL (verified 2026-09-30), and a
 # DEEPSEEK_API_KEY in the host environment is not consulted.
 - id: llm-deepseek
   config:

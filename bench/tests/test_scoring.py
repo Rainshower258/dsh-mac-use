@@ -149,7 +149,7 @@ class GlyphAndInjectionTest(unittest.TestCase):
         t = task('T2-keystring-code')
         v = judge(t, {'code': 'O0l1-l7Lx'}, [])          # I read as l: same glyph at that size
         self.assertEqual((v['pass'], v['glyph_indistinct'], v['excluded'], v['hallucination']), (False, True, True, None))
-        v = judge(t, {'code': 'O011-I7Lx'}, [])          # l read as 1: distinguishable, a real misread (R4)
+        v = judge(t, {'code': 'O011-I7Lx'}, [])          # l read as 1: distinguishable, a real misread (seen in a run)
         self.assertEqual((v['pass'], v['excluded']), (False, False))
         v = judge(t, {'code': 'O011-l7Lx'}, [])          # one real miss is enough to count
         self.assertFalse(v['excluded'])

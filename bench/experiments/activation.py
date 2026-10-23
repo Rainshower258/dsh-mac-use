@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""R3: which activation method passes the post-activation check most reliably (PLAN-v2 §6). Guest side; run with
+"""Which activation method passes the post-activation check most reliably (docs/DESIGN.md "Pre-action checks",
+"Activate, then verify"). Guest side; run with
   DAEMON_CONFIG='{"debug_activation": true}' bench/experiments/run_vm_experiment.sh activation.py
 
 For each method (running_application, ax_frontmost, ax_raise) and each situation, N trials of

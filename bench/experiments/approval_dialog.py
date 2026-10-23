@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The daemon's approval dialog, against the real daemon (PLAN-v2, 宿主机日常使用模式, 2026-10-03). Guest side; run
+"""The daemon's approval dialog (docs/desktop.md; added 2026-10-03), against the real daemon. Guest side; run
 with run_vm_experiment.sh approval_dialog.py. Nobody answers the dialog here (a guest process cannot click it: that is
 the point), so the person's buttons are checked on the host in the on-site session. Checks, fixed in advance:
   pending         access.request for "DSHFixture" (a name) answers pending with the resolved bundle ID and path

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""R3 exit conditions (PLAN-v2 R3), guest side; run with run_vm_experiment.sh actions.py.
+"""Acceptance checks for the daemon's real actions (AX first, then events), guest side; run with
+run_vm_experiment.sh actions.py.
 
 Ground truth comes from the fixture (calibration mode): clicks.jsonl (mousedown landings), events.jsonl (click,
 dblclick, contextmenu, keydown with modifier state, wheel, mouseup, drag moves) and the text fields' values in
@@ -70,8 +71,8 @@ class Run:
         return self.d.call('observe', {'task_id': TASK, 'ocr': 'off'})
 
     def act(self, method, **p):
-        """(result, None) or (None, reason). Like the R4 plugin, retries only refusals classed after_delay, a few
-        times; every refusal message is kept."""
+        """(result, None) or (None, reason). Like the dsh plugin (plugin/), retries only refusals classed
+        after_delay, a few times; every refusal message is kept."""
         for attempt in range(7):
             try:
                 return self.d.call(method, {'task_id': TASK, 'app': FIXTURE, **p}), None

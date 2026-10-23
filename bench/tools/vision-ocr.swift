@@ -1,4 +1,4 @@
-// Standalone Apple Vision OCR for the offline bench (the Phase 3 daemon
+// Standalone Apple Vision OCR for the offline bench (the daemon's
 // `ocr.recognize` should use the same request configuration).
 //
 //   swiftc -O -target arm64-apple-macosx14.0 bench/tools/vision-ocr.swift -o bench/tools/bin/vision-ocr

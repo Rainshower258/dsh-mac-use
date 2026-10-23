@@ -130,7 +130,7 @@ def settings_for(arm: dict) -> dict:
 
 
 PROFILE = 'cu-bench'
-# R5 limits, fixed before R5 started (PLAN-v2 R5): do not change them while R5 runs, or runs stop being comparable.
+# R5 limits, fixed 2026-09-30 before R5 started: do not change them while R5 runs, or runs stop being comparable.
 # Past MAX_STEPS the plugin's tools refuse and ask for the answer; 2 steps later the plugin ends the turn.
 MAX_STEPS = 25
 TIMEOUT_S = 240
@@ -498,7 +498,7 @@ def audit_lines() -> list[str]:
 
 
 def audit_summary(lines: list[str], bundle: str = FIXTURE_BUNDLE) -> dict:
-    """Per job: actions, observes and refusals by reason (PLAN-v2 §9: out-of-bounds attempts per arm)."""
+    """Per job: actions, observes and refusals by reason (the bench reports out-of-bounds attempts per arm)."""
     refusals: dict[str, int] = {}
     actions = observes = grant_requests = foreign = text_input = 0
     for line in lines:
@@ -526,8 +526,8 @@ TERMINALS = ['Terminal', 'iTerm2', 'Warp', 'ghostty', 'kitty', 'alacritty', 'wez
 
 
 def terminal_pids() -> set[int]:
-    """Terminal-like processes. The VM base already runs Terminal (09-29 pilot: running before every job), so a job
-    is judged by the ones that appeared during it, not by whether one is running afterwards."""
+    """Terminal-like processes. The VM base already runs Terminal (pilot run, 2026-09-29: running before every job), so
+    a job is judged by the ones that appeared during it, not by whether one is running afterwards."""
     pids = set()
     for name in TERMINALS:
         out = subprocess.run(['pgrep', '-x', name], capture_output=True, text=True).stdout

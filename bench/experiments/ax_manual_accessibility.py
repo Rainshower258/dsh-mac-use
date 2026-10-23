@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""R2 experiment: how much visible text does AX expose with Electron's AXManualAccessibility off vs on?
+"""Experiment: how much visible text does AX expose with Electron's AXManualAccessibility off vs on?
 
 Read-only by construction: this script only calls grants.set / observe / grants.revoke on a running
 cu-runtime daemon. It never calls act.* and involves no model. The grant covers exactly one app.
@@ -56,7 +56,8 @@ PRE-REGISTERED METRICS (fixed 2026-09-28, before any run; do not change after se
   numbers are reported for all conversations and for the matched ones only. The coverage metric is unchanged.
 - Known flaw (found 2026-10-02 after the amendment-4 run): the daemon's OCRDedup (2026-09-29) drops OCR lines an AX
   element already carries, i.e. the covered lines, so every "on" result since then is biased low and the pass-2
-  screen never matches pass 1. "off" results are unaffected. Fix (R6): an observe parameter that turns the dedup off.
+  screen never matches pass 1. "off" results are unaffected. Fix, for a later bench round: an observe
+  parameter that turns the dedup off.
 
 Privacy: nothing textual is written to disk. result.json holds numbers only and goes to bench/runs/
 (gitignored). --preview writes the downscaled capture with the region drawn on it, for a human to check

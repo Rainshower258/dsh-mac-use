@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""R4 smoke test without a model (run_vm_experiment.sh plugin_smoke.py): the plugin's compiled tools against the
+"""Smoke test without a model (run_vm_experiment.sh plugin_smoke.py): the plugin's compiled tools against the
 real daemon and the fixture, through plugin_smoke.mjs. Checks: grant + warm-up on the first call, list shows only the
 granted app, first observe is full and the second a diff, a stable element id clicks the right marker (via AX), typing
 arrives and is verified, headless cu_request_app is refused, a disallowed chord is refused as not retryable, an unknown

@@ -1,6 +1,6 @@
 # bench/ — 读屏（OCR / VLM）效果 bench
 
-用来量化 dsh-computer-use 在"字只存在于像素里"的场景下能读对多少、会不会编，并在同一套数据上比较各个读屏后端。环境踩坑和 Phase 0 的结论见 [`SETUP_NOTES.md`](SETUP_NOTES.md)。
+用来量化 dsh-computer-use 在"字只存在于像素里"的场景下能读对多少、会不会编，并在同一套数据上比较各个读屏后端。环境踩坑和最初调研的结论见 [`SETUP_NOTES.md`](SETUP_NOTES.md)。
 
 > **2026-09-28 起 bench 住在 `cu-runtime/bench/`**，从 `dsh-computer-use` 用 git subtree 迁过来，历史保留。`dsh-computer-use` 此后只作参考：A0/A1 这两组上游基线仍然用它的插件和守护进程，路径由 `DSH_CU_LEGACY` 指定，默认是 `../../dsh-computer-use`。E2E 用 `bench/vm/run_vm.sh` 在虚拟机里跑，客体里的目录结构没有变。
 >
@@ -11,13 +11,13 @@ bench 分两层：
 | 层 | 跑什么 | 谁跑 | 花不花钱 |
 |---|---|---|---|
 | 离线组件层 | 读屏后端直接吃截图，对照真值打分 | CC 全自动 | 不花（云端 VLM 后端除外） |
-| E2E agent 层 | dsh agent 带着工具做任务，对照答案打分 | headless 自动跑，由 维护者触发；或 维护者在 dsh web 里手动跑 | 花 DeepSeek API 费用 |
+| E2E agent 层 | dsh agent 带着工具做任务，对照答案打分 | headless 自动跑，由维护者触发；或由维护者在 dsh web 里手动跑 | 花 DeepSeek API 费用 |
 
 ## 目录
 
 ```
 bench/
-├── SETUP_NOTES.md            Phase 0：环境指纹、踩坑、五个问题的答案
+├── SETUP_NOTES.md            最初的调研：环境指纹、踩坑、五个问题的答案
 ├── fixture-app/              可控的"AX 盲区制造机"（Electron）
 ├── fixtures/content.yaml     题库：所有消息的真值文本 + 关键串
 ├── corpus/
@@ -112,7 +112,7 @@ python3 bench/score_e2e.py bench/runs/<run_id>   # → score.md / score.json（�
 - ⚠️ **E2E 只在 VM 里跑。** `run_e2e.py` 和所有实验脚本在宿主机上会直接拒绝启动（`vmguard.py`，判据是 `kern.hv_vmm_present` 和 `hw.model`）。起因见 `docs/incidents/2026-09-29-host-model-run.md`。
 - **VM 里只部署 bench 构建**（`dist-bench/CURuntime.app`，Info.plist 的 `CUBench` 为 true）。bench 和各实验在克隆的 `config.json` 里打开 `config_grants`、`debug_activation`、`debug_ime`（几何套件还有 `debug_native_images`），release 构建见到这些开关（或任何 `--state-dir`，写成默认目录也一样）会拒绝启动。所有 VM 脚本经 `scripts/vm-lib.sh` 部署，部署前检查 `CUBench`；`dist/` 里的 release 构建不会进 VM，`build-app.sh` 也不会把 bench 构建放进 `dist/`。
 - **bench 构建用单独的签名身份 `cu-runtime-bench-signing`**（`build-app.sh` 在 `CU_BENCH=1` 时默认用它，拒绝用 release 的 `cu-runtime-signing`，反之亦然；两种构建都带 hardened runtime）。这台 Mac 上的两项权限绑定的是 release 证书，bench 构建拿不到；只有 VM 底板授予 bench 证书。部署前 `require_bench_app` 用 `codesign --verify -R` 核对 bench 证书和 hardened runtime 标志。底板只需授权一次（bench 身份重新生成时再做一次），步骤见 `scripts/vm-grant-base.sh` 开头：生成身份（`zsh scripts/make-signing-identity.sh cu-runtime-bench-signing`）→ `CU_BENCH=1 zsh scripts/build-app.sh`（钥匙串弹窗点"允许"，不要点"始终允许"）→ `scripts/vm-grant-base.sh prepare` → 在底板窗口里打开 CURuntime 的辅助功能和屏幕录制 → `scripts/vm-grant-base.sh finish`（自检两项都通过才关机）→ `scripts/vm-signing-check.sh` 应为 PASS（它会重新构建，钥匙串再要一次登录密码，同样点"允许"）。QQ 底板有自己的授权，也要做一次：`CU_BASE=cu-base-qq scripts/vm-grant-base.sh prepare` → 同样在底板窗口里授权 → 收尾用 `scripts/vm-qq-base.sh finish`（自检相同；关机前先用 SIGTERM 退出 QQ 并等它退出，测试账号的登录才保得住，见 `bench/vm/qq/README.md`）。`vm-grant-base.sh finish` 遇到装了 QQ 的底板会拒绝，并提示改用它。不要在宿主机上给 bench 构建授权。
-- **3ecf445 之前的构建都是用 release 证书签的**（当时的 bench 构建和第一版 R1 也一样），没有 hardened runtime，在这台 Mac 上照样带着两项权限；R1 之前的还认 `--state-dir` 和上面那些调试开关。旧的 `dist-bench/`、`dist/`、worktree 里被忽略的 `dist*/` 和归档里的副本都算。`zsh scripts/find-release-builds.sh` 把本机所有 CURuntime.app 列出来，这类标为 REMOVE（`--delete` 在终端输入 yes 后删除）；更彻底的做法是轮换 release 证书，见 README.md「Signing」。用 bench 证书签的构建只列出、不标记。
+- **3ecf445 之前的构建都是用 release 证书签的**（当时的 bench 构建和 d4faaeb 到 b0d4919 之间最早的那批 release 构建也一样），没有 hardened runtime，在这台 Mac 上照样带着两项权限；d4faaeb 之前的（Info.plist 里没有 `CUBench` 键）还认 `--state-dir` 和上面那些调试开关。旧的 `dist-bench/`、`dist/`、worktree 里被忽略的 `dist*/` 和归档里的副本都算。`zsh scripts/find-release-builds.sh` 把本机所有 CURuntime.app 列出来，这类标为 REMOVE（`--delete` 在终端输入 yes 后删除）；更彻底的做法是轮换 release 证书，见 README.md「Signing」。用 bench 证书签的构建只列出、不标记。
 - 每个任务 × 模式 × 第 k 次，都会重启一次 fixture，再跑一个 `dsh --profile cu-bench` 进程。已经有 `result.json` 的任务会跳过，所以中断后可以接着跑。
 - **bench 自己的 dsh profile**（`dsh-profile/cu-bench`）：runner 每次把它拷进这次 run 的 `runs/<id>/dsh-home`，并用它作 `DSH_HOME`。profile **本身**就关闭了 bash、文件、web、subagent 等全部非 `cu_*` 工具，钉死 native 工具模式、只读沙箱，并关闭遥测；overlay 或 settings 加载失败也不会退回带 bash 的默认配置。
 - **key**：profile 只认 `CU_BENCH_DEEPSEEK_KEY`，只从客体里的 `/Users/a1/.cu-bench/credentials.yaml` 读取。`run_vm.sh` 在每个克隆里用 `vm/guest_key.py` 把 key 从 dsh 默认库挪过去，底板不改。宿主机上没有这个文件，用这个 profile 跑会在第一次调模型前报 `MISSING_CREDENTIAL`。
@@ -123,7 +123,7 @@ python3 bench/score_e2e.py bench/runs/<run_id>   # → score.md / score.json（�
 - 判定方式：`exact`（忽略空白、逐字符比较）、`cer_list`、`click`（查 `clicks.jsonl`）、`bait`（正确答案是 null）。答错的分三类：弃答、读错/认错位置（答案是屏幕上另一处的真实文本）、**编造**（fixture 里根本没有这个串）。
 - **R5 固定参数**：步数上限 25（`MAX_STEPS`，由插件执行：超过后工具拒绝并要求作答，再过 2 步结束这一轮），每个 job 超时 240 秒（`TIMEOUT_S`）。开跑后不改；`env.json` 里的 `limits.r5_fixed` 会标明。
 - **记录**：`vm/run_vm.sh` 在销毁克隆前拷回客体完整审计（`guest-audit/`），并把 run 归档到被忽略的 `bench/archive/`，保留 30 天。**删除 run 目录只用 `python3 bench/records.py clean <run>`**，它会先归档；不要直接 rm。
-- 两台 VM 并行时设 `PARALLEL_VMS=2`，score.md 会注明耗时不能当延迟数据。阶段 1 结束后用 `python3 bench/discriminate.py <各组 run>` 选出阶段 2 要跑的组合。
+- 两台 VM 并行时设 `PARALLEL_VMS=2`，score.md 会注明耗时不能当延迟数据。R5 的 phase 1 结束后用 `python3 bench/discriminate.py <各组 run>` 选出 phase 2 要跑的组合。
 - `--manual`（生成在 dsh web 里手动跑的清单）同样只能在 VM 里用。
 - headless 模式下审批永远是 0（`requireAppApproval: false`）。
 

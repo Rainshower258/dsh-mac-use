@@ -24,8 +24,8 @@ TASKS = RUNS.parent / 'tasks'
 ARMS = ['B0-axoff', 'B0-axon', 'B1', 'B2', 'B3']
 # 元 per million tokens, DeepSeek list-price ratio (uncached in : cache read : out), times the factor that makes
 # phase 2 + latency (r5-p2lean-*, r5-latency-*: 204 jobs, nothing else billed in that window) come out at their bill,
-# "6 元多" (≈ 6.5 元, maintainer, 2026-10-01). The first calibration used phase 1's 11 元, which almost certainly also
-# held the safety runs and the jobs of the 09-30 phase 2 that was stopped and discarded: it overestimated ~2x.
+# "6 元多" (≈ 6.5 元, bill read 2026-10-01). The first calibration used phase 1's 11 元, which almost certainly also
+# held the safety runs and the jobs of the 2026-09-30 phase 2 that was stopped and discarded: it overestimated ~2x.
 PRICE = {'input_tokens': 2.0, 'cache_read_tokens': 0.2, 'output_tokens': 3.0}
 BILL_P2_LATENCY = 6.5
 BILL_SCALE = None  # set in main() from the bill

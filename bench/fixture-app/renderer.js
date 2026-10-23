@@ -499,7 +499,7 @@ async function main() {
     }
   }, { passive: true })
 
-  // R4 composer: a real text box; Enter (not while an input method composes) or the send button sends. The exact
+  // Composer (T10): a real text box; Enter (not while an input method composes) or the send button sends. The exact
   // text is logged, then appended to the conversation as the local user's message.
   let composer
   let sentN = 0

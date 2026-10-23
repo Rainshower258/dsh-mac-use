@@ -73,7 +73,8 @@
       return { id: Number(el.id.slice(1)), text: el.textContent, x: r.left, y: r.top, w: r.width, h: r.height }
     })))
   })
-  // R3 action tests: text fields (AX-visible, labelled) whose values are reported, and an event log.
+  // Action tests (bench/experiments/actions.py): text fields (AX-visible, labelled) whose values are reported, and an
+  // event log.
   // `<id>#app` is the app's own copy of the text, updated only by 'input' events, like a React-controlled box; a
   // `reactive` field gets a send button enabled only while that copy is non-empty (does an AX set reach the app?).
   const appState = {}, inputEvents = {}

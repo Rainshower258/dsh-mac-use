@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Input method policy groundwork (Desktop handoff 2026-09-29 night), guest side. Run with
+"""Input method policy groundwork (2026-09-29), guest side. Run with
     DAEMON_CONFIG='{"debug_ime": true, "debug_activation": true}' run_vm_experiment.sh ime_probe.py
 Measures, before the policy is built on them:
   A set_value   act.set_value into a Chromium input and textarea (3 each): does the DOM get the value, and does the

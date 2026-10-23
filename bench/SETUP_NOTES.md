@@ -1,4 +1,4 @@
-# SETUP_NOTES — Phase 0
+# SETUP_NOTES — 最初的环境调研
 
 > 2026-09-30 起：下面关于 `--profile headless`、凭据从 `~/.dsh` 解析、在宿主机上跑 E2E 的描述已经过时，现行做法见 bench/README 的「E2E 层」和 `docs/incidents/2026-09-29-host-model-run.md`。本文保留为最初的调研记录。
 
@@ -38,13 +38,13 @@
    - [5/6] 的"屏幕录制 OK"检查的是运行这个脚本的终端的权限，不是 CUADaemon 的。
 3. **`build-app.sh` 会重写已提交的 `dist/AppIcon.iconset/*.png`**，导致工作区出现改动。跑完用 `git checkout -- dist/AppIcon.iconset` 还原。
 4. **`CGWindowListCreateImage` 在 macOS 15 SDK 里已被标为 obsoleted**，现在还能编译，只是因为 `Package.swift` 把部署目标写成了 macOS 14。以后如果调高部署目标，编译会直接失败；到时就得改用 ScreenCaptureKit（上游 README 也写了这是规划中的改进）。
-5. **截图临时文件会一直留着**：`$TMPDIR/dsh-cua-<uuid>.png` 从来不删。权限是 0600（main.swift 里设了 `umask 077`），但文件会越积越多。Phase 3 加 `read_text` 时要一并处理。
-6. **TCC 按"负责进程"归因。** 守护进程如果是从某个终端（包括 CC 的终端）拉起来的，就继承那个终端的授权。**CC 所在的这个终端已经同时拥有录屏和辅助功能权限**，所以 CC 能直接做离线层实测。但 `dsh web` 由什么进程拉起并不固定，维护者仍然需要按 `docs/accessibility-setup.md` 把 `dist/DSH Computer Use.app` 加进两个权限列表，这样才稳。
+5. **截图临时文件会一直留着**：`$TMPDIR/dsh-cua-<uuid>.png` 从来不删。权限是 0600（main.swift 里设了 `umask 077`），但文件会越积越多。以后加 `read_text` 时要一并处理。
+6. **TCC 按"负责进程"归因。** 守护进程如果是从某个终端（包括 CC 的终端）拉起来的，就继承那个终端的授权。**CC 所在的这个终端已经同时拥有录屏和辅助功能权限**，所以 CC 能直接做离线层实测。但 `dsh web` 由什么进程拉起并不固定，仍然需要由维护者按 `docs/accessibility-setup.md` 把 `dist/DSH Computer Use.app` 加进两个权限列表，这样才稳。
 7. `docs/accessibility-setup.md`、`cordis.example.yml` 和 `scripts/grant-accessibility.sh` 里写死了上游作者的机器路径（`/Users/<upstream-author>/…`、`deepseek-computer-use-reverse`、debug 构建）。照着文档操作时，要把路径换成 `~/Desktop/dsh-cu-ocr/dsh-computer-use/…`。
-8. **中英 README 的差异**：内容基本一致，只有一处——英文版"Project Structure"里 `docs/` 的注释还写着 "virtual cursor"，但虚拟光标在 08-21 已经删掉了（见 tasks.md 3.10），中文版是对的。另外，两个 README 都说截图走 ScreenCaptureKit，实际代码用的是 `CGWindowListCreateImage`（Known Limitations 里有说明）。
+8. **中英 README 的差异**：内容基本一致，只有一处——英文版"Project Structure"里 `docs/` 的注释还写着 "virtual cursor"，但虚拟光标在上游已经删掉了（见上游的 tasks.md 3.10），中文版是对的。另外，两个 README 都说截图走 ScreenCaptureKit，实际代码用的是 `CGWindowListCreateImage`（Known Limitations 里有说明）。
 9. 编译好的插件在运行时只从 `@deepseek-ai/dsh-tools` 导入了 `defineTool`。用 `link:` 安装后，它解析到的是自己 `node_modules` 里的 rc.8，而宿主是 0.1.5-rc.3。上游只在 rc.7 上验证过。`defineTool` 本身多半没问题，但 `admitScreenshot` 里用到的 `exec.agent.session.requestHeader()`、`llm.resolveModelInfo` 这类宿主 API 如果有漂移，出错时会**静默**退回到"只给截图路径"（见 Q3）。
 
-10. **守护进程的应用列表会冻结**（上游 bug，已在本地 commit `da3c83d` 修复，维护者同意保留）。原来 `main.swift` 的主线程一直阻塞在 `accept()`，不跑 run loop，而 `NSWorkspace.runningApplications` 要靠主 run loop 上的通知来刷新，所以列表停在第一次查询时的样子（复现程序：`bench/tools/runloop_stale_repro.swift <DSHFixture 可执行文件路径>`）。后果是：守护进程启动后才打开（或重启）的应用都找不到；即使按名字匹配上了，拿到的也是已经退出的旧 pid，截图为 `null`。修法是把 accept 循环放到后台线程，主线程跑 `RunLoop.main.run()`。修完以后，一个守护进程可以连续给 60 次重启的 fixture 各拍一张，全部正确。
+10. **守护进程的应用列表会冻结**（上游 bug，已在本地 commit `da3c83d` 修复，2026-09-26 决定保留）。原来 `main.swift` 的主线程一直阻塞在 `accept()`，不跑 run loop，而 `NSWorkspace.runningApplications` 要靠主 run loop 上的通知来刷新，所以列表停在第一次查询时的样子（复现程序：`bench/tools/runloop_stale_repro.swift <DSHFixture 可执行文件路径>`）。后果是：守护进程启动后才打开（或重启）的应用都找不到；即使按名字匹配上了，拿到的也是已经退出的旧 pid，截图为 `null`。修法是把 accept 循环放到后台线程，主线程跑 `RunLoop.main.run()`。修完以后，一个守护进程可以连续给 60 次重启的 fixture 各拍一张，全部正确。
     - A0 基线用的是**带这个修复**的守护进程，这一点在 baseline.md 里要注明。修复只影响"能不能找到应用"，不影响读屏能力。
 11. **Chromium 窗口太早截图会拿到空白图。** 窗口 `show` 并完成 2 个 rAF 之后，合成帧也不一定已经到了窗口服务器，这时 `CGWindowListCreateImage` 只能截到背景色。fixture 在输出 READY 之前会先等 700ms；`bench/corpus/check.py` 会检查截图不是空白、真值框里有字迹。**对 read_text 的启示**：真实 app 刚切换会话后马上截图，也可能拿到空白或旧帧。要么先等界面稳定再截，要么检测到空白就重试。
 12. `CGWindowListCreateImage` 截别的进程里 GPU 合成的窗口（Electron/Chromium），在 macOS 26 上目前仍然可用，截出来的图和 `screencapture -l`（走 ScreenCaptureKit）一致。
@@ -54,8 +54,8 @@
     - 已检查过 `results/offline/*.json` 和 `summary.md`，里面没有这类字符串。
 
     这应该作为一个 issue 或 PR 反馈给上游（建议 AX 树默认去掉 AXMenuBar，或者至少去掉 Apple 菜单）。A0 的 E2E transcript 里也会带着这些内容，**真实 transcript 不要外发**。
-15. **坐标点击护栏**（本地 commit，维护者 2026-09-26 同意）。上游守护进程会在全屏任意位置点击模型给的坐标。一次 A1 run 里，agent 把截图像素 `(1823, 112)` 当成屏幕坐标去点，结果点到了 维护者的桌面上。同一个 run 里它还打开了 fixture 的 View 菜单、DevTools，并在控制台里敲 JS（fixture 已经去掉了菜单、DevTools 和缩放）。现在，按坐标执行的 click 和 drag 如果落在目标应用所有屏上窗口之外，会直接报错，报错信息写明窗口范围，并提示"x/y 是屏幕 point，不是截图像素"（`CUADaemonCore/PointerGuard.swift`，含单测；`tests/click_plumbing.mjs` 覆盖三种渲染模式）。按 element_index 的点击不受影响。**A0 基线同样带着这道护栏**，baseline.md 里要注明。
-16. **苹果菜单剪枝 + 按键前台护栏**（两个本地 commit，维护者 2026-09-26 同意）。第一次跑完整基线时，A0 在 canvas/image 模式下读不到字，就去点苹果菜单：「强制退出」两次、「最近使用的项目」、App Store、系统信息。它按的 `⌘N`/`⌘V` 还落进了文本编辑，新建了文档并粘贴了 维护者的剪贴板。同一个菜单里就有关机、重启、注销。修复如下：
+15. **坐标点击护栏**（本地 commit，2026-09-26 决定保留）。上游守护进程会在全屏任意位置点击模型给的坐标。一次 A1 run 里，agent 把截图像素 `(1823, 112)` 当成屏幕坐标去点，结果点到了这台 Mac 的桌面上。同一个 run 里它还打开了 fixture 的 View 菜单、DevTools，并在控制台里敲 JS（fixture 已经去掉了菜单、DevTools 和缩放）。现在，按坐标执行的 click 和 drag 如果落在目标应用所有屏上窗口之外，会直接报错，报错信息写明窗口范围，并提示"x/y 是屏幕 point，不是截图像素"（`CUADaemonCore/PointerGuard.swift`，含单测；`tests/click_plumbing.mjs` 覆盖三种渲染模式）。按 element_index 的点击不受影响。**A0 基线同样带着这道护栏**，baseline.md 里要注明。
+16. **苹果菜单剪枝 + 按键前台护栏**（两个本地 commit，2026-09-26 决定保留）。第一次跑完整基线时，A0 在 canvas/image 模式下读不到字，就去点苹果菜单：「强制退出」两次、「最近使用的项目」、App Store、系统信息。它按的 `⌘N`/`⌘V` 还落进了文本编辑，新建了文档并粘贴了这台 Mac 当时剪贴板里的内容。同一个菜单里就有关机、重启、注销。修复如下：
     - (a) AX 树不再采集 AXMenuBar 下的第一个 AXMenuBarItem，也就是苹果菜单（`AXPrunePolicy`）。模型读不到它，也按编号点不到它。这一条同时修掉了第 14 条的「最近使用的项目」泄露。
     - (b) press_key 和 type_text 先激活目标应用，最多等 1 秒，如果它还不在最前面就报错，不发出按键。
     - 真机验证：fixture 的菜单栏只剩 `DSHFixture`；对 fixture 按键正常；对 `com.apple.controlcenter` 按键会被拒绝，并提示"终端在最前"。
@@ -115,17 +115,17 @@ dsh --profile headless --patch <临时 yml> "<任务文本>"
 
 结论：
 - **Arm A1 能否成立，取决于用的是哪个模型。** 用 `deepseek-flash` 或 `deepseek-v4-flash-vision-exp` 时，理论上截图会作为图像送进去；用 `v4-flash` / `v4-pro` 时则**一定不会**。
-- 维护者的 web 当前选的是哪个模型存在 `~/.dsh/settings.yaml` 的 `agent-default-model` 段里，而 settings 的优先级**高于** patch 里的 config。CC 没有读这个文件。**bench 不依赖它**：headless 的 overlay 会把 `settings.path` 指向 `bench/dsh-settings/<arm>.yaml`，只写这一段：
+- dsh web 当前选的是哪个模型存在 `~/.dsh/settings.yaml` 的 `agent-default-model` 段里，而 settings 的优先级**高于** patch 里的 config。CC 没有读这个文件。**bench 不依赖它**：headless 的 overlay 会把 `settings.path` 指向 `bench/dsh-settings/<arm>.yaml`，只写这一段：
   ```yaml
   agent-default-model: { provider: deepseek-official, model: deepseek-v4-flash-vision-exp }
   ```
-  这样每个 arm 用的模型都是钉死、有记录的。凭据仍然由 `credentials-local` 从 `~/.dsh/.credentials.yaml` 或 `DEEPSEEK_API_KEY` 环境变量里解析，CC 不会碰。风险是：如果 维护者在 settings 里配过自定义 `baseURL` 或 pi-ai provider，隔离之后就丢了。第一次跑的时候确认。
+  这样每个 arm 用的模型都是钉死、有记录的。凭据仍然由 `credentials-local` 从 `~/.dsh/.credentials.yaml` 或 `DEEPSEEK_API_KEY` 环境变量里解析，CC 不会碰。风险是：如果 settings 里配过自定义 `baseURL` 或 pi-ai provider，隔离之后就丢了。第一次跑的时候确认。
 - **分辨率约束（对 A1 很关键）**：带图模型的 `imagePixelBudget` 是 **640,000 像素**，单张不超过 1 MB。截图是 2x 的，比如一个 1400×900 pt 的窗口就是 2800×1800 = 5.04 M px，会被缩到大约 0.356 倍，相当于 **1 pt 约等于 0.71 px**：11px 的字只剩约 8 px 高，中文笔画会糊。也就是说，A1 的读字上限主要被这个预算卡住，而不是模型本身。A2+ 的 OCR 后端吃的是原始 2x 图，这一点在报告里必须写明，否则对比不公平。
 - 结合第 9 条踩坑（宿主 API 漂移会导致静默回退），**第一次 A1 run 必须检查 session jsonl 里的 `computer_use_get_app_state` 结果中是否真的有 image block**，确认之后才能把 A1 的数据当真。
 
-#### Q3 补充：2026-09-26 在 web 端手动冒烟的实测结果（`runs/manual-smoke/2026-09-26-web-run-findings.md`，由 维护者会话里的 dsh agent 记录）
+#### Q3 补充：2026-09-26 在 web 端手动冒烟的实测结果（由 web 会话里的 dsh agent 记录，记录留在本机被忽略的 `runs/` 下）
 
-- **实际生效的模型目录由 settings 决定，不是包里的默认值。** 维护者的 settings 里只有三个模型：`deepseek-v4.1-flash-expires-on-0910`（text，当前默认）、`deepseek-v4-pro`（text）、`deepseek-v4-flash-vision-exp`（text+image），**没有** `deepseek-flash`。上面那张表只描述了包自带的默认值。bench 的 A0/A1 统一用 `deepseek-v4-flash-vision-exp`。
+- **实际生效的模型目录由 settings 决定，不是包里的默认值。** 当时这台 Mac 的 settings 里只有三个模型：`deepseek-v4.1-flash-expires-on-0910`（text，当前默认）、`deepseek-v4-pro`（text）、`deepseek-v4-flash-vision-exp`（text+image），**没有** `deepseek-flash`。上面那张表只描述了包自带的默认值。bench 的 A0/A1 统一用 `deepseek-v4-flash-vision-exp`。
 - 用 text-only 模型时，`get_app_state` 的 `tool/result` 里恰好是两个 text 块：AX 树，外加一行 `Screenshot: file://…`，**没有 image 块**。这证实了 A0 的形态。canvas 模式下 AX 树是 `AXWebArea → AXEmptyGroup → AXImage`，一个字都没有。
 - ⚠️ **bench 泄漏已经实证。** agent 自己用 bash 调了 `bench/tools/bin/vision-ocr` 去读截图文件，读出了正确的订单号（它在报告里如实说明，并且仍然回答了 null）。所以从此以后：
   - `run_e2e.py` 的 overlay 会关掉所有非 `computer_use_*` 工具（`DISABLED_TOOL_ROWS`，`--dump-config` 已确认生效）。
@@ -137,7 +137,7 @@ dsh --profile headless --patch <临时 yml> "<任务文本>"
 - **第一次有效的 A1（web，`deepseek-v4-flash-vision-exp`，canvas，T2-keystring-order）：答对了 `20260926-0042`，没有被同屏的 `0024` 骗到。** AX 树里没有任何字，agent 自述只调用了 `computer_use_*`（web 里没法用 overlay 关工具，所以这一条只能凭它自述），因此内容只可能来自截图的 image block，图像通路是通的。
   - 它顺带转述了其他消息，**易混字符照样读错**：`尾号 0l7O` 读成 `0170`，`400-820-1l0O` 读成 `…1100`，而且以"逐字符核对"的语气把错误结果当事实说了出来。这和 Apple Vision 错在同一个地方。T2-keystring-code 和 T8 要重点看这类"自信的误读"。
   - 它试过 `super+equal` 放大页面，失败了：守护进程的 `keyCodes` 表里没有 `equal` 或 `plus`。
-  - 之前两轮 web run 作废：一轮是 text-only 模型（维护者忘了切），另一轮 prompt 里混进了标准答案。
+  - 之前两轮 web run 作废：一轮用的是 text-only 模型（没有切换模型），另一轮 prompt 里混进了标准答案。
 - 首次访问 DSHFixture 时弹出了审批，`allowed-once`。agent 说"approvals.json 里已经有 DSHFixture 却仍然弹了"，更可能的情况是这一行正是这次批准写进去的。后续 web run 如果重复弹出，再当作 bug 来查。
 
 ### Q4. 截图像素 vs 屏幕 point、窗口坐标原点
@@ -156,7 +156,7 @@ global_x = window.X + px_x / scale
 global_y = window.Y + px_y / scale      (scale = 截图宽 / window.Width，本机为 2.0)
 ```
 
-附带发现（Phase 3 要处理，也会直接影响 A1 的 T5 结果）：
+附带发现（以后要处理，也会直接影响 A1 的 T5 结果）：
 - `computer_use_click` 的参数说明写的是 "at pixel coordinates from a screenshot"，但守护进程把 `x/y` 当**全局 point** 直接发给 CGEvent。模型如果照着截图像素去点，会差一个 2 倍再加上窗口偏移。
 - `get_app_state` 的返回里**没有窗口 bounds 和 scale**，AX 树文本里也**不含元素坐标**。所以即使模型看得到截图，它在结构上也没法把像素换算成点击坐标。A1 在 T5 上的失败有一部分是这个接口缺陷造成的，而不完全是模型能力问题。报告里要把这两类失败分开归因。
 - 截图像素的颜色经过了显示器色彩配置（纯红 1,0,0 截出来是 0.92,0.20,0.14）。对 OCR 影响很小，但 fixture 的"低对比度灰字"要以截出来的实际像素为准来标注对比度。
@@ -167,15 +167,15 @@ global_y = window.Y + px_y / scale      (scale = 截图宽 / window.Width，本�
 
 ---
 
-## 对后续 Phase 的影响（小结）
+## 对后续工作的影响（小结）
 
 1. headless 可以无人值守跑：隔离 sessions 和 settings，钉死模型，stdout 拿 ANSWER，jsonl 拿指标。
 2. A1 只在 `deepseek-flash` / `deepseek-v4-flash-vision-exp` 上成立，而且受 640k px 预算限制。第一次 run 要验证图像块确实送进去了。
 3. `read_text` 的 bbox 直接输出全局 pt，这样 `computer_use_click(x, y)` 可以直接用。这也顺带修掉了 click 参数说明和实际语义不一致的问题（给上游的 PR 可以单独拆出来）。
-4. 离线层（corpus 截图 + OCR 评分）CC 可以在这个终端里全自动跑，不依赖 维护者授权。
+4. 离线层（corpus 截图 + OCR 评分）CC 可以在这个终端里全自动跑，不依赖人工授权。
 
-## 待办 / 需要 维护者的
+## 待办 / 需要人工操作的
 
-- [ ] **Fork 到 GitHub**：属于 GitHub 写操作，auto 模式下会被拦截。需要的时候 维护者自己跑 `! gh repo fork AzaiSakura/dsh-computer-use --remote --remote-name fork`，或者临时切到 accept 模式。bench 阶段不急。
+- [ ] **Fork 到 GitHub**：属于 GitHub 写操作，auto 模式下会被拦截。需要的时候由维护者自己跑 `! gh repo fork AzaiSakura/dsh-computer-use --remote --remote-name fork`，或者临时切到 accept 模式。bench 阶段不急。
 - [ ] 按 `docs/accessibility-setup.md` 把 `~/Desktop/dsh-cu-ocr/dsh-computer-use/dist/DSH Computer Use.app` 加进「辅助功能」和「屏幕录制」（路径替换见第 7 条踩坑）。
 - [ ] 第一次 E2E 冒烟时确认三件事：sessions 落盘路径、隔离 settings 后 key 和 baseURL 是否正常、A1 是否真的收到了 image block。

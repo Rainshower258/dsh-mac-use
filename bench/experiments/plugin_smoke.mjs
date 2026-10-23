@@ -1,4 +1,4 @@
-// R4 smoke test without a model: the plugin's tools (compiled lib) against the real daemon and the fixture.
+// Smoke test without a model: the plugin's tools (compiled lib) against the real daemon and the fixture.
 // Run by plugin_smoke.py inside a VM clone. Prints one JSON object with every tool's text output.
 import { CURuntimeClient } from '../../plugin/lib/client.js'
 import { defineCuTools, Tasks } from '../../plugin/lib/tools.js'

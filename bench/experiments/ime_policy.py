@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Input method policy, end to end against the real daemon (PLAN-v2 R4, 2026-09-29 night). Guest side; run with
-run_vm_experiment.sh ime_policy.py. Pinyin is selected before each case (bench/tools/bin/inputsource); the field is
-pre-filled with "x" so act.type really types (an empty field would be set through AX). Checks, fixed in advance:
+"""Input method policy, end to end against the real daemon (docs/DESIGN.md "Input methods"; checks fixed
+2026-09-29). Guest side; run with run_vm_experiment.sh ime_policy.py. Pinyin is selected before each case
+(bench/tools/bin/inputsource); the field is pre-filled with "x" so act.type really types (an empty field would be set
+through AX). Checks, fixed in advance:
   takeover          grant ime_policy takeover: the text arrives exactly, the result says switched, the source is ABC
                     while the task runs and Pinyin again after grants.revoke; audit: select then restore
   composing         takeover while "ni" is being composed: refused ime_composing (after_observe), nothing typed, the

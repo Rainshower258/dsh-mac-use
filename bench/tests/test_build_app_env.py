@@ -195,7 +195,8 @@ class BuildAppSourceHashTest(unittest.TestCase):
 
 
 class SourceHashCoversBuildAppTest(unittest.TestCase):
-    """scripts/source-hash.sh (C2): Package.swift, Sources/** and scripts/build-app.sh, nothing else of scripts/."""
+    """scripts/source-hash.sh: Package.swift, Sources/** and scripts/build-app.sh (it decides the bundle id, the
+    Info.plist keys and the signing), nothing else of scripts/."""
 
     def setUp(self):
         self.root = Path(tempfile.mkdtemp()).resolve()

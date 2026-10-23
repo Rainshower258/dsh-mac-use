@@ -10,6 +10,7 @@ expect: { code: "O0l1-I7Lx" }
 match: exact
 # Is the task fair? Measured 2026-09-30 at native resolution (corpus/synthetic c4, 2x; SF 14px, dom and canvas):
 # O/0 are 18-20 vs 14 px wide, l/1 are 2 vs 6-8 px wide (the 1 has a flag): distinguishable, so reading l as 1
-# (R4: "O011") is a real misread and counts. l/I are the same height in dom (20 px) and 1 px apart in canvas,
-# 2 vs 3 px wide: not distinguishable, so an answer that misses only there is marked glyph-indistinct and excluded.
+# (an earlier run answered "O011") is a real misread and counts. l/I are the same height in dom (20 px) and 1 px
+# apart in canvas, 2 vs 3 px wide: not distinguishable, so an answer that misses only there is marked
+# glyph-indistinct and excluded.
 glyph_indistinct: [["l", "I"]]

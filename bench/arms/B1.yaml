@@ -1,7 +1,7 @@
 id: B1
 description: B1：B0（AXManualAccessibility 开）+ 模型看截图（只有授权窗口，其他为灰块）
 runtime: cu-runtime
-# Stated explicitly for every cu-runtime arm (it changes the target app; PLAN-v2 R4).
+# Stated explicitly for every cu-runtime arm, since it changes the target app.
 electron_ax: true
 model: { provider: deepseek-official, model: deepseek-v4-flash-vision-exp }
 image_input: true
