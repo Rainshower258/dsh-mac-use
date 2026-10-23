@@ -149,7 +149,7 @@ BIN=$(/usr/bin/xcrun --no-cache swift build -c release --scratch-path "$SCRATCH"
   <key>CFBundleName</key><string>CURuntime</string>
   <key>CFBundleExecutable</key><string>cu-runtime</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.1.0</string>
+  <key>CFBundleShortVersionString</key><string>1.0.0</string>
   <key>CFBundleVersion</key><string>$BUILD</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSUIElement</key><true/>

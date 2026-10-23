@@ -76,6 +76,15 @@ test('the manifest: an ESM bundle with the plugin\'s supported dsh range', () =>
   assert.equal(pkg.exports['./tools'], './plugin/lib/index.js')
 })
 
+test('one release version: the package, the plugin, its lockfile and the app build-app.sh writes', () => {
+  const plugin = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
+  const lock = JSON.parse(readFileSync(new URL('../package-lock.json', import.meta.url), 'utf8'))
+  const build = readFileSync(new URL('../../scripts/build-app.sh', import.meta.url), 'utf8')
+  const [, app] = /<key>CFBundleShortVersionString<\/key><string>([^<]*)<\/string>/.exec(build)
+  assert.match(pkg.version, /^\d+\.\d+\.\d+$/)
+  assert.deepEqual([plugin.version, lock.version, lock.packages[''].version, app], Array(4).fill(pkg.version))
+})
+
 test('the package ships what the plugin page builds the daemon from, and none of the other scripts', () => {
   for (const f of ['/Package.swift', '/Sources', '/Tests', '/scripts/build-app.sh', '/scripts/make-signing-identity.sh',
     '/scripts/source-commit', '/scripts/source-hash.sh']) {
