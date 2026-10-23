@@ -302,6 +302,7 @@ final class WatchdogTests: XCTestCase {
     override func tearDownWithError() throws {
         h.env.observeGate?.signal()
         h.env.activateGate?.signal()
+        h.env.launchGate?.signal()
         close(fd)
         server.stop()
         try? FileManager.default.removeItem(at: dir)
@@ -358,6 +359,35 @@ final class WatchdogTests: XCTestCase {
         XCTAssertEqual(e?["data"]?["action_may_have_executed"], true)
         XCTAssertTrue(e?["message"]?.stringValue?.contains("MAY ALREADY HAVE BEEN EXECUTED") ?? false)
         XCTAssertTrue(e?["message"]?.stringValue?.contains("observe before deciding whether to retry") ?? false)
+    }
+
+    /// Review 2026-10-23: a launch that timed out was answered after_delay, and the plugin opened the same file or URL
+    /// up to 4 times. Like an act.*, it may already have happened: outcome_unknown, never retried automatically.
+    func testTimedOutLaunchMayHaveHappenedAndIsNotRetried() {
+        h.grant(allowLaunch: true)
+        h.env.running.remove(fixture)
+        h.env.launchGate = DispatchSemaphore(value: 0)
+        send(#"{"jsonrpc":"2.0","id":5,"method":"apps.launch","params":{"task_id":"t1","app":"dev.dsh.bench.fixture"}}"#)
+        waitUntilWatchdogArmed()
+        clock.advance(by: 30)
+        let r = receive()
+        XCTAssertEqual(r?["id"], 5)
+        let e = r?["error"]
+        XCTAssertEqual(e?["code"], .number(Double(RPCCode.requestTimeout.rawValue)))
+        XCTAssertEqual(e?["data"]?["action_may_have_executed"], true)
+        XCTAssertEqual(e?["data"]?["retry"], "outcome_unknown")
+        XCTAssertEqual(e?["data"]?["executed"], .null)
+        let message = e?["message"]?.stringValue ?? ""
+        XCTAssertTrue(message.contains("launch timed out") && message.contains("MAY ALREADY HAVE BEEN EXECUTED"), message)
+        XCTAssertTrue(message.contains("observe before deciding whether to retry"), message)
+        XCTAssertTrue(h.audit.entries.contains { $0["reason"] == "request_timeout" && $0["method"] == "apps.launch" })
+    }
+
+    func testOnlyMethodsThatMayActAreKeptFromAutomaticRetry() {
+        for m in ["act.click", "act.key", "act.type", "apps.launch"] { XCTAssertTrue(Server.mayHaveActed(m), m) }
+        for m in ["observe", "apps.list", "zoom", "runtime.ping", "apps.launcher", "act", nil] as [String?] {
+            XCTAssertFalse(Server.mayHaveActed(m), String(describing: m))
+        }
     }
 
     func testShutdownReturnsWhenTheClockRunsOutEvenIfTheWorkerIsStuck() {

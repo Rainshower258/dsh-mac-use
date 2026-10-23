@@ -254,6 +254,7 @@ final class FakeEnv: SystemEnvironment {
     func imeComposing(bundleID: String?) -> Bool? { composing }
 
     func launch(bundleID: String) -> Bool {
+        launchGate?.wait()
         launched.append(bundleID)
         return true
     }
@@ -296,6 +297,8 @@ final class FakeEnv: SystemEnvironment {
     /// When set, observe / activate block until the test signals it (deterministic "stuck" calls).
     var observeGate: DispatchSemaphore?
     var activateGate: DispatchSemaphore?
+    /// Holds launch(bundleID:) until signalled (a launch that outlives the watchdog).
+    var launchGate: DispatchSemaphore?
 
     var zoomRequests: [ZoomRequest] = []
     var zoomResult = ZoomResult()

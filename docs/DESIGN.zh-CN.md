@@ -92,7 +92,7 @@ scripts/cu-rpc.py runtime.ping
 
 通过 Unix socket 传输 JSON-RPC 2.0。每帧为 4 字节小端长度，后接 JSON 正文。大于 256 KiB 的帧返回错误 `-32600`，并关闭连接。
 
-拒绝为错误 `-32010`，附带机器可读的 `data.reason`、`data.retry` 和 `data.executed`（见「拒绝类别」）。每个请求另有看门狗（30 s）：若届时工作线程仍未完成，客户端收到 `-32003`。这表示**结果未知**，客户端应重新查询状态。对于 `act.*`，该错误带有 `data.action_may_have_executed: true`，因为事件可能已经发出：应先观察，绝不自动重试动作。守护进程继续提供服务，外部调用各有截止时间（SCK 10 s，Vision 15 s，AX 每条消息 1.5 s，且整体遍历预算为 3 s）。每个请求，无论被允许还是被拒绝，都恰好产生一行审计记录。对于 `act.type`，该行记录文本长度，从不记录文本本身。
+拒绝为错误 `-32010`，附带机器可读的 `data.reason`、`data.retry` 和 `data.executed`（见「拒绝类别」）。每个请求另有看门狗（30 s）：若届时工作线程仍未完成，客户端收到 `-32003`。这表示**结果未知**，客户端应重新查询状态。对于 `act.*` 和 `apps.launch`，该错误带有 `data.action_may_have_executed: true`，因为事件可能已经发出（或应用已启动、文件或 URL 已打开）：应先观察，绝不自动重试动作。守护进程继续提供服务，外部调用各有截止时间（SCK 10 s，Vision 15 s，AX 每条消息 1.5 s，且整体遍历预算为 3 s）。每个请求，无论被允许还是被拒绝，都恰好产生一行审计记录。对于 `act.type`，该行记录文本长度，从不记录文本本身。
 
 | 方法 | 参数 | 说明 |
 |---|---|---|
@@ -225,7 +225,7 @@ Electron 应用只有在设置了 `AXManualAccessibility` 时，才会向 AX 暴
 | `after_delay` | 在任何操作执行之前、因暂时性原因被拒绝（`overlay_state_unknown`、`activation_failed`、`window_focus_failed`、`too_many_connections`、`launch_failed`） | 可在短暂延迟后重发同一请求若干次 |
 | `after_observe` | 在任何操作执行之前、因屏幕与快照所述不符而被拒绝（`stale_*`、`hit_test_failed`、`not_on_target_window` 等） | 重新观察并构建新请求；绝不重发 |
 | `never` | 因策略被拒绝，或请求格式错误（也包括 `ime_switch_needs_approval` 和 `ime_switch_failed`，插件对此的处理是询问用户，或以 `ime_policy: leave` 重发；未输入任何内容） | 不要原样重试 |
-| `outcome_unknown` | 动作可能已全部或部分发生（`action_failed`、`focus_lost`、`act.*` 的 `request_timeout`）；`data.action_may_have_executed: true` | 绝不自动重试：先观察 |
+| `outcome_unknown` | 动作可能已全部或部分发生（`action_failed`、`focus_lost`、`act.*` 或 `apps.launch` 的 `request_timeout`）；`data.action_may_have_executed: true` | 绝不自动重试：先观察 |
 
 插件（R4）只自动重试 `after_delay`，且次数有限。前三类的 `data.executed` 为 `false`，最后一类为 `null`（未知）。
 
@@ -277,7 +277,7 @@ Finder 不在硬拒绝名单中，而是由配置控制：它需要守护进程�
 `plugin/` 是 dsh 插件：即 `cu_*` 工具。它只连接守护进程的 socket，从不将守护进程作为其子进程启动（否则 TCC 会把权限记在 node 而非该应用名下）；启用 `autoStart` 时（插件包的模式、cu-std），它通过 LaunchServices 打开已安装的应用，且仅限宿主已验证的正式版构建（见下文「可安装的 dsh 插件包（电脑操作模式）」）；否则在无法连接时说明应在何处启动守护进程。所有策略决定都留在守护进程中。每个 dsh 会话（一个任务）中：
 - 首次工具调用会授权所配置的 `apps`（来源为 `config`，显式设置 `electronAx`），并执行一次预热观察；该授权在 `turn/end` 时撤销；
 - 元素 id 在多次观察之间保持稳定（`e…`/`o…`，由每个元素的 key 生成，key 是角色、identifier、文本、frame 与窗口的哈希）。插件将其映射到最新快照，因此在首次 `cu_observe` 之后只列出变化；发生变化的元素获得新 id，旧 id 视为未知，而不会被重新指向别的元素；
-- 只有带 `retry: after_delay` 的拒绝会被重试（3 次，分别在 0.5/1/2 s 之后）；其他所有拒绝都会连同发生了什么、下一步该做什么一起返回给模型；
+- 只有带 `retry: after_delay` 的拒绝会被重试（3 次，分别在 0.5/1/2 s 之后），且 `act.*` 或 `apps.launch` 的 `request_timeout` 无论守护进程给出哪一类都不重试；其他所有拒绝都会连同发生了什么、下一步该做什么一起返回给模型；
 - 在 `appApproval: none`（默认值：bench、headless）下，`cu_request_app(app, mode, reason)` 进入守护进程的授权流程，该流程不弹窗直接拒绝。在 `appApproval: dialog`（插件包的模式、cu-std）下没有 `cu_request_app`：若某调用因应用未获授权（`not_granted`、`no_grant`，或带 `app` 的 `cu_observe`）或其 read 模式不允许（`needs_mode: full`）而在任何操作执行之前被拒绝，则先采用已覆盖该调用的现有授权（静默的 `access.request`）；否则立即向用户请求完整模式（以交互方式发送带调用中 `justification` 的 `access.request`，随后每秒发送一次 `access.status`，直到有人作答），然后重新发送该调用。以下情况不会询问：会话的 dsh 授权策略为 `never`（或没有授权服务），或该应用的弹窗在本轮已失败（被拒绝、超时、超出守护进程的上限）：此时仍由守护进程的 `approval_refused_earlier`、`approval_limit`、硬拒绝名单与黑名单决定。`justification` 字段及相应的系统提示词文本仅存在于该模式，因此 bench 的工具保持不变；
 - `exclusive`（默认 true）：只要模型同时能看到任何非 cu_* 工具（bash、文件、run_code……），每个 cu_* 工具都会拒绝，因此即使 profile 配置有误，电脑操作也绝不会与 shell 并存运行；
 - `onlyCuTools`（默认 false；即下文可安装插件包的模式）：该行位于一个 agent 预设内，该预设的每个 agent 在其第一步之前会被逐个名称地拒绝宿主提供给它的每个工具：在 `agent/created` 时；对于用户选择该模式时被移入其中的新会话 agent，则在 `agent-preset/selected` 与 `turn/start` 时；此后在每一步之前，对期间新增的宿主工具再次执行。dsh 在此处不会拒绝的工具（由同一预设的另一行注册的工具）仍然可见，此时 `exclusive` 会拒绝 cu_* 调用。它不能与 `hideFromRoot` 同时使用；

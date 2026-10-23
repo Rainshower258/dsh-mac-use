@@ -5,7 +5,7 @@ import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { CURuntimeClient, DaemonUnavailable, RpcError } from '../lib/client.js'
-import { withRetry, RETRY_DELAYS_MS } from '../lib/retry.js'
+import { withRetry, RETRY_DELAYS_MS, mayAct } from '../lib/retry.js'
 import { ElementBook, renderElement } from '../lib/elements.js'
 import { defineCuTools, Tasks, explain } from '../lib/tools.js'
 import { Config } from '../lib/index.js'
@@ -81,6 +81,28 @@ test('only after_delay is retried: 3 times, 0.5/1/2 s', async () => {
     await assert.rejects(withRetry(async () => { n++; throw refusal(cls) }, { sleep: async () => {} }))
     assert.equal(n, 1, `${cls} is never retried`)
   }
+})
+
+// Review 2026-10-23: a launch that timed out came back after_delay and was opened up to 4 times. A timeout of a method
+// that may act is outcome_unknown, whatever an older daemon classed it.
+const timedOut = (retry) => new RpcError(-32003, 'request timed out after 30.0s; outcome unknown, re-query state',
+  { reason: 'request_timeout', action_may_have_executed: false, executed: false, retry })
+
+test('a timeout of apps.launch or an act.* is never retried, even when an older daemon classes it after_delay', async () => {
+  for (const method of ['apps.launch', 'act.click']) {
+    let n = 0
+    await assert.rejects(withRetry(async () => { n++; throw timedOut('after_delay') }, { sleep: async () => {}, method }),
+      (e) => e instanceof RpcError && e.retry === 'outcome_unknown' && e.data.action_may_have_executed === true
+        && e.data.executed === null && e.reason === 'request_timeout')
+    assert.equal(n, 1, `${method}: not retried`)
+  }
+  assert.ok(mayAct('apps.launch') && mayAct('act.type') && !mayAct('apps.list') && !mayAct('observe') && !mayAct(undefined))
+  let n = 0
+  await assert.rejects(withRetry(async () => { n++; throw timedOut('after_delay') }, { sleep: async () => {}, method: 'observe' }))
+  assert.equal(n, 4, 'positive control: an observe that timed out is still retried')
+  n = 0
+  await assert.rejects(withRetry(async () => { n++; throw refusal('after_delay') }, { sleep: async () => {}, method: 'apps.launch' }))
+  assert.equal(n, 4, 'positive control: a launch refused before it ran (not a timeout) is still retried')
 })
 
 // ---------------------------------------------------------------- stable ids and diffs
@@ -685,6 +707,16 @@ test('cu_launch open (C3, 2026-10-15): ~ expanded, kept through the dialog, the 
   const sent = bare.calls.filter((c) => c.method === 'apps.launch')
   assert.equal(sent.length, 1)
   assert.ok(!('open' in sent[0].params), 'no open: none sent')
+})
+
+test('cu_launch that timed out is sent once and tells the model it may have opened: observe first', async () => {
+  for (const retry of ['outcome_unknown', 'after_delay']) {  // this daemon's answer, and an older daemon's
+    const h = desktop({ grant: (p) => granted('com.apple.textedit', p.mode, 'turn'),
+      responses: { 'apps.launch': () => { throw timedOut(retry) } } })
+    await assert.rejects(h.tools.cu_launch.execute({ app: 'com.apple.textedit', open: 'https://example.com', justification: 'j' }, h.exec),
+      /request_timeout.*MAY ALREADY HAVE HAPPENED: call cu_observe before deciding whether to repeat it/)
+    assert.equal(h.calls.filter((c) => c.method === 'apps.launch').length, 1, `${retry}: sent once`)
+  }
 })
 
 // ---------------------------------------------------------------- cu_steps (C5, 2026-10-15)

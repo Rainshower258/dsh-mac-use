@@ -281,19 +281,29 @@ public final class Server {
         return pending.await(clock, timeout: requestDeadline)
     }
 
+    /// Methods whose effect may outlast a timeout: every `act.*`, and `apps.launch` (the app may be starting, the
+    /// file or URL may be opening; a retry would open it again, review 2026-10-23).
+    static func mayHaveActed(_ method: String?) -> Bool {
+        guard let method else { return false }
+        return method.hasPrefix("act.") || method == "apps.launch"
+    }
+
     /// An action that timed out may already have happened (the event can be posted before the reply is
-    /// ready), so the client must observe before retrying: blind retries click twice / send twice.
+    /// ready), so the client must observe before retrying: blind retries click twice / send twice / open twice.
     private func timeoutReply(_ conn: ConnectionInfo, _ payload: Data) -> Data {
         let request = try? JSONDecoder().decode(JSONValue.self, from: payload)
         let method = request?["method"]?.stringValue
-        let isAction = method?.hasPrefix("act.") ?? false
+        let isAction = Self.mayHaveActed(method)
         var f = conn.auditFields
         f["method"] = method.map { .string($0) } ?? .null
         f["decision"] = "error"
         f["reason"] = "request_timeout"
         f["detail"] = .string("no result within \(requestDeadline)s; outcome unknown")
         audit.record(f)
-        let message = isAction
+        let message = method == "apps.launch"
+            ? "launch timed out after \(requestDeadline)s and MAY ALREADY HAVE BEEN EXECUTED (the app may be starting, "
+                + "the file or URL may be opening): observe before deciding whether to retry"
+            : isAction
             ? "action timed out after \(requestDeadline)s and MAY ALREADY HAVE BEEN EXECUTED: observe before deciding whether to retry"
             : "request timed out after \(requestDeadline)s; outcome unknown, re-query state"
         // An action's outcome is unknown: never retried automatically. Anything else had no side effect worth

@@ -242,7 +242,7 @@ export function defineCuTools(deps: ToolDeps): ToolDefinition[] {
     if (tasks.config.appApproval === 'dialog' && typeof id === 'string') {
       await tasks.ensureTurn(id, () => client.request('access.turn_start', { task_id: id, late: true }, exec.signal))
     }
-    return withRetry(() => client.request(method, params, exec.signal), { sleep: deps.sleep })
+    return withRetry(() => client.request(method, params, exec.signal), { sleep: deps.sleep, method })
   }
 
   /** One warm-up observe per task (the first OCR is slow). */
