@@ -28,7 +28,10 @@ def main() -> None:
           'CER is computed per ground-truth line against the best-matching substring of the backend output '
           '(whitespace removed; *loose* also NFKC-folds width variants such as `，`/`,`, `℃`/`°C`). '
           'Key strings must appear character-for-character (whitespace-insensitive; *loose* allows width folding only — '
-          '`l`/`1`/`I` and `O`/`0` confusions still fail). bbox hit = a box reading a button/conversation label has its centre inside that element.', '',
+          '`l`/`1`/`I` and `O`/`0` confusions still fail). bbox hit = a box reading a button/conversation label has its centre inside that element. '
+          '**Limitation:** CER and key strings measure recall only; text a backend outputs beyond the ground truth costs nothing, so '
+          'these metrics do not catch hallucinated text (a backend that printed every ground-truth line plus noise would score '
+          'perfectly). The backends measured here only report what they detect.', '',
           '## Overview', '',
           '| backend | CER strict | CER loose | key strict | key loose | bbox hit | p50 ms | p95 ms | cold start ms | peak RSS MB |',
           '|---|---|---|---|---|---|---|---|---|---|']

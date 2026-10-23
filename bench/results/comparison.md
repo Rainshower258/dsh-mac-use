@@ -6,13 +6,15 @@ the real apps are in Results 1d (86Box), 1e and 1f (QQ).
 
 ## Conclusion first
 
+**Scope: preliminary evidence.** A self-built fixture whose ground truth the maintainer controls, one model (`deepseek-v4-flash-vision-exp`, since retired), one host, k=3, and phase-2 cells chosen because the arms differed in phase 1. The real apps are 86Box (3 jobs per arm) and QQ. Read the numbers below with that in mind.
+
 **OCR's main value is that it turns on-screen text into elements with ids the model can click.** On the fixture's
 click tasks the model reading the screenshot (B1) estimates pixel coordinates and hits 67% (10/15); with OCR elements
 (B2, B3) it clicks by id and hits 100% — **+33 pts on click tasks against +8 pts on reading tasks** (B1 82% → B2 90%;
-→ B3 97% with zoom). Overall, B1 78% → B2 93% → B3 98% (cell-level paired tests: B1 vs B2 p = 0.031, B1 vs B3
+→ B3 97% with zoom). On the 18 phase-2 cells (selected because the arms differed in phase 1, so this is not an overall pass rate), B1 78% → B2 93% → B3 98% (cell-level paired tests: B1 vs B2 p = 0.031, B1 vs B3
 p = 0.016; B2 vs B3 not decidable). Zoom's extra gain on the fixture is content OCR does not output (emoji). The
 same holds on a real app: 86Box/DOS T6, B1 0/3, B2 3/3, B3 3/3. **Default: B3's configuration (OCR on, zoom
-offered)**; an `auto` OCR threshold is an optional optimisation (R6), not needed for the default.
+offered)** — a design choice, since B2 vs B3 is not decided by these data; an `auto` OCR threshold is an optional optimisation (R6), not needed for the default.
 
 **Which source reads text best depends on the app** (T7 on QQ, Result 1f). In an Electron app with electron_ax on,
 AX carries the original text: emoji as Unicode, look-alike letters exact, and OCR is the worse reader there
@@ -114,7 +116,7 @@ the per-class rows are effect sizes with bootstrap CIs, and the overall paired t
 | B3 | 27 | 0 | 1 |
 
 B1 has nothing to click on canvas/image but pixels, so it estimates coordinates from the downscaled image and lands
-on the neighbouring button (`收藏`) or the wrong conversation. B2/B3 get OCR text blocks as elements with ids and click
+on the neighbouring button (`转发`, next to the target `收藏`) or the wrong conversation. B2/B3 get OCR text blocks as elements with ids and click
 those; the daemon resolves the id to the block's centre. **"Reads more exactly" and "clicks the right thing" are
 separate results**: the locating gain is the larger one here (+33 pts on click tasks against +8 pts on reading tasks
 for OCR alone).
@@ -127,9 +129,10 @@ for OCR alone).
   it (`没问题`, CER 0.25) or guesses another (`✌️`). B3 zooms in and gets the emoji (5/6). B1 fails T1 both ways: it
   misreads `Il1O` past the threshold (`ltIO`, `lfIO`, `tlO`, CER 0.107–0.143) and guesses the emoji (`🙂 😊 👌`).
 - **T3-image-invoice, canvas/image — B1 4/6**: two letter-case misreads of the check code (`A7X-9K2q`, `A7x-9k2q`
-  for `A7x-9K2q`), scored as fabricated. B2 and B3 6/6.
+  for `A7x-9K2q`), scored as fabricated. B2 and B3 6/6. (The scorer counts any answer that is not a substring of the
+  fixture's text as fabricated, so a letter-case misread counts too: "fabricated" here overstates what happened.)
 
-And the locating failures: **T5-click-button canvas/image — B1 2/6** (clicked `收藏` instead of the target); **T11-stale
+And the locating failures: **T5-click-button canvas/image — B1 2/6** (all four misses clicked `转发`, next to the target `收藏`); **T11-stale
 canvas — B1 2/3** (read the right phone number but clicked a wrong conversation on the way; the list is reordered
 after the first observe and the task fails any wrong-conversation click).
 
@@ -293,6 +296,9 @@ settle, post-click check).
 
 ## Deviations from the plan and limitations
 
+- **Click scoring is lenient.** A click task passes when the target is among the job's clicks; wrong clicks before or
+  after it are not penalised, although the prompt says to click once. T11 is the exception: any wrong-conversation click
+  fails it. The two rules are inconsistent; scoring every click task strictly is left for the next bench round.
 - **k=3, not the planned k=5**, and phase 2 cut to the arms and cells that carry information (decided before phase 2
   started, after phase 1's cost was known): B1/B2/B3 on the 20 differing cells; B0 one arm (B0-axon) on dom cells
   only; B3's T9 canvas/image already had k=5 from the safety runs. With 54 jobs per arm, B1 vs B3 is clear and
