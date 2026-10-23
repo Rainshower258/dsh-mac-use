@@ -210,11 +210,7 @@ public final class Dispatcher {
             return ["revoked": .bool(grants.revoke(p.taskId))]
 
         case "grants.list":
-            // The tasks no other running client holds: another client's task IDs and apps are not this one's to read.
-            let all = grants.all(now: now())
-            let listed = all.filter { heldElsewhere($0.taskID, grant: $0) == nil }
-            if listed.count < all.count { f["withheld"] = .number(Double(all.count - listed.count)) }
-            return .array(listed.map(\.json))
+            return listGrants(&f)
 
         case "grants.request":
             // The daemon never widens a grant because it was asked to. A human-approved grant arrives

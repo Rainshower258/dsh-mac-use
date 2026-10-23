@@ -395,6 +395,15 @@ extension Dispatcher {
         return nil
     }
 
+    /// grants.list: the tasks no other running client holds; another client's task IDs and apps are not this one's
+    /// to read.
+    func listGrants(_ f: inout [String: JSONValue]) -> JSONValue {
+        let all = grants.all(now: now())
+        let listed = all.filter { heldElsewhere($0.taskID, grant: $0) == nil }
+        if listed.count < all.count { f["withheld"] = .number(Double(all.count - listed.count)) }
+        return .array(listed.map(\.json))
+    }
+
     /// grants.revoke: only the client that holds the task, or anyone when no running client does.
     func checkHoldsTask(_ taskID: String) throws {
         endIfOwnerGone(taskID)
