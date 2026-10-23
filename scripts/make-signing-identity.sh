@@ -14,10 +14,11 @@
 # would need a password prompt for nothing. So `security find-identity -v` (valid only) does not list it; without -v
 # it shows as CSSMERR_TP_NOT_TRUSTED, which is expected. The private key never leaves the keychain afterwards, and it
 # is never on disk unencrypted: openssl writes it encrypted with a random one-time password, which only this process
-# holds (passed to openssl through a pipe; to security import, which takes it no other way, as an argument), and the
-# temporary files (the encrypted key, the certificate, the .p12) are deleted when the script ends, also when it is
-# interrupted or terminated (INT, TERM, HUP); a SIGKILL leaves them in $TMPDIR, of no use without the password. A copy
-# of the certificate alone, which is public, stays in ~/.<name>/cert.pem (see the end).
+# holds and never puts in an argument list, where any process of this user could read it (ps): openssl reads it from a
+# pipe, and `security import`, which takes it only as -P, gets its whole command line on stdin (security -i), so its
+# argv is just -i. The temporary files (the encrypted key, the certificate, the .p12) are deleted when the script
+# ends, also when it is interrupted or terminated (INT, TERM, HUP); a SIGKILL leaves them in $TMPDIR, of no use
+# without the password. A copy of the certificate alone, which is public, stays in ~/.<name>/cert.pem (see the end).
 # Every tool is called by its absolute path (the plugin's host runs this as /bin/zsh -f with a minimal environment).
 set -euo pipefail
 
@@ -76,7 +77,7 @@ print -r -- "$PASS"$'\n'"$PASS" | "$OPENSSL" pkcs12 -export -inkey "$TMP/key.pem
 # daemon install) makes macOS ask for the login keychain password. Nothing else on this Mac can then sign a look-alike
 # CURuntime.app, which would keep both permissions, without the user seeing it. The answer is Allow (允许); Always
 # Allow (始终允许) puts codesign on the list and signing stops asking.
-/usr/bin/security import "$TMP/id.p12" -k "$KEYCHAIN" -P "$PASS" >/dev/null || {
+print -r -- "import ${(q)TMP}/id.p12 -k ${(q)KEYCHAIN} -P $PASS" | /usr/bin/security -i >/dev/null || {
   print -u2 "import failed: is the login keychain locked? Run this in Terminal on the Mac's screen, logged in."; exit 1; }
 
 created=$(/usr/bin/security find-identity -p codesigning | /usr/bin/awk -v n="\"$NAME\"" '$3 == n {print $2}' | /usr/bin/sort -u)

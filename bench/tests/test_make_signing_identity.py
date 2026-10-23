@@ -24,7 +24,15 @@ SHA = 'D' * 40
 HARNESS = r'''
 stub_log() { print -r -- "$*" >> $STUB_LOG }
 function /usr/bin/security {
-  stub_log security "$@"
+  # -i: commands on stdin, split as security splits them (quotes, backslashes); logged as security-stdin, so a test
+  # can tell them from what was in the argv.
+  if [[ $1 == -i ]]; then
+    stub_log security "$@"
+    local line rc=0
+    while IFS= read -r line; do STUB_VIA_STDIN=1 /usr/bin/security "${(@Q)${(z)line}}" || rc=$?; done
+    return $rc
+  fi
+  if [[ -n ${STUB_VIA_STDIN:-} ]]; then stub_log security-stdin "$@"; else stub_log security "$@"; fi
   case $1 in
     find-identity)
       # STUB_REAL_SHA: the imported identity is listed by its certificate's real SHA-1, as the keychain would.
@@ -124,8 +132,11 @@ class MakeSigningIdentityTest(unittest.TestCase):
         self.assertIn('p12-opens', calls)
         self.assertTrue(any(c.startswith('p12 subject=') and 'cu-runtime-signing' in c for c in calls), calls)
         self.assertIn('dir mode 700', calls)
-        imports = [c.split() for c in calls if c.startswith('security import')]
+        imports = [c.split() for c in calls if c.startswith('security-stdin import')]
         self.assertEqual(len(imports), 1, calls)
+        # The password is never in an argv (ps shows those to every process of the user): security gets it on stdin.
+        self.assertIn('security -i', calls)
+        self.assertFalse([c for c in calls if c.startswith('security import')], calls)
         # No -T: codesign is not on the key's access list, so every signing asks.
         self.assertNotIn('-T', imports[0])
         self.assertEqual(imports[0][imports[0].index('-k') + 1], f'{self.tmp}/home/Library/Keychains/login.keychain-db')
@@ -146,7 +157,7 @@ class MakeSigningIdentityTest(unittest.TestCase):
         rc, out, err, calls = self.run_script(STUB_EXISTING='cu-runtime-signing')
         self.assertEqual(rc, 0, err)
         self.assertIn('already exists', out)
-        self.assertFalse([c for c in calls if c.startswith('security import')])
+        self.assertFalse([c for c in calls if 'import' in c.split()[:2]])
         self.assertEqual(list((self.tmp / 'tmp').iterdir()), [])
 
     def test_a_failed_import_leaves_no_files(self):
