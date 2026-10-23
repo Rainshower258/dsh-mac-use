@@ -10,13 +10,26 @@
 
 需要 macOS 14 或更新版本、dsh 0.2.1-rc.2（网页版或桌面版）、Node.js 24、Xcode 命令行工具和 pnpm（`npm i -g pnpm`；桌面版自带）。
 
+### 用仓库链接安装（推荐）
+
 在 dsh 里：
 
 1. 插件页 →「添加插件」→ 填入本仓库链接 `https://github.com/Rainshower258/dsh-mac-use` → 启用。
 2. 插件详情页 →「守护进程」标签 →「安装守护进程」→「授予权限」。
 3. 「模式检查」显示「正常」即完成。
 
-要改代码的话，改为 clone 源码，在源码目录运行 `zsh scripts/install.sh`（检查前置条件并构建插件），第 1 步填源码的完整路径（例如 `/Users/<用户名>/cu-runtime`）。
+### 从源码安装（要改代码时）
+
+```sh
+git clone https://github.com/Rainshower258/dsh-mac-use.git ~/cu-runtime
+zsh ~/cu-runtime/scripts/install.sh
+```
+
+然后在 dsh 里：
+
+1. 插件页 →「添加插件」→ 填入源码的完整路径（例如 `/Users/<用户名>/cu-runtime`）→ 启用。
+2. 插件详情页 →「守护进程」标签 →「安装守护进程」→「授予权限」。
+3. 「模式检查」显示「正常」即完成。
 
 ## 使用
 
