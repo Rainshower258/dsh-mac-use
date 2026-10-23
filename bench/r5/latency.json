@@ -1,0 +1,25 @@
+{
+ "k": 2,
+ "run_prefix": "r5-latency",
+ "why": "R5 latency: one VM at a time (PARALLEL_VMS=1), arms run serially. Phase 1/2 ran two VMs in parallel, so their wall times are not latency data. Cells: a text read (T1 canvas), a click (T5 canvas), an image read (T3-invoice image), a DOM baseline (T2-order dom). Daemon-side per-call times are in each job audit (dur_ms, sck_ms, vision_ms).",
+ "per_arm_cells": {
+  "B1": [
+   "T1-latest5:canvas",
+   "T5-click-button:canvas",
+   "T3-image-invoice:image",
+   "T2-keystring-order:dom"
+  ],
+  "B2": [
+   "T1-latest5:canvas",
+   "T5-click-button:canvas",
+   "T3-image-invoice:image",
+   "T2-keystring-order:dom"
+  ],
+  "B3": [
+   "T1-latest5:canvas",
+   "T5-click-button:canvas",
+   "T3-image-invoice:image",
+   "T2-keystring-order:dom"
+  ]
+ }
+}

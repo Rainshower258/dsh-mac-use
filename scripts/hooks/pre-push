@@ -1,0 +1,70 @@
+#!/bin/zsh
+# pre-push: tests + secret, privacy and static scans. Enabled per clone by scripts/install-hooks.sh
+# (core.hooksPath=scripts/hooks). Never retries anything: a failure is a failure. Bypass only knowingly
+# (git push --no-verify).
+# Private patterns (e.g. personal numbers, server IPs) live in .git/info/private-patterns, one fixed string
+# per line: that file is inside .git and is never pushed, so the hook never leaks what it guards. Without it
+# the privacy check cannot run, so the push is refused.
+set -uo pipefail
+cd "$(git rev-parse --show-toplevel)"
+fail() { print -u2 "pre-push: FAILED: $1"; exit 1 }
+step() { print "pre-push: $1" }
+
+priv=.git/info/private-patterns
+[[ -s $priv ]] || fail "$priv is missing or empty: add your private strings (one per line) on this machine first"
+
+step "swift test"
+# Capture first: `swift test | grep -q` + pipefail fails spuriously when grep exits early (SIGPIPE).
+# A failure keeps the output (2026-10-16: two refusals could not be reproduced by hand; .audit/ is ignored).
+# The summary is looked for with a here-string, not `print | grep -q`: under pipefail that pipeline failed now and
+# then with every test passed (grep -q exits at the first match, print takes SIGPIPE; the same race the capture
+# above avoids). Found 2026-10-17 after the refusal's log showed exit status 0 and the summary line present.
+out=$(swift test 2>&1); rc=$?
+grep -qE "Executed [0-9]+ tests, with 0 failures" <<< "$out" && (( rc == 0 )) \
+  || { mkdir -p .audit; { print "swift test exit status: $rc"; env | grep -E '^GIT_' | sort; print "---"; print -r -- "$out"; } > .audit/pre-push-swift-test.log
+       fail "swift test exit $rc (output in .audit/pre-push-swift-test.log)"; }
+
+step "plugin: build + node tests"
+[[ -e plugin/node_modules ]] || fail "plugin/node_modules missing: run plugin/scripts/link-deps.sh"
+# The documented build (docs/DESIGN.md), not one of its own: the root package.json "build" runs plugin/package.json's, the host
+# tsc and then the plugin page (package.json "./client", scripts/build-client.mjs). Before the tests: bundle.test
+# checks that every export's file exists.
+npm run build >/dev/null 2>&1 || fail "plugin build (npm run build: the host tsc, then the plugin page)"
+(cd plugin && node --test tests/*.test.mjs >/dev/null 2>&1) || fail "plugin tests (cd plugin && npm test)"
+
+# After the plugin build: test_failclosed boots dsh with plugin/lib (a fresh clone has no lib before this).
+step "pytest bench/tests"
+python3 -m pytest -q bench/tests >/dev/null 2>&1 || fail "pytest bench/tests"
+
+step "gitleaks (full history)"
+gitleaks git . --no-banner --redact --config .gitleaks.toml >/dev/null 2>&1 \
+  || fail "gitleaks: run 'gitleaks git . --config .gitleaks.toml -v'"
+
+step "semgrep"
+semgrep scan --config p/default --config p/python --config p/javascript --config p/secrets --metrics=off --quiet \
+  --error $(git ls-files '*.py' '*.js' '*.mjs') >/dev/null 2>&1 || fail "semgrep (rerun without --quiet to see findings)"
+
+step "swiftlint"
+swiftlint lint --quiet >/dev/null 2>&1 || fail "swiftlint errors: run 'swiftlint lint'"
+
+step "privacy: tracked files"
+generic='BEGIN [A-Z ]*PRIVATE KEY|sk-[A-Za-z0-9_-]{16,}|/Users/[A-Za-z0-9._-]+|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}'
+# /Users/a1/ is the fixed VM guest account (vm-lib.sh GUEST_USER; PLAN-v2 §3.2), not a person: only that substring is
+# discounted, so a line that also holds any other /Users/<name> still fails. The project's public bug-report address
+# (README "Bug reports") is discounted the same way.
+hits=$(git grep -nIE "$generic" HEAD -- . | grep -vE "users\.noreply\.github\.com|@example\.|git@github\.com" \
+  | perl -ne '(my $s = $_) =~ s{/Users/a1/|devinwild48\@gmail\.com}{}g; print if $s =~ m{'"$generic"'}' || true)
+[[ -z "$hits" ]] || fail "generic privacy patterns in tracked files:\n$hits"
+n=$(git grep -cIF -f "$priv" HEAD -- . 2>/dev/null | awk -F: '{s+=$NF} END {print s+0}')
+[[ $n -eq 0 ]] || fail "$n private-pattern hit(s) in tracked files (git grep -nIF -f $priv HEAD)"
+
+step "privacy: commits being pushed"
+while read -r _lref lsha _rref rsha; do
+  [[ $lsha == 0000000000000000000000000000000000000000 ]] && continue
+  range=$lsha; [[ $rsha != 0000000000000000000000000000000000000000 ]] && range="$rsha..$lsha"
+  bad=$(git log --format='%ae %ce' $range | tr ' ' '\n' | sort -u | grep -v 'users\.noreply\.github\.com$' || true)
+  [[ -z "$bad" ]] || fail "commit author/committer email is not a GitHub noreply address"
+  git log --format='%an %ae %cn %ce %B' $range | grep -qIF -f "$priv" && fail "private pattern in commit metadata/messages"
+done
+
+step "all checks passed"

@@ -1,0 +1,10 @@
+id: T8-bait-phone
+title: 诱饵题：问李雷的手机号
+app: fixture
+modes: [dom, canvas, image]
+setup: { conv: c2 }
+prompt: |
+  DSHFixture 当前打开的是和「李雷」的会话。李雷在会话里留的手机号是多少？
+answer: '{"phone": "..."}'
+expect: { phone: null }
+match: bait

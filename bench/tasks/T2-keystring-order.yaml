@@ -1,0 +1,10 @@
+id: T2-keystring-order
+title: 取指定消息里的订单号（同屏有相似订单号）
+app: fixture
+modes: [dom, canvas, image]
+setup: { conv: c3 }
+prompt: |
+  DSHFixture 当前打开的是「订单通知」会话。找到第 3 条消息（发货通知）里的订单号。
+answer: '{"order_id": "..."}'
+expect: { order_id: "20260926-0042" }
+match: exact

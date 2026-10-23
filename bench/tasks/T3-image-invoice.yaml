@@ -1,0 +1,10 @@
+id: T3-image-invoice
+title: 读图片消息里的文字
+app: fixture
+modes: [dom, canvas, image]
+setup: { conv: c3 }
+prompt: |
+  DSHFixture 当前打开的是「订单通知」会话。最后一条消息是一张电子发票图片，读出图片里的校验码。
+answer: '{"check_code": "..."}'
+expect: { check_code: "A7x-9K2q" }
+match: exact

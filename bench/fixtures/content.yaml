@@ -1,0 +1,193 @@
+# Fixture content: the single source of truth for every bench screenshot and
+# E2E task. The fixture app lays this out identically in dom / canvas / image
+# modes, so ground truth is the same text regardless of how pixels are made.
+#
+# Message fields:
+#   id          stable id, referenced by tasks (e.g. c3m3)
+#   from        sender display name; `self` marks the local user (right bubble)
+#   time        timestamp shown above the bubble
+#   text        message text; newlines are hard breaks, long lines soft-wrap
+#   kind        text (default) | code (monospace) | image (text baked into a
+#               picture in EVERY mode — "字在图片里")
+#   style       optional list: small (11px) | faint (low-contrast grey)
+#   keystrings  exact strings an agent must reproduce character-for-character
+
+self: 我
+
+conversations:
+  - id: c1
+    name: 产品讨论组
+    messages:
+      - id: c1m1
+        from: 韩梅梅
+        time: "09:02"
+        text: 早上好，今天 10:30 评审 v2.3 的需求文档，大家记得提前看一下。
+      - id: c1m2
+        from: 李雷
+        time: "09:05"
+        text: 收到👌 文档链接发一下？
+      - id: c1m3
+        from: 韩梅梅
+        time: "09:06"
+        text: 在共享盘 /产品/2026Q4/需求-v2.3.docx，权限已经开了。
+      - id: c1m4
+        from: self
+        time: "09:10"
+        text: 我这边看完了，第 4 节的埋点口径和上周说的不一致，会上讨论。
+      - id: c1m5
+        from: 王工
+        time: "09:14"
+        text: 接口联调环境换地址了：staging-api.example.internal:8443，旧的 8080 下线。
+        keystrings: ["staging-api.example.internal:8443"]
+      - id: c1m6
+        from: 李雷
+        time: "09:15"
+        style: [faint]
+        text: （已撤回一条消息）
+      - id: c1m7
+        from: 韩梅梅
+        time: "09:21"
+        text: 会议号：842 1937 5506，密码 6620。
+        keystrings: ["842 1937 5506", "6620"]
+      - id: c1m8
+        from: 王工
+        time: "09:33"
+        kind: code
+        text: |-
+          $ curl -s https://staging-api.example.internal:8443/health
+          {"status":"ok","build":"b7f3e1c","uptime":86400}
+        keystrings: ["b7f3e1c"]
+      - id: c1m9
+        from: self
+        time: "09:40"
+        text: 好的，健康检查通过。
+      - id: c1m10
+        from: 李雷
+        time: "09:52"
+        style: [small]
+        text: 小提示：评审前请把个人待办同步到看板，截止 12:00。
+      - id: c1m11
+        from: 韩梅梅
+        time: "10:01"
+        text: 还有 30 分钟开始，会议室改到 B-1207。
+        keystrings: ["B-1207"]
+      - id: c1m12
+        from: 王工
+        time: "10:05"
+        kind: image
+        text: |-
+          构建通知
+          流水线 #4471 成功
+          耗时 6m 42s  镜像 tag: rel-2026.09.26-rc2
+        keystrings: ["#4471", "rel-2026.09.26-rc2"]
+      - id: c1m13
+        from: self
+        time: "10:12"
+        text: 收到，我先去会议室占位置。
+
+  - id: c2
+    name: 李雷
+    messages:
+      - id: c2m1
+        from: 李雷
+        time: "昨天 21:47"
+        text: 周末的羽毛球还去吗？场地我订了周六下午 3 点。
+      - id: c2m2
+        from: self
+        time: "昨天 21:50"
+        text: 去！几号场？
+      - id: c2m3
+        from: 李雷
+        time: "昨天 21:52"
+        text: 7 号场，场馆取票码 Qz8#Il1O，到了前台报这个就行。
+        keystrings: ["Qz8#Il1O"]
+      - id: c2m4
+        from: 李雷
+        time: "08:15"
+        style: [faint, small]
+        text: 顺便帮我带一筒球，回头转你 68 元。
+      - id: c2m5
+        from: self
+        time: "08:20"
+        text: 没问题 👍
+
+  - id: c3
+    name: 订单通知
+    messages:
+      - id: c3m1
+        from: 小助手
+        time: "08:00"
+        text: 您的订单已提交，订单号 20260926-0024，预计 2 小时内发货。
+        keystrings: ["20260926-0024"]
+      - id: c3m2
+        from: 小助手
+        time: "08:31"
+        text: 支付成功：¥ 1,299.00（招商银行 尾号 0l7O）。
+        keystrings: ["¥ 1,299.00", "0l7O"]
+      - id: c3m3
+        from: 小助手
+        time: "09:26"
+        text: 订单 20260926-0042 已发货，顺丰单号 SF1407 2263 9981，可在"物流"页查看。
+        keystrings: ["20260926-0042", "SF1407 2263 9981"]
+      - id: c3m4
+        from: 小助手
+        time: "09:27"
+        style: [small, faint]
+        text: 退换货请在签收后 7 天内申请，客服电话 400-820-1l0O。
+        keystrings: ["400-820-1l0O"]
+      - id: c3m5
+        from: 小助手
+        time: "11:48"
+        kind: image
+        text: |-
+          电子发票
+          发票号码 0442 1187
+          校验码 A7x-9K2q
+          金额 ¥1,299.00
+        keystrings: ["0442 1187", "A7x-9K2q"]
+
+  - id: c4
+    name: 验证码助手
+    messages:
+      - id: c4m1
+        from: 验证码助手
+        time: "10:40"
+        text: 【示例银行】您的动态验证码为 706219，5 分钟内有效，请勿泄露。
+        keystrings: ["706219"]
+      - id: c4m2
+        from: 验证码助手
+        time: "10:44"
+        text: 【示例云】登录验证码 O0l1-I7Lx，如非本人操作请忽略。
+        keystrings: ["O0l1-I7Lx"]
+      - id: c4m3
+        from: 验证码助手
+        time: "10:45"
+        style: [small]
+        text: 【示例云】绑定手机 138-0013-8000 成功。
+        keystrings: ["138-0013-8000"]
+
+  - id: c5
+    name: 家人群
+    messages:
+      - id: c5m1
+        from: 妈妈
+        time: "07:30"
+        text: 今天降温了，出门多穿点🧥
+      - id: c5m2
+        from: 爸爸
+        time: "07:42"
+        kind: image
+        text: |-
+          天气预报 9月26日
+          小雨转阴 12℃ ~ 19℃
+          东北风 3 级  湿度 87%
+        keystrings: ["12℃ ~ 19℃", "87%"]
+      - id: c5m3
+        from: self
+        time: "08:05"
+        text: 知道啦，带伞了☂️
+      - id: c5m4
+        from: 妈妈
+        time: "12:10"
+        style: [faint]
+        text: 周日回家吃饭吗？做你爱吃的糖醋排骨。

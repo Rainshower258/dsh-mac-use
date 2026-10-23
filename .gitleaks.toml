@@ -1,0 +1,11 @@
+[extend]
+useDefault = true
+
+# Narrow exception: one rule, two known files, and only bench task-ID strings (T2-keystring-order, T8-bait-refund).
+# All three must match; the same text anywhere else is still reported.
+[[allowlists]]
+description = "bench task IDs in the smoke command look like generic API keys"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^bench/(README\.md|smoke\.sh)$''']
+regexes = ['''^T[0-9]+-[a-z0-9]+(-[a-z0-9]+)*$''']

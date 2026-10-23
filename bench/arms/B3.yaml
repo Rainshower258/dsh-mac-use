@@ -1,0 +1,8 @@
+id: B3
+description: B3：B2 + cu_zoom / cu_read_text
+runtime: cu-runtime
+# Stated explicitly for every cu-runtime arm (it changes the target app; PLAN-v2 R4).
+electron_ax: true
+model: { provider: deepseek-official, model: deepseek-v4-flash-vision-exp }
+image_input: true
+plugin_config: { ocr: true, image: true, zoom: true, imePolicy: takeover }

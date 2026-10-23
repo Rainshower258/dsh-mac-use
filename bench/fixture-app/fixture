@@ -1,0 +1,8 @@
+#!/bin/sh
+# Launch DSHFixture (killing any previous instance) and pass flags through.
+#   bench/fixture-app/fixture --mode canvas --conv 3 [--run-dir DIR] [--gt-out FILE]
+# Runs in the foreground; append & to background it.
+HERE="$(cd "$(dirname "$0")" && pwd)"
+pkill -f 'DSHFixture.app/Contents/MacOS/Electron' 2>/dev/null
+sleep 0.3
+exec "$HERE/dist/DSHFixture.app/Contents/MacOS/Electron" "$@"

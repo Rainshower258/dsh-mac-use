@@ -1,0 +1,12 @@
+id: T6-86box-dir
+title: 86Box DOS 窗口：dir 列出的文件大小
+app: 86Box
+# 86Box in the VM base (bench/vm/86box/README.md): AMI 286 booting a FreeDOS floppy that runs `dir A:\`. Pixels only.
+modes: [real]
+setup: { vm: 86box/t6, ready_text: COMMAND, ready_timeout_s: 150, settle_s: 2 }
+prompt: |
+  86Box 窗口里是 DOS 的 dir 命令输出。读出 COMMAND.COM 的文件大小（字节数）。
+answer: '{"size": "..."}'
+expect: { size: "85480" }
+ignore_chars: ","
+match: exact

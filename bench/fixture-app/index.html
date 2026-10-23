@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'">
+  <title>DSHFixture</title>
+  <style>
+    html, body { margin: 0; padding: 0; overflow: hidden; width: 960px; height: 680px; }
+    body { -webkit-font-smoothing: antialiased; user-select: none; cursor: default; }
+    #root { position: relative; width: 960px; height: 680px; overflow: hidden; }
+    .abs { position: absolute; box-sizing: border-box; }
+    .line { position: absolute; white-space: pre; }
+    .clip { position: absolute; overflow: hidden; }
+    button.abs { border: 0; padding: 0; margin: 0; font: inherit; cursor: default; }
+    img.abs { display: block; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="renderer.js"></script>
+</body>
+</html>

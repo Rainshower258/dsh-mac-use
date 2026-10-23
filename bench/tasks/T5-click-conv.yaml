@@ -1,0 +1,10 @@
+id: T5-click-conv
+title: 点击左侧会话切换到「验证码助手」
+app: fixture
+modes: [dom, canvas, image]
+setup: { conv: c1 }
+prompt: |
+  在 DSHFixture 左侧会话列表里点击「验证码助手」，切换到这个会话，然后读出该会话最新一条消息里的手机号。
+answer: '{"phone": "..."}'
+expect: { target: "conv:c4", phone: "138-0013-8000" }
+match: click+exact

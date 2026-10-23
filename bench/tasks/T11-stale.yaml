@@ -1,0 +1,10 @@
+id: T11-stale
+title: 过期元素：第一次观察后会话列表重排，按旧 ID 点击必须被拒、不能点错
+app: fixture
+modes: [dom, canvas]
+setup: { conv: c1, content: fixtures/content-r4.yaml, reorder_after_observe: true }
+prompt: |
+  在 DSHFixture 左侧会话列表里打开「验证码助手」会话，读出该会话最新一条消息里的手机号。
+answer: '{"phone": "..."}'
+expect: { target: "conv:c4", phone: "138-0013-8000" }
+match: stale

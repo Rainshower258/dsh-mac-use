@@ -1,0 +1,10 @@
+id: T5-click-button
+title: 点击标签为「收藏」的按钮
+app: fixture
+modes: [dom, canvas, image]
+setup: { conv: c3 }
+prompt: |
+  在 DSHFixture 窗口右上角点击标签为「收藏」的按钮，只点一次。点完后说明你点了哪里。
+answer: '{"clicked": "收藏"}'
+expect: { target: "btn:收藏" }
+match: click

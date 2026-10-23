@@ -1,0 +1,16 @@
+# Enforced by scripts/hooks/pre-push: errors block a push, warnings are informational.
+included: [Sources, Tests]
+disabled_rules:
+  - identifier_name      # x, y, i, id, pt are idiomatic here
+  - line_length
+  - trailing_comma
+  - statement_position
+  - opening_brace
+  - large_tuple
+  - xctfail_message
+force_try: error
+force_cast: error
+cyclomatic_complexity: { warning: 15, error: 40 }   # Dispatcher.route is L6 in the audit; split before R3
+function_body_length: { warning: 100, error: 250 }
+type_body_length: { warning: 350, error: 600 }
+file_length: { warning: 500, error: 1000 }

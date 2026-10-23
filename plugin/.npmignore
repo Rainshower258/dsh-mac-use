@@ -1,0 +1,3 @@
+# Packing the installable package (package.json at the repository root, its "files"): the built lib/ ships, which
+# ../.gitignore-style rules in this directory would otherwise drop. Only lib/ is listed in "files" from here.
+node_modules

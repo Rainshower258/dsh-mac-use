@@ -1,0 +1,108 @@
+# B PROTOTYPE: computer use inside dsh's standard mode (bash, files, web, subagents), through a `screen` subagent.
+# On a real Mac only with scripts/install-cu-std.sh --real-mac. bash shares the user's identity with the daemon (合并方案-
+# 调研-20261010.md ②); what stands between them: the daemon refuses grants.set in daily mode and binds approvals to the
+# client that asked, and confined commands cannot read the daemon's state dir or connect to its socket (the `sandbox`
+# row below). bash itself runs under dsh's own rules (P3, 2026-10-16: the official dsh keeps bash and computer use
+# apart; the per-call confirmation after screen content, `confirm: after-screen`, is kept as an option, off by default).
+# Installed by scripts/install-cu-std.sh into ~/.dsh-cu-std.
+#
+# What it composes on top of the standard host: the cu-runtime plugin (cu_* tools, global) and one more delegation tool,
+# `screen`, whose children run in the agent preset cu-screen (the 电脑操作 preset's persona from
+# profiles/presets/cu-desktop, no tool rows of its own), use the vision model, and keep ONLY the cu_* tools: the plugin
+# denies them every other tool they see (hideFromRoot, screenPreset; dsh 0.2.1-rc.2, scripts/install-cu-std.sh). What a
+# screen child says reaches the top level sealed as screen content (plugin/src/screen-root.ts). The top-level agent does
+# not see cu_* (hideFromRoot). bash works under dsh's standard rules (sandbox, escalation prompt); every workflow call
+# waits for the person's approval, and so does every bash call once screen content may be in the conversation if
+# `confirm` below is set to after-screen (cu-exec-gate, plugin/src/exec-gate.ts); a call that leaves the sandbox is
+# asked by dsh's own escalation prompt. bash is loaded here, not in the preset, and its row injects the gate's service:
+# without the gate dsh refuses to start ("entry did not activate"), so nothing runs ungated. The preset's bash, pwsh and
+# workflow rows are off (install-cu-std.sh; workflow runs inside dsh's process, outside the sandbox).
+
+- id: session-telemetry-otel
+  config:
+    mode: DISABLED
+
+# bash (and anything else dsh confines) runs under scripts/cu-sandbox-runner: dsh's own Seatbelt profile plus no
+# reading or writing of the daemon's state dir (token, socket, config, audit) and no connecting to its socket. Not
+# under danger-full-access, which dsh runs unconfined (each such call is approved by the user, in every mode).
+- id: sandbox
+  config:
+    runnerCommand: [@RUNNER@, --deny-dir, @STATE_DIR@, --deny-socket, @SOCKET@]
+    runnerFailureSignatures: ['cu-sandbox-runner: ', 'sandbox-exec: ']
+
+# The parent's preset is dsh's standard one with its `subagent`, bash, pwsh and workflow rows off (standard-screen,
+# rendered by scripts/install-cu-std.sh from the installed dsh's own `preset-standard` row), and the only one: the
+# shipped presets' bash and workflow rows do not inject the exec gate, so the session picker must not reach them.
+# dsh 0.2.x (2026-10-16): presets are rows of the composition (`dsh-agent-preset`), not directories; before 0.2.0 this
+# was `agent-presets` with roots and includeShippedRoot: false.
+- id: agent-preset-registry
+  config:
+    default: standard-screen
+- id: preset-standard
+  disabled: true
+- id: preset-ptc
+  disabled: true
+- id: preset-minimal
+  disabled: true
+- id: preset-cordis
+  disabled: true
+- insert: '@STANDARD_SCREEN_PRESET@'
+
+- insert:
+    - id: cu-exec-gate
+      name: '@GATE@'
+      config:
+        # off (P3, 2026-10-16): bash works under dsh's standard rules, as in dsh without this plugin. after-screen
+        # (the maintainer 2026-10-14, the default until 10-16) asks for every call once screen content may be in the
+        # conversation. Commands outside the sandbox: dsh's escalation prompt, per call, whatever this says.
+        confirm: "off"   # quoted: bare off is YAML 1.1 for false
+        fullAccess: true
+        screenTool: screen
+    - id: cu-tool-bash
+      name: '@deepseek-ai/dsh-tool-bash'
+      inject: [cuExecGate]
+    - id: cu-runtime
+      name: '@PLUGIN@'
+      config:
+        apps: []
+        appApproval: dialog
+        electronAx: true
+        imePolicy: ask
+        imeApproval: call
+        restoreFocus: true
+        # The parent must delegate: it sees no cu_* tools (first VM run: it called them itself and was refused).
+        hideFromRoot: true
+        # Open the daemon app when it is not running, unless the user stopped it (plugin/src/autostart.ts).
+        autoStart: true
+        # The preset tool-screen starts its children in (below): those children keep the cu_* tools alone.
+        screenPreset: cu-screen
+    # The screen children's preset. dsh 0.2.1 configures a child's persona and tools only through an agent preset
+    # (tool-subagent: `persona`, `toolFilter` and `backgroundMode` are gone; a row naming the first two fails to load).
+    # Its only row is the persona: the cu_* tools come from the cu-runtime row above, and the plugin denies a screen
+    # child every other tool (bash, screen, working_directory…) before its first step. dsh lists every preset in the
+    # session picker; a top-level session started in this one is scoped like the top level (no cu_*).
+    - id: preset-cu-screen
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: cu-screen
+        name: '屏幕子代理（B 原型，供 screen 工具使用）'
+        description: '由 screen 工具启动的子代理只能使用 cu_* 工具。新建会话请选择「标准模式 + 屏幕（B 原型）」。'
+        order: 99
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: @PERSONA@
+    - id: tool-screen
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: screen
+        # Every child in the screen preset (spawn only). Without allowedAgentPresets the model cannot choose another.
+        agentPreset: cu-screen
+        # The screen child cannot delegate further (depth 1 is the cap).
+        maxDepth: 1
+        agentOptions:
+          provider: deepseek-official
+          model: deepseek-flash
+          reasoningEffort: high

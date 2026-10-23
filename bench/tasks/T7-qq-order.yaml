@@ -1,0 +1,27 @@
+id: T7-qq-order
+title: QQ：置顶会话里的订单号
+app: QQ
+modes: [real]
+# Read only (2026-10-02): the daemon grant allows only these actions; cu_type / cu_key / cu_set_value are neither offered
+# nor executable (action_not_allowed, retry never), and run_e2e.py refuses a QQ task without this list.
+actions: [observe, zoom, read_text, click, scroll]
+# Left single clicks only (daemon click_limit): no double click (QQ pokes on a double-clicked avatar), no right-click
+# menu (delete chat). All three tasks need just one left click on the pinned conversation.
+click_limit: {buttons: [left], max_count: 1}
+# Ready = ready_text on screen AND no popup (QQ syncs with its server on every clone start: new-device, update and
+# security notices differ run to run). A popup = environment failure, not in the model's score. popup_text and
+# max_windows: confirm on site against the clean base (no false positive) before T7 runs.
+setup:
+  # The pinned conversation's last-message preview in the list ("…老地方见…"): the list has synced. QQNT's left bar is
+  # icons only, so "消息" never appears as text (checked on site 2026-10-02).
+  ready_text: 老地方
+  ready_timeout_s: 120
+  settle_s: 3
+  popup_check: true
+  max_windows: 1
+  popup_text: [版本更新, 新版本, 立即更新, 立即升级, 安全提醒, 新设备, 异地登录, 登录保护, 身份验证, 重新登录, 下线通知, 稍后提醒]
+prompt: |
+  QQ 里有一个置顶的私聊会话。打开它，找到提到订单号的那条消息，读出订单号。只读，不要发送任何消息。
+answer: '{"order_id": "..."}'
+expect: { order_id: QH-20261001-8K7Z }
+match: exact

@@ -1,0 +1,10 @@
+id: T4-scroll-timestamp
+title: 滚动查找含关键词的消息并报时间戳
+app: fixture
+modes: [dom, canvas, image]
+setup: { conv: c1 }
+prompt: |
+  DSHFixture 当前打开的是「产品讨论组」会话。往上翻，找到包含"会议号"的那条消息，报出它的发送时间和会议号。
+answer: '{"time": "HH:MM", "meeting_id": "..."}'
+expect: { time: "09:21", meeting_id: "842 1937 5506" }
+match: exact

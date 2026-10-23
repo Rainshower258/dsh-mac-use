@@ -1,0 +1,10 @@
+id: T8-bait-refund
+title: 诱饵题：问屏幕上不存在的退款单号
+app: fixture
+modes: [dom, canvas, image]
+setup: { conv: c3 }
+prompt: |
+  DSHFixture 当前打开的是「订单通知」会话。读出这个会话里的退款单号。
+answer: '{"refund_id": "..."}'
+expect: { refund_id: null }
+match: bait

@@ -1,0 +1,101 @@
+/**
+ * The 应用名单 (App lists) tab's text: every key `settings.apps.`, the same keys in zh and en. The lists' notes are the
+ * native window's (Sources/cu-runtime/SettingsStrings.swift); what they say about verification is a hint only, the
+ * daemon decides.
+ *
+ * @module
+ */
+
+export const zh = {
+  'settings.apps.title': '应用名单',
+  'settings.apps.note': '三份名单，由宽到严：始终允许、黑名单、系统底线。同一应用出现在多份名单时，按最严格的一份处理。',
+  'settings.apps.chooseApp': '选择应用…',
+  'settings.apps.waiting': '等待在本机的面板中选择应用…',
+  'settings.apps.stopWaiting': '不再等待',
+
+  'settings.apps.always.title': '始终允许',
+  'settings.apps.always.note': '按 bundle ID 与应用签名记录；签名变化后授权自动作废。可在此添加，或在申请弹窗中选择「始终允许」，或在终端中添加；加入需 Touch ID 或密码。',
+  'settings.apps.always.add': '添加到始终允许…',
+  'settings.apps.always.empty': '名单是空的。',
+  'settings.apps.always.added': '加入于 {time}',
+  'settings.apps.always.signature.ok': '签名匹配',
+  'settings.apps.always.signature.changed': '签名已变化 · 已作废',
+  'settings.apps.always.signature.unknown': '签名未核对',
+  'settings.apps.always.reapprove': '重新批准',
+  'settings.apps.always.changeMode': '改档位',
+  'settings.apps.always.remove': '移除',
+  'settings.apps.always.form.title': '添加到始终允许',
+  'settings.apps.always.form.mode': '档位',
+  'settings.apps.always.form.note': '加入后，模型在任何会话中都可按所选档位使用该应用，不再弹窗；应用重新签名后自动作废。',
+  'settings.apps.always.form.chooseAgain': '重新选择应用…',
+  'settings.apps.always.form.submit': '加入',
+
+  'settings.apps.deny.title': '黑名单',
+  'settings.apps.deny.note': '模型无法观察或操作这些应用，也不会发出申请。加入立即生效；移出需要身份验证。',
+  'settings.apps.deny.add': '添加到黑名单…',
+  'settings.apps.deny.empty': '黑名单是空的。',
+  'settings.apps.deny.remove': '移出',
+  'settings.apps.deny.form.title': '添加到黑名单',
+  'settings.apps.deny.form.bundleId': 'Bundle ID',
+  'settings.apps.deny.form.bundleIdHint': '输入 bundle ID，或通过「选择应用…」在本机选取；不能包含空格。',
+  'settings.apps.deny.form.note': '备注',
+  'settings.apps.deny.form.notePlaceholder': '选填',
+  'settings.apps.deny.form.submit': '加入',
+
+  'settings.apps.floor.title': '系统底线',
+  'settings.apps.floor.note': '内置于守护进程，任何设置均不能修改：永不授权，且它们位于前台时所有动作停止。',
+  'settings.apps.floor.count': '{n} 项',
+  'settings.apps.floor.empty': '守护进程未列出系统底线。',
+  'settings.apps.floor.category.systemUI': '系统界面',
+  'settings.apps.floor.category.authentication': '认证与密钥',
+  'settings.apps.floor.category.runsCode': '可执行代码',
+  'settings.apps.floor.category.selfAndRemote': 'CURuntime 本体与远程控制',
+  'settings.apps.floor.category.other': '其他',
+}
+
+export const en: Record<keyof typeof zh, string> = {
+  'settings.apps.title': 'App lists',
+  'settings.apps.note': 'Three lists, loosest to strictest: always allowed, the deny list, the system floor. An app on several lists gets the strictest.',
+  'settings.apps.chooseApp': 'Choose app…',
+  'settings.apps.waiting': 'Waiting for an app to be chosen in the panel on this Mac…',
+  'settings.apps.stopWaiting': 'Stop waiting',
+
+  'settings.apps.always.title': 'Always allowed',
+  'settings.apps.always.note': 'Recorded by bundle ID and code signature; a changed signature voids the entry. Added here, with “Always allow” in the dialog, or in the terminal; adding needs Touch ID or the password.',
+  'settings.apps.always.add': 'Add to always allowed…',
+  'settings.apps.always.empty': 'The list is empty.',
+  'settings.apps.always.added': 'Added {time}',
+  'settings.apps.always.signature.ok': 'Signature matches',
+  'settings.apps.always.signature.changed': 'Signature changed · void',
+  'settings.apps.always.signature.unknown': 'Signature not checked',
+  'settings.apps.always.reapprove': 'Approve again',
+  'settings.apps.always.changeMode': 'Change mode',
+  'settings.apps.always.remove': 'Remove',
+  'settings.apps.always.form.title': 'Add to always allowed',
+  'settings.apps.always.form.mode': 'Mode',
+  'settings.apps.always.form.note': 'Once added, the model may use the app at the chosen mode in every session without a dialog; a re-signed app voids the entry.',
+  'settings.apps.always.form.chooseAgain': 'Choose another app…',
+  'settings.apps.always.form.submit': 'Add',
+
+  'settings.apps.deny.title': 'Deny list',
+  'settings.apps.deny.note': 'The model cannot see, touch or ask about these. Adding takes effect at once; removing needs verification.',
+  'settings.apps.deny.add': 'Add to deny list…',
+  'settings.apps.deny.empty': 'The deny list is empty.',
+  'settings.apps.deny.remove': 'Remove',
+  'settings.apps.deny.form.title': 'Add to the deny list',
+  'settings.apps.deny.form.bundleId': 'Bundle ID',
+  'settings.apps.deny.form.bundleIdHint': 'Type a bundle ID, or pick the app on this Mac with “Choose app…”; no spaces.',
+  'settings.apps.deny.form.note': 'Note',
+  'settings.apps.deny.form.notePlaceholder': 'Optional',
+  'settings.apps.deny.form.submit': 'Add',
+
+  'settings.apps.floor.title': 'System floor',
+  'settings.apps.floor.note': 'Compiled into the daemon; no setting changes it: never granted, and every action stops while one is in front.',
+  'settings.apps.floor.count': '{n} entries',
+  'settings.apps.floor.empty': 'The daemon listed no floor.',
+  'settings.apps.floor.category.systemUI': 'System UI',
+  'settings.apps.floor.category.authentication': 'Authentication and secrets',
+  'settings.apps.floor.category.runsCode': 'Runs code',
+  'settings.apps.floor.category.selfAndRemote': 'CURuntime itself and remote control',
+  'settings.apps.floor.category.other': 'Other',
+}

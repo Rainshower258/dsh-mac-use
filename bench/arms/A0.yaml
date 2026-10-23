@@ -1,0 +1,6 @@
+id: A0
+description: 上游原样：AX（diff）+ 截图 URL；模型收不到图像（同一模型被声明为 text-only）
+# Same model as A1 so the only difference is whether the screenshot reaches it.
+model: { provider: deepseek-official, model: deepseek-v4-flash-vision-exp }
+image_input: false
+plugin_config: {}

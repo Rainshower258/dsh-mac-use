@@ -1,0 +1,16 @@
+{
+ "k": 3,
+ "run_prefix": "r5-t6",
+ "why": "R5 real-app part: T6 on 86Box (pixels only), B1/B2/B3, k=3 (maintainer, 2026-10-01).",
+ "per_arm_cells": {
+  "B1": [
+   "T6-86box-dir:real"
+  ],
+  "B2": [
+   "T6-86box-dir:real"
+  ],
+  "B3": [
+   "T6-86box-dir:real"
+  ]
+ }
+}

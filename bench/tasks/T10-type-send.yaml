@@ -1,0 +1,12 @@
+id: T10-type-send
+title: 输入超过 20 字的中英混合文本并发送
+app: fixture
+modes: [dom, canvas]
+setup: { conv: c7, content: fixtures/content-r4.yaml, composer: true }
+prompt: |
+  在 DSHFixture 的「文件传输助手」会话里发送下面这条消息（一字不改，只发送一次）：
+  会议改到周五下午 3:30，地点 B-1207 会议室，Please bring your laptop 和充电器。
+  发送成功后回答 done。
+answer: '{"done": true}'
+expect: { conv: c7, text: "会议改到周五下午 3:30，地点 B-1207 会议室，Please bring your laptop 和充电器。" }
+match: sent_text

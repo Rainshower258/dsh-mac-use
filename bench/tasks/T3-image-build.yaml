@@ -1,0 +1,10 @@
+id: T3-image-build
+title: 读图片消息里的镜像 tag
+app: fixture
+modes: [dom, canvas, image]
+setup: { conv: c1 }
+prompt: |
+  DSHFixture 当前打开的是「产品讨论组」会话。王工发了一张构建通知图片，读出图片里的镜像 tag。
+answer: '{"tag": "..."}'
+expect: { tag: "rel-2026.09.26-rc2" }
+match: exact

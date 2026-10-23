@@ -1,0 +1,161 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>calibration</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; font: 12px -apple-system, sans-serif; }
+  body { background: #eeeeee; }
+  body.blocker { background: #303030; }  /* unsaturated: can never be mistaken for a marker */
+  .marker {
+    position: absolute; width: 24px; height: 24px; margin: 0; padding: 0; border: 0; border-radius: 0;
+    color: #fff; font: bold 11px -apple-system, sans-serif; line-height: 24px; text-align: center;
+    transform: translate(-50%, -50%);
+  }
+  #label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 28px; }
+  #text { position: absolute; left: 50%; top: 27%; transform: translate(-50%, -50%); font: 600 34px -apple-system, sans-serif;
+          letter-spacing: 1px; color: #111; white-space: nowrap; }
+  body.blocker #text { color: #fff; top: 50%; }
+</style>
+</head>
+<body>
+<script>
+  // 9 markers: corners, edge midpoints, centre, inset from the content edges. Colours are fully saturated hues
+  // 40 degrees apart so the harness can tell them apart after colour management.
+  const params = new URLSearchParams(location.search)
+  const role = params.get('role')
+  const INSET = 40
+  const SPOTS = [[0, 0], [0.5, 0], [1, 0], [0, 0.5], [0.5, 0.5], [1, 0.5], [0, 1], [0.5, 1], [1, 1]]
+
+  function layout() {
+    document.querySelectorAll('.marker').forEach((m) => m.remove())
+    if (role === 'blocker') return window.calib.markers([])
+    const w = document.documentElement.clientWidth, h = document.documentElement.clientHeight
+    const list = SPOTS.map(([fx, fy], i) => {
+      const hue = i * 40
+      const b = document.createElement('button')
+      b.className = 'marker'
+      b.id = `m${i}`
+      b.textContent = String(i)
+      b.setAttribute('aria-label', `marker ${i}`)
+      b.style.background = `hsl(${hue}, 100%, 45%)`
+      b.style.left = `${INSET + fx * (w - 2 * INSET)}px`
+      b.style.top = `${INSET + fy * (h - 2 * INSET)}px`
+      document.body.appendChild(b)
+      const r = b.getBoundingClientRect()
+      return { id: i, hue, cx: r.left + r.width / 2, cy: r.top + r.height / 2 }
+    })
+    window.calib.markers(list)
+  }
+
+  if (role === 'blocker') {
+    document.body.classList.add('blocker')
+    if (!params.get('label')) { const l = document.createElement('div'); l.id = 'label'; l.textContent = 'BLOCKER'; document.body.appendChild(l) }
+  }
+  if (params.get('label')) {   // leak test: canary text (blocker) or positive-control text (fixture)
+    // Pixels only: the leak test is about the pixel/OCR path, and an AX-visible positive control would be dropped
+    // from OCR output as a duplicate of its AX element (OCRDedup), proving nothing about OCR.
+    const t = document.createElement('div'); t.id = 'text'; t.textContent = params.get('label')
+    t.setAttribute('aria-hidden', 'true'); document.body.appendChild(t)
+  }
+  // OCR experiments: text lines placed by the harness; their rendered rects are the ground truth.
+  window.calib.onLines((lines) => {
+    for (const l of lines) {
+      let el = document.getElementById(`t${l.id}`)
+      if (!l.text) { el?.remove(); continue }
+      if (!el) { el = document.createElement('div'); el.id = `t${l.id}`; el.className = 'tline'; document.body.appendChild(el) }
+      el.textContent = l.text
+      if (l.ax === false) el.setAttribute('aria-hidden', 'true'); else el.removeAttribute('aria-hidden')   // pixels only, like canvas text
+      el.style.cssText = `position:absolute; left:${l.x}px; top:${l.y}px; font:${l.size ?? 16}px -apple-system, sans-serif; color:#111; white-space:nowrap;`
+    }
+    requestAnimationFrame(() => window.calib.texts([...document.querySelectorAll('.tline')].map((el) => {
+      const r = el.getBoundingClientRect()
+      return { id: Number(el.id.slice(1)), text: el.textContent, x: r.left, y: r.top, w: r.width, h: r.height }
+    })))
+  })
+  // R3 action tests: text fields (AX-visible, labelled) whose values are reported, and an event log.
+  // `<id>#app` is the app's own copy of the text, updated only by 'input' events, like a React-controlled box; a
+  // `reactive` field gets a send button enabled only while that copy is non-empty (does an AX set reach the app?).
+  const appState = {}, inputEvents = {}
+  function reportValues() {
+    const v = {}
+    for (const el of document.querySelectorAll('.field')) {
+      v[el.id] = el.value
+      v[`${el.id}#app`] = appState[el.id] ?? ''
+      v[`${el.id}#inputs`] = inputEvents[el.id] ?? 0
+      const send = document.getElementById(`${el.id}-send`)
+      if (send) v[`${el.id}#send_enabled`] = !send.disabled
+    }
+    window.calib.values(v)
+  }
+  window.calib.onFields((fields) => {
+    for (const f of fields) {
+      let el = document.getElementById(f.id)
+      if (!el) {
+        el = document.createElement(f.kind === 'textarea' ? 'textarea' : 'input')
+        if (f.kind === 'password') el.type = 'password'
+        el.id = f.id; el.className = 'field'; el.setAttribute('aria-label', f.label ?? f.id)
+        el.addEventListener('input', (e) => {
+          inputEvents[el.id] = (inputEvents[el.id] ?? 0) + 1
+          appState[el.id] = el.value
+          const send = document.getElementById(`${el.id}-send`)
+          if (send) send.disabled = !appState[el.id]
+          window.calib.event({ kind: 'input', field: el.id, inputType: e.inputType ?? null, composing: e.isComposing ?? null })
+          reportValues()
+        })
+        document.body.appendChild(el)
+        if (f.reactive) {
+          const b = document.createElement('button')
+          b.id = `${f.id}-send`; b.textContent = 'Send'; b.disabled = true
+          b.setAttribute('aria-label', `${f.label ?? f.id} send`)
+          b.style.cssText = `position:absolute; left:${f.x + f.w + 10}px; top:${f.y}px; height:${f.h}px;`
+          document.body.appendChild(b)
+        }
+      }
+      el.style.cssText = `position:absolute; left:${f.x}px; top:${f.y}px; width:${f.w}px; height:${f.h}px; font:15px -apple-system, sans-serif;`
+      if (f.value !== undefined) {
+        el.value = f.value
+        appState[el.id] = f.value   // a reset by the harness resets the app's copy too
+        inputEvents[el.id] = 0
+        const send = document.getElementById(`${el.id}-send`)
+        if (send) send.disabled = !f.value
+      }
+    }
+    reportValues()
+  })
+  document.addEventListener('compositionstart', (e) => window.calib.event({ kind: 'compositionstart', target: e.target.id }), true)
+  document.addEventListener('compositionend', (e) => window.calib.event({ kind: 'compositionend', target: e.target.id, data: e.data }), true)
+  // AX value changes do not always fire 'input' in Chromium: poll too, report on change.
+  let lastValues = ''
+  setInterval(() => {
+    const v = JSON.stringify([...document.querySelectorAll('.field')].map((el) => [el.id, el.value]))
+    if (v !== lastValues) { lastValues = v; reportValues() }
+  }, 300)
+  const mods = (e) => ({ meta: e.metaKey, shift: e.shiftKey, alt: e.altKey, ctrl: e.ctrlKey })
+  document.addEventListener('keydown', (e) => window.calib.event({ kind: 'keydown', key: e.key, code: e.code, ...mods(e) }), true)
+  document.addEventListener('click', (e) => window.calib.event({ kind: 'click', target: e.target.id || e.target.tagName, detail: e.detail, button: e.button }), true)
+  document.addEventListener('dblclick', (e) => window.calib.event({ kind: 'dblclick', target: e.target.id || e.target.tagName }), true)
+  document.addEventListener('contextmenu', (e) => { e.preventDefault(); window.calib.event({ kind: 'contextmenu', target: e.target.id || e.target.tagName }) }, true)
+  document.addEventListener('auxclick', (e) => window.calib.event({ kind: 'auxclick', target: e.target.id || e.target.tagName, button: e.button }), true)
+  document.addEventListener('wheel', (e) => window.calib.event({ kind: 'wheel', dx: e.deltaX, dy: e.deltaY }), { capture: true, passive: true })
+  document.addEventListener('mouseup', (e) => window.calib.event({ kind: 'mouseup', x: e.screenX, y: e.screenY, button: e.button }), true)
+  let moves = 0
+  document.addEventListener('mousemove', (e) => { if (e.buttons & 1) moves += 1 }, true)
+  document.addEventListener('mousedown', () => { moves = 0 }, true)
+  document.addEventListener('mouseup', () => window.calib.event({ kind: 'drag_moves', n: moves }), true)
+  window.addEventListener('resize', () => requestAnimationFrame(layout))
+  requestAnimationFrame(layout)
+  // PointerEvent coordinates can be fractional in Chromium; MouseEvent.screenX/Y are truncated to integers,
+  // which alone would add up to 1 pt per axis to the measured click error.
+  let lastPointer = null
+  document.addEventListener('pointerdown', (e) => { lastPointer = { x: e.screenX, y: e.screenY } }, true)
+  document.addEventListener('mousedown', (e) => {
+    const p = lastPointer ?? { x: e.screenX, y: e.screenY }
+    lastPointer = null
+    window.calib.click({ screenX: p.x, screenY: p.y, mouseScreenX: e.screenX, mouseScreenY: e.screenY,
+                        quantized: Number.isInteger(p.x) && Number.isInteger(p.y),
+                        target: e.target.id || e.target.tagName, button: e.button, detail: e.detail })
+  }, true)
+</script>
+</body>
+</html>

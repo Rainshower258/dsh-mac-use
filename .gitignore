@@ -1,0 +1,28 @@
+.build/
+dist/
+dist-bench/
+# build-app.sh's work dir beside its output, left only when a SIGKILL ends a build (it may hold a signed app)
+.build-app.*/
+.DS_Store
+
+# Signing identities: the cert lives in ~/.cu-runtime-signing, never here
+*.p12
+
+# Runtime state that may carry private data: audit logs, tokens, screenshots, run outputs, keys
+audit/
+*.jsonl
+token
+*.png
+*.jpg
+*.jpeg
+runs/
+.env
+*.credentials.yaml
+
+# Raw audit/tool output (absolute paths, file lists): local only; the sanitized summary lives in docs/audits/
+.audit/
+CODE_AUDIT_REPORT.md
+
+# Archived run records (bench/records.py): session logs and audits, kept 30 days
+archive/
+__pycache__/

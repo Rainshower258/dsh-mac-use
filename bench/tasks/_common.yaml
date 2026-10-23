@@ -1,0 +1,10 @@
+# Appended to every task prompt by bench/run_e2e.py so the rules are identical
+# across tasks and arms. {answer_schema} comes from the task's `answer` field.
+footer: |
+
+  规则：
+  - 目标应用名为 {app}，请用 {tools} 工具操作它（先 {first_tool}）。
+  - 只允许使用 {tools} 工具；不要用 bash、文件读写、read_image 或其他任何工具去读截图文件。
+  - 只能根据屏幕上实际显示的内容回答；读不到或不存在就填 null，不要猜。
+  - 字母和数字必须逐字符照抄（注意 0/O、1/l/I 的区别），不要改写格式。
+  - 回答的最后一行必须是：ANSWER: {answer_schema}

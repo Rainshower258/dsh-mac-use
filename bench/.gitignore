@@ -1,0 +1,10 @@
+# Regenerable or private bench artifacts (never part of an upstream PR either).
+fixture-app/node_modules/
+fixture-app/dist/
+corpus/synthetic/
+# Real-app screenshots (QQ / WeChat / Feishu / 86Box) stay on this machine only.
+corpus/real/
+runs/
+results/offline/raw/
+__pycache__/
+tools/bin/

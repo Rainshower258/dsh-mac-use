@@ -1,0 +1,157 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rainshower258 <188022223+Rainshower258@users.noreply.github.com>
+Date: Sat, 26 Sep 2026 19:24:00 +0800
+Subject: [PATCH] feat(daemon): refuse coordinate clicks/drags outside the
+ target app's windows
+
+Coordinates are posted as real CGEvents anywhere on screen. In a bench run a
+model passed screenshot pixel coordinates (2x, window-relative) as points and
+clicked the user's desktop. Coordinate click/drag now fails with an error that
+names the window bounds and the point-vs-pixel mix-up; element_index clicks
+are unchanged.
+---
+ native/Sources/CUADaemon/AppSession.swift     | 12 +++++++
+ native/Sources/CUADaemon/Screenshot.swift     | 17 +++++++++
+ .../Sources/CUADaemonCore/PointerGuard.swift  | 26 ++++++++++++++
+ .../PointerGuardTests.swift                   | 35 +++++++++++++++++++
+ 4 files changed, 90 insertions(+)
+ create mode 100644 native/Sources/CUADaemonCore/PointerGuard.swift
+ create mode 100644 native/Tests/CUADaemonCoreTests/PointerGuardTests.swift
+
+diff --git a/native/Sources/CUADaemon/AppSession.swift b/native/Sources/CUADaemon/AppSession.swift
+index c02800d..c57839b 100644
+--- a/native/Sources/CUADaemon/AppSession.swift
++++ b/native/Sources/CUADaemon/AppSession.swift
+@@ -212,6 +212,7 @@ final class AppSessionStore {
+             let point = try center(of: node)
+             try InputEvents.click(at: point, button: button, count: count)
+         } else if let point = coordinate(from: at) {
++            try requireInsideWindow(point, session)
+             try InputEvents.click(at: point, button: button, count: count)
+         } else {
+             throw ComputerUseError.invalidParams("click.at must be elementID or coordinate")
+@@ -224,9 +225,20 @@ final class AppSessionStore {
+               let to = coordinate(from: ["coordinate": ["_0": payload["to"] ?? []]]) else {
+             throw ComputerUseError.invalidParams("drag requires from and to coordinate pairs")
+         }
++        try requireInsideWindow(from, session)
++        try requireInsideWindow(to, session)
+         try InputEvents.drag(from: from, to: to)
+     }
+ 
++    /// Coordinates are posted as real CGEvents anywhere on screen; refuse
++    /// points outside the target app's windows rather than click other apps.
++    private func requireInsideWindow(_ point: CGPoint, _ session: AppSession) throws {
++        let windows = Screenshot.windowBounds(pid: session.pid)
++        guard PointerGuard.allows(point, windows: windows) else {
++            throw ComputerUseError.actionFailed(PointerGuard.rejection(point, app: session.bundleID, windows: windows))
++        }
++    }
++
+     private func performPressKey(_ session: AppSession, _ payload: [String: Any]) throws {
+         InputEvents.activate(pid: session.pid)
+         guard let chord = payload["_0"] as? String, !chord.trimmingCharacters(in: .whitespaces).isEmpty else {
+diff --git a/native/Sources/CUADaemon/Screenshot.swift b/native/Sources/CUADaemon/Screenshot.swift
+index 4f8e3b1..a615770 100644
+--- a/native/Sources/CUADaemon/Screenshot.swift
++++ b/native/Sources/CUADaemon/Screenshot.swift
+@@ -20,6 +20,23 @@ enum Screenshot {
+         return (url, "image/png")
+     }
+ 
++    /// Global-point bounds (top-left origin) of every on-screen layer-0 window owned by `pid`.
++    static func windowBounds(pid: pid_t) -> [CGRect] {
++        guard let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
++            as? [[String: Any]] else {
++            return []
++        }
++        return windows.compactMap { window in
++            guard let owner = window[kCGWindowOwnerPID as String] as? Int, pid_t(owner) == pid,
++                  let layer = window[kCGWindowLayer as String] as? Int, layer == 0,
++                  let bounds = window[kCGWindowBounds as String] as? [String: CGFloat],
++                  let x = bounds["X"], let y = bounds["Y"], let width = bounds["Width"], let height = bounds["Height"] else {
++                return nil
++            }
++            return CGRect(x: x, y: y, width: width, height: height)
++        }
++    }
++
+     /// The largest on-screen window owned by `pid` (approximates key window).
+     static func frontmostWindowID(pid: pid_t) -> CGWindowID? {
+         guard let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
+diff --git a/native/Sources/CUADaemonCore/PointerGuard.swift b/native/Sources/CUADaemonCore/PointerGuard.swift
+new file mode 100644
+index 0000000..ca73013
+--- /dev/null
++++ b/native/Sources/CUADaemonCore/PointerGuard.swift
+@@ -0,0 +1,26 @@
++import CoreGraphics
++import Foundation
++
++/// Keeps coordinate-based pointer actions inside the target app's windows.
++///
++/// Coordinates from the model are global screen points and are posted as
++/// real CGEvents, so an out-of-window point clicks whatever else is on screen
++/// (observed: a model passing screenshot *pixel* coordinates clicked the
++/// desktop). Such actions are rejected instead of executed.
++public enum PointerGuard {
++    /// Whether `point` lies inside (or on the edge of) any of `windows`.
++    public static func allows(_ point: CGPoint, windows: [CGRect]) -> Bool {
++        windows.contains { rect in
++            point.x >= rect.minX && point.x <= rect.maxX && point.y >= rect.minY && point.y <= rect.maxY
++        }
++    }
++
++    /// The error text returned to the model when a point is rejected.
++    public static func rejection(_ point: CGPoint, app: String, windows: [CGRect]) -> String {
++        let format = { (v: CGFloat) in String(Int(v.rounded())) }
++        let boxes = windows.map { "[x \(format($0.minX))...\(format($0.maxX)), y \(format($0.minY))...\(format($0.maxY))]" }
++        let listed = boxes.isEmpty ? "no on-screen window" : boxes.joined(separator: ", ")
++        return "coordinate (\(format(point.x)), \(format(point.y))) is outside \(app)'s windows \(listed); "
++            + "x/y are global screen points, not screenshot pixels. Use element_index, or a point inside the window."
++    }
++}
+diff --git a/native/Tests/CUADaemonCoreTests/PointerGuardTests.swift b/native/Tests/CUADaemonCoreTests/PointerGuardTests.swift
+new file mode 100644
+index 0000000..9a825ce
+--- /dev/null
++++ b/native/Tests/CUADaemonCoreTests/PointerGuardTests.swift
+@@ -0,0 +1,35 @@
++import CoreGraphics
++import XCTest
++@testable import CUADaemonCore
++
++final class PointerGuardTests: XCTestCase {
++    private let window = CGRect(x: 80, y: 80, width: 960, height: 712)
++
++    func testInsideAndEdgesAllowed() {
++        XCTAssertTrue(PointerGuard.allows(CGPoint(x: 500, y: 400), windows: [window]))
++        XCTAssertTrue(PointerGuard.allows(CGPoint(x: 80, y: 80), windows: [window]))
++        XCTAssertTrue(PointerGuard.allows(CGPoint(x: 1040, y: 792), windows: [window]))
++    }
++
++    func testOutsideRejected() {
++        // A screenshot-pixel coordinate (2x) that lands on the desktop.
++        XCTAssertFalse(PointerGuard.allows(CGPoint(x: 1823, y: 112), windows: [window]))
++        XCTAssertFalse(PointerGuard.allows(CGPoint(x: 79, y: 400), windows: [window]))
++    }
++
++    func testAnyOfSeveralWindows() {
++        let second = CGRect(x: 1200, y: 100, width: 300, height: 200)
++        XCTAssertTrue(PointerGuard.allows(CGPoint(x: 1300, y: 150), windows: [window, second]))
++    }
++
++    func testNoWindowsRejectsEverything() {
++        XCTAssertFalse(PointerGuard.allows(CGPoint(x: 500, y: 400), windows: []))
++    }
++
++    func testRejectionMessageNamesPointAndWindow() {
++        let message = PointerGuard.rejection(CGPoint(x: 1823, y: 112), app: "DSHFixture", windows: [window])
++        XCTAssertTrue(message.contains("(1823, 112)"), message)
++        XCTAssertTrue(message.contains("[x 80...1040, y 80...792]"), message)
++        XCTAssertTrue(message.contains("not screenshot pixels"), message)
++    }
++}
+-- 
+2.50.1 (Apple Git-155)
+

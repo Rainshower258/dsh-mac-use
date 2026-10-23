@@ -1,0 +1,75 @@
+# The bench's own dsh profile (run_e2e.py copies it into a per-run DSH_HOME and boots `--profile cu-bench`).
+#
+# Fail closed (docs/incidents/2026-09-29-host-model-run.md): everything that keeps the model on the cu_* tools lives
+# in the profile itself, so it holds even if an overlay or the settings file fails to load. The per-job overlay
+# repeats the tool disables; the runner's self-check verifies the resulting tool list.
+#
+# Note: a patch entry's `config` REPLACES the row's config (it is not merged), so each entry below is complete.
+
+# Tools: the model gets the plugin's cu_* tools and nothing else. With bash or the file tools on, the model routes
+# around the read-screen path under test (T12, R0), and on the host it is the incident's attack surface.
+- id: tool-bash
+  disabled: true
+- id: tool-pwsh
+  disabled: true
+- id: tool-jobs
+  disabled: true
+- id: tool-fs
+  disabled: true
+- id: tool-fs-search
+  disabled: true
+- id: tool-skill
+  disabled: true
+- id: tool-subagent
+  disabled: true
+- id: tool-subagent-fork
+  disabled: true
+- id: tool-subagent-control
+  disabled: true
+- id: tool-subagent-list-agents
+  disabled: true
+- id: tool-workflow
+  disabled: true
+- id: tool-web
+  disabled: true
+- id: tool-goal
+  disabled: true
+- id: tool-ralph
+  disabled: true
+# dsh 0.2.1: a working_directory tool (read or change the session's directory), on by default; with it the plugin's
+# exclusive check refused every cu_* call. (0.2.1 also dropped tool-ralph: a row absent from the composition is
+# not offered, and dsh only warns that the patch entry was not found.)
+- id: tool-working-directory
+  disabled: true
+# Harmless (no system access), but the model must see the cu_* tools and nothing else.
+- id: tool-todo
+  disabled: true
+- id: plan-mode
+  disabled: true
+
+# Native tool schemas only: pinned here so $DSH_TOOLS_MODE cannot switch on the run_code (PTC) transport.
+- id: tools
+  config:
+    mode: native
+# Read-only sandbox, whatever $DSH_PERMISSION_MODE says (nothing should spawn a process; this is a second layer).
+- id: sandbox-policy
+  config:
+    mode: read-only
+    workspaceRoot: !!js process.cwd()
+
+# The key: a bench-only credential name, in a file that exists only in the VM guest (fixed guest layout,
+# PLAN-v2 §3.2; bench/vm/run_vm.sh puts it there in each throwaway clone). On the host neither exists, so a run
+# with this profile stops at the first model call with MISSING_CREDENTIAL (verified 2026-09-30), and a
+# DEEPSEEK_API_KEY in the host environment is not consulted.
+- id: llm-deepseek
+  config:
+    apiKeyEnv: CU_BENCH_DEEPSEEK_KEY
+- id: credentials
+  config:
+    path: /Users/a1/.cu-bench/credentials.yaml
+
+# No session telemetry from bench runs (the default FEEDBACK_ONLY only uploads on explicit feedback, but a bench
+# run has no business uploading anything).
+- id: session-telemetry-otel
+  config:
+    mode: DISABLED

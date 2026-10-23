@@ -1,0 +1,63 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rainshower258 <188022223+Rainshower258@users.noreply.github.com>
+Date: Sat, 26 Sep 2026 21:19:15 +0800
+Subject: [PATCH] feat(daemon): refuse key/text input unless the target app is
+ frontmost
+
+CGEvent keyboard input goes to whichever app is frontmost. In bench runs
+Cmd-N / Cmd-V landed in TextEdit and pasted the user's clipboard. press_key
+and type_text now activate the target, wait up to 1s for it to become
+frontmost, and fail instead of typing into another app.
+---
+ native/Sources/CUADaemon/AppSession.swift | 21 +++++++++++++++++++--
+ 1 file changed, 19 insertions(+), 2 deletions(-)
+
+diff --git a/native/Sources/CUADaemon/AppSession.swift b/native/Sources/CUADaemon/AppSession.swift
+index c57839b..2e5d8a5 100644
+--- a/native/Sources/CUADaemon/AppSession.swift
++++ b/native/Sources/CUADaemon/AppSession.swift
+@@ -230,6 +230,23 @@ final class AppSessionStore {
+         try InputEvents.drag(from: from, to: to)
+     }
+ 
++    /// Key and text events go to whichever app is frontmost, not to the target
++    /// pid. Activate the target and refuse to type unless it really is in front
++    /// (observed: ⌘N/⌘V landed in TextEdit and pasted the user's clipboard).
++    private func requireFrontmost(_ session: AppSession) throws {
++        InputEvents.activate(pid: session.pid)
++        let deadline = Date().addingTimeInterval(1.0)
++        while NSWorkspace.shared.frontmostApplication?.processIdentifier != session.pid {
++            guard Date() < deadline else {
++                let front = NSWorkspace.shared.frontmostApplication?.localizedName ?? "another app"
++                throw ComputerUseError.actionFailed(
++                    "\(session.bundleID) is not the frontmost app (\(front) is); key/text input refused so it cannot reach another app"
++                )
++            }
++            usleep(50_000)
++        }
++    }
++
+     /// Coordinates are posted as real CGEvents anywhere on screen; refuse
+     /// points outside the target app's windows rather than click other apps.
+     private func requireInsideWindow(_ point: CGPoint, _ session: AppSession) throws {
+@@ -240,7 +257,7 @@ final class AppSessionStore {
+     }
+ 
+     private func performPressKey(_ session: AppSession, _ payload: [String: Any]) throws {
+-        InputEvents.activate(pid: session.pid)
++        try requireFrontmost(session)
+         guard let chord = payload["_0"] as? String, !chord.trimmingCharacters(in: .whitespaces).isEmpty else {
+             throw ComputerUseError.invalidParams("pressKey requires a key")
+         }
+@@ -248,7 +265,7 @@ final class AppSessionStore {
+     }
+ 
+     private func performType(_ session: AppSession, _ payload: [String: Any]) throws {
+-        InputEvents.activate(pid: session.pid)
++        try requireFrontmost(session)
+         guard let text = payload["_0"] as? String else {
+             throw ComputerUseError.invalidParams("type requires text")
+         }
+-- 
+2.50.1 (Apple Git-155)
+

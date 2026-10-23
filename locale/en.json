@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Computer Use (cu-runtime)",
+    "description": "Adds the 电脑操作 (computer use) mode: the model observes and operates the macOS apps the user approves, with the cu_* tools only. Requires the CURuntime daemon installed on this Mac with the Accessibility and Screen Recording permissions."
+  }
+}

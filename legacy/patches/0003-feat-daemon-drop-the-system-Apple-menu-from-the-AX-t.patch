@@ -1,0 +1,83 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rainshower258 <188022223+Rainshower258@users.noreply.github.com>
+Date: Sat, 26 Sep 2026 21:19:15 +0800
+Subject: [PATCH] feat(daemon): drop the system Apple menu from the AX tree
+
+Every app's AXMenuBar starts with the Apple menu, which lists the user's
+system-wide Recent Items (private file names) and exposes Force Quit, Sleep,
+Restart, Shut Down and Log Out to element_index clicks. In bench runs a model
+clicked Force Quit and opened Recent Items. The subtree is no longer captured,
+so it can neither be read nor addressed; the app's own menus are kept.
+---
+ .../Sources/CUADaemon/AccessibilityTree.swift  |  4 +++-
+ .../Sources/CUADaemonCore/AXPrunePolicy.swift  | 17 +++++++++++++++++
+ .../AXPrunePolicyTests.swift                   | 18 ++++++++++++++++++
+ 3 files changed, 38 insertions(+), 1 deletion(-)
+ create mode 100644 native/Sources/CUADaemonCore/AXPrunePolicy.swift
+ create mode 100644 native/Tests/CUADaemonCoreTests/AXPrunePolicyTests.swift
+
+diff --git a/native/Sources/CUADaemon/AccessibilityTree.swift b/native/Sources/CUADaemon/AccessibilityTree.swift
+index bc2568b..6f546b9 100644
+--- a/native/Sources/CUADaemon/AccessibilityTree.swift
++++ b/native/Sources/CUADaemon/AccessibilityTree.swift
+@@ -94,7 +94,9 @@ enum AXTreeBuilder {
+             if !value.isEmpty { label += " value=\(value)" }
+             lines.append(String(repeating: "  ", count: depth) + label)
+ 
+-            for child in childrenAttr(element, kAXChildrenAttribute as CFString) {
++            for (childIndex, child) in childrenAttr(element, kAXChildrenAttribute as CFString).enumerated() {
++                let childRole = stringAttr(child, kAXRoleAttribute as CFString) ?? "?"
++                if AXPrunePolicy.skipsChild(parentRole: role, childIndex: childIndex, childRole: childRole) { continue }
+                 walk(child, depth: depth + 1)
+             }
+         }
+diff --git a/native/Sources/CUADaemonCore/AXPrunePolicy.swift b/native/Sources/CUADaemonCore/AXPrunePolicy.swift
+new file mode 100644
+index 0000000..cb31879
+--- /dev/null
++++ b/native/Sources/CUADaemonCore/AXPrunePolicy.swift
+@@ -0,0 +1,17 @@
++import Foundation
++
++/// Which parts of an app's accessibility tree are never shown to the model.
++///
++/// Every app's AXMenuBar starts with the system Apple menu. It is not app
++/// content, it lists the user's system-wide Recent Items (private file names),
++/// and it exposes Force Quit, Sleep, Restart, Shut Down and Log Out to
++/// element_index clicks. Observed in bench runs: a model that could not read
++/// the target clicked Force Quit and opened Recent Items. The subtree is
++/// dropped, so it can neither be read nor addressed.
++public enum AXPrunePolicy {
++    /// Whether the child at `childIndex` of a parent with `parentRole` (child
++    /// role `childRole`) is skipped together with its subtree.
++    public static func skipsChild(parentRole: String, childIndex: Int, childRole: String) -> Bool {
++        parentRole == "AXMenuBar" && childIndex == 0 && childRole == "AXMenuBarItem"
++    }
++}
+diff --git a/native/Tests/CUADaemonCoreTests/AXPrunePolicyTests.swift b/native/Tests/CUADaemonCoreTests/AXPrunePolicyTests.swift
+new file mode 100644
+index 0000000..7b12655
+--- /dev/null
++++ b/native/Tests/CUADaemonCoreTests/AXPrunePolicyTests.swift
+@@ -0,0 +1,18 @@
++import XCTest
++@testable import CUADaemonCore
++
++final class AXPrunePolicyTests: XCTestCase {
++    func testAppleMenuIsSkipped() {
++        XCTAssertTrue(AXPrunePolicy.skipsChild(parentRole: "AXMenuBar", childIndex: 0, childRole: "AXMenuBarItem"))
++    }
++
++    func testAppMenusAreKept() {
++        XCTAssertFalse(AXPrunePolicy.skipsChild(parentRole: "AXMenuBar", childIndex: 1, childRole: "AXMenuBarItem"))
++        XCTAssertFalse(AXPrunePolicy.skipsChild(parentRole: "AXMenuBar", childIndex: 2, childRole: "AXMenuBarItem"))
++    }
++
++    func testOtherFirstChildrenAreKept() {
++        XCTAssertFalse(AXPrunePolicy.skipsChild(parentRole: "AXWindow", childIndex: 0, childRole: "AXButton"))
++        XCTAssertFalse(AXPrunePolicy.skipsChild(parentRole: "AXMenu", childIndex: 0, childRole: "AXMenuItem"))
++    }
++}
+-- 
+2.50.1 (Apple Git-155)
+

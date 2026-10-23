@@ -1,0 +1,3 @@
+name: 电脑操作
+description: 只用 cu_* 工具操作用户批准的应用；没有 shell、文件、网页和子代理工具。
+order: 1

@@ -1,0 +1,51 @@
+{
+  "name": "cu-runtime",
+  "version": "0.2.0",
+  "description": "Computer use on macOS for dsh: the 电脑操作 mode, whose cu_* tools reach the apps a person approves through the CURuntime daemon.",
+  "type": "module",
+  "license": "MIT",
+  "main": "plugin/lib/host.js",
+  "exports": {
+    ".": "./plugin/lib/host.js",
+    "./tools": "./plugin/lib/index.js",
+    "./client": "./plugin/lib/web-client.js",
+    "./host": "./plugin/lib/host.js",
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/*.json": "./locale/*.json",
+    "./host/locale/*.json": "./locale/host/*.json",
+    "./host/icon": "./icon.svg"
+  },
+  "icon": "./icon.svg",
+  "scripts": {
+    "build": "cd plugin && npm run build"
+  },
+  "files": [
+    "/plugin/lib",
+    "/locale",
+    "/icon.svg",
+    "/cordis.patch.yml",
+    "/Package.swift",
+    "/Sources",
+    "/Tests",
+    "/scripts/build-app.sh",
+    "/scripts/make-signing-identity.sh",
+    "/scripts/source-commit",
+    "/scripts/source-hash.sh"
+  ],
+  "engines": {
+    "dsh": ">=0.2.0-rc.2 <0.3.0-0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-tools": ">=0.2.0-rc.2 <0.3.0-0",
+    "@deepseek-ai/schemastery": "^3.18.4"
+  }
+}

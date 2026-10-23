@@ -1,0 +1,8 @@
+id: B0-axon
+description: B0：新 runtime（cu-runtime），只靠 AX：OCR、截图、zoom 都关；Electron 的 AXManualAccessibility 开
+runtime: cu-runtime
+# Stated explicitly for every cu-runtime arm (it changes the target app; PLAN-v2 R4).
+electron_ax: true
+model: { provider: deepseek-official, model: deepseek-v4-flash-vision-exp }
+image_input: false
+plugin_config: { ocr: false, image: false, zoom: false, imePolicy: takeover }

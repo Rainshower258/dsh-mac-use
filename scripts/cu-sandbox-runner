@@ -1,0 +1,56 @@
+#!/bin/zsh -f
+# cu-std's runner for dsh's sandbox (dsh-sandbox-local `runnerCommand`, profiles/cu-std/cordis.patch.yml.in): the
+# Seatbelt profile dsh itself builds (allow default; writes only to the mode's roots), plus a third layer of the B
+# hardening (合并方案-调研-20261010.md ②): commands that run confined can neither read nor write the daemon's state
+# dir (its token, socket, config and audit), nor connect to its socket.
+#
+#   cu-sandbox-runner --deny-dir DIR [--deny-dir DIR…] --deny-socket PATH [--deny-socket PATH…] <dsh's profile> -- argv…
+#
+# dsh appends its bwrap-compatible profile arguments; only the two shapes dsh-sandbox-local 0.1.5 emits are accepted
+# (read-only, and workspace-write with its workspace bind), anything else fails closed with the "cu-sandbox-runner: "
+# signature (runnerFailureSignatures). The writable roots are dsh's (dsh-sandbox writableRoots): the workspace, /tmp
+# and the temp dir, canonical, since Seatbelt matches resolved paths. Not covered: dsh's danger-full-access mode runs
+# without any sandbox, and a program the command asks LaunchServices to open runs outside it; the daemon's own checks
+# (no grants.set in daily mode, approvals bound to the client that asked) stay, and cu-exec-gate asks the user for
+# every danger-full-access call.
+emulate -L zsh
+setopt no_unset
+
+fail() { print -ru2 -- "cu-sandbox-runner: $*"; exit 125 }
+sbpl_string() { local s=${1//\\/\\\\}; print -rn -- "\"${s//\"/\\\"}\"" }
+
+deny_dirs=() deny_sockets=()
+while (( $# )); do
+  case $1 in
+    --deny-dir) (( $# >= 2 )) || fail "--deny-dir needs a path"; deny_dirs+=(${2:A}); shift 2 ;;
+    --deny-socket) (( $# >= 2 )) || fail "--deny-socket needs a path"; deny_sockets+=(${2:A}); shift 2 ;;
+    *) break ;;
+  esac
+done
+(( ${#deny_dirs} && ${#deny_sockets} )) || fail "at least one --deny-dir and one --deny-socket are required"
+
+for expected in --ro-bind / / --dev /dev --unshare-pid --proc /proc --die-with-parent; do
+  [[ ${1-} == $expected ]] || fail "unexpected sandbox profile argument: ${1-<none>} (expected $expected)"
+  shift
+done
+writable=()
+if [[ ${1-} == --tmpfs ]]; then
+  [[ ${2-} == /tmp && ${3-} == --bind && -n ${4-} && ${4-} == ${5-} ]] || fail "unexpected workspace-write arguments"
+  writable=(${4:A} /private/tmp ${${TMPDIR:-/tmp}:A})
+  shift 5
+fi
+[[ ${1-} == -- ]] || fail "expected -- before the command, got: ${1-<none>}"
+shift
+(( $# )) || fail "no command to run"
+
+profile='(version 1) (allow default) (deny file-write*) (allow file-write* (literal "/dev/null"))'
+if (( ${#writable} )); then
+  profile+=' (allow file-write*'
+  for root in ${(u)writable}; do profile+=" (subpath $(sbpl_string $root))"; done
+  profile+=')'
+fi
+# Last, so no allow above can reopen them.
+for dir in $deny_dirs; do profile+=" (deny file-read* file-write* (subpath $(sbpl_string $dir)))"; done
+for sock in $deny_sockets; do profile+=" (deny network-outbound (remote unix-socket (path-literal $(sbpl_string $sock))))"; done
+
+exec /usr/bin/sandbox-exec -p "$profile" -- "$@"

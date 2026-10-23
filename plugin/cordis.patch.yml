@@ -1,0 +1,9 @@
+# cu-runtime plugin layer. Override per task with your own patch targeting the `cu-runtime` row, e.g.
+#   - id: cu-runtime
+#     config: { apps: [com.tencent.qq], electronAx: true }
+- insert:
+    - id: cu-runtime
+      name: 'cu-runtime-plugin'
+      config:
+        apps: []
+        electronAx: false

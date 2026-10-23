@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Computer Use: host service",
+    "description": "Checks that this dsh is a supported version (0.2.x)."
+  }
+}

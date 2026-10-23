@@ -1,0 +1,5 @@
+id: A1
+description: A0 + 模型自己看截图（image block 经 ctx.attachments 送入；受 640k px 预算缩放）
+model: { provider: deepseek-official, model: deepseek-v4-flash-vision-exp }
+image_input: true
+plugin_config: {}

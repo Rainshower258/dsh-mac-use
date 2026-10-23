@@ -1,0 +1,17 @@
+id: T1-latest5
+title: 读当前会话最新 5 条消息
+app: fixture
+modes: [dom, canvas, image]
+setup: { conv: c2 }
+prompt: |
+  DSHFixture 当前打开的是和「李雷」的会话。请按从旧到新的顺序读出这个会话最新的 5 条消息的正文（不含发送者和时间）。
+answer: '{"messages": ["...", "...", "...", "...", "..."]}'
+expect:
+  messages:
+    - 周末的羽毛球还去吗？场地我订了周六下午 3 点。
+    - 去！几号场？
+    - 7 号场，场馆取票码 Qz8#Il1O，到了前台报这个就行。
+    - 顺便帮我带一筒球，回头转你 68 元。
+    - 没问题 👍
+match: cer_list
+cer_threshold: 0.1

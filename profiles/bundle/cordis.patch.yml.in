@@ -1,0 +1,45 @@
+# The bundle layer: dsh applies it to a profile that installed this package ("添加插件", or
+# `dsh plugin --profile <p> add <this repository or its release>`), after dsh-base and before the profile's own patch.
+#
+# Computer use gets a mode of its own, the agent preset 电脑操作: its plugins are a persona and the tools row
+# (cu-runtime/tools), so the cu_* tools are registered inside the preset and no other mode sees them, and the preset's
+# agents get no bash, file, web or subagent tools. onlyCuTools denies them the tools the host gives every mode
+# (working_directory, MCP resources); exclusive refuses the cu_* calls if one is still visible. Nothing here changes
+# the other modes. The tools row is never a top-level row: there it would give every mode the cu_* tools.
+#
+# The top-level row is the package itself (cu-runtime, plugin/src/host.ts): it registers no tools; it serves the
+# plugin page (dsh mounts the package's page only on a top-level row named exactly as the package), which installs,
+# starts and stops the daemon. Its id is not cu-runtime, so it is never taken for the tools row.
+#
+# The tools row's settings: no pre-granted apps (each app the model touches is approved by the person at this Mac in the
+# daemon's dialog), Electron apps' AX tree on, input-method switches asked for per call, the focus given back at each
+# turn end, onlyCuTools, and autoStart: the daemon app opens when the first cu_* call cannot reach it, only a release
+# build the plugin verified. plugin/tests/bundle.test.mjs asserts these values. A preset's rows are not configurable
+# from dsh's plugin page.
+
+- insert:
+    # dsh 0.1.5 has no profile context and no agent presets: this row stops it with the supported range (host.ts),
+    # and the preset row below is not loaded there.
+    - id: cu-runtime-host
+      name: 'cu-runtime'
+    - id: preset-cu-runtime
+      name: '@deepseek-ai/dsh-agent-preset'
+      disabled: !!js "ctx.get('profileContext') === undefined"
+      config:
+        id: cu-runtime
+        name: @NAME@
+        description: @DESCRIPTION@
+        order: @ORDER@
+        plugins:
+@PERSONA@
+          - id: cu-runtime
+            name: 'cu-runtime/tools'
+            config:
+              apps: []
+              appApproval: dialog
+              electronAx: true
+              imePolicy: ask
+              imeApproval: call
+              restoreFocus: true
+              autoStart: true
+              onlyCuTools: true

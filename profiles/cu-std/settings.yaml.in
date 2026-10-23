@@ -1,0 +1,15 @@
+# Settings of the B prototype's dsh home (scripts/install-cu-std.sh writes this once). The parent agent keeps the
+# standard preset and its default model; the vision model is registered for the `screen` children.
+# The first VM run came up on `cordis`: pin the B preset (standard minus its subagent row).
+agent-presets:
+  default: standard-screen
+llm-deepseek:
+  models:
+    - id: deepseek-flash
+      name: DeepSeek-V41-Flash
+      contextWindow: 1000000
+      inputModalities:
+        - text
+        - image
+      imagePixelBudget: 640000
+      imageMaxBytes: 1048576

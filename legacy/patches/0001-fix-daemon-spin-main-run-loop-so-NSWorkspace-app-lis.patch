@@ -1,0 +1,35 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rainshower258 <188022223+Rainshower258@users.noreply.github.com>
+Date: Sat, 26 Sep 2026 18:34:25 +0800
+Subject: [PATCH] fix(daemon): spin main run loop so NSWorkspace app list stays
+ fresh
+
+The accept loop blocked the main thread, so NSWorkspace never delivered the
+main-run-loop notifications that refresh runningApplications. Apps launched
+or relaunched after the first lookup were never found (get_app_state then
+bound to a dead pid and returned a null screenshot). Serve connections on a
+background thread and run the main run loop instead.
+---
+ native/Sources/CUADaemon/main.swift | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/native/Sources/CUADaemon/main.swift b/native/Sources/CUADaemon/main.swift
+index 8d21c6a..cf197cb 100644
+--- a/native/Sources/CUADaemon/main.swift
++++ b/native/Sources/CUADaemon/main.swift
+@@ -219,4 +219,11 @@ func runAcceptLoop() {
+     }
+ }
+ 
+-runAcceptLoop()
++// Serve connections off the main thread and keep the main run loop spinning:
++// NSWorkspace only refreshes `runningApplications` from main-run-loop
++// notifications, so blocking main in accept() freezes the app list and apps
++// launched (or relaunched) after the first lookup are never found.
++Thread.detachNewThread {
++    runAcceptLoop()
++}
++RunLoop.main.run()
+-- 
+2.50.1 (Apple Git-155)
+

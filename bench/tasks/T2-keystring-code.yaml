@@ -1,0 +1,15 @@
+id: T2-keystring-code
+title: 取易混字符验证码
+app: fixture
+modes: [dom, canvas, image]
+setup: { conv: c4 }
+prompt: |
+  DSHFixture 当前打开的是「验证码助手」会话。读出【示例云】发来的登录验证码。
+answer: '{"code": "..."}'
+expect: { code: "O0l1-I7Lx" }
+match: exact
+# Is the task fair? Measured 2026-09-30 at native resolution (corpus/synthetic c4, 2x; SF 14px, dom and canvas):
+# O/0 are 18-20 vs 14 px wide, l/1 are 2 vs 6-8 px wide (the 1 has a flag): distinguishable, so reading l as 1
+# (R4: "O011") is a real misread and counts. l/I are the same height in dom (20 px) and 1 px apart in canvas,
+# 2 vs 3 px wide: not distinguishable, so an answer that misses only there is marked glyph-indistinct and excluded.
+glyph_indistinct: [["l", "I"]]

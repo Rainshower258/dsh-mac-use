@@ -1,0 +1,6 @@
+# Python deps for bench/ (host and VM guest). Pinned to the versions the 2026-09-28 results were produced with.
+# Install: python3 -m pip install -r bench/requirements.txt
+PyYAML==6.0.3        # run_e2e.py, score_e2e.py, tasks
+numpy==2.4.5         # offline metrics
+pillow==12.2.0       # corpus checks, experiment region preview
+pytest==9.0.2        # bench/tests (and the pre-push hook)
